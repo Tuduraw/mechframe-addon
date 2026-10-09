@@ -1,0 +1,6 @@
+{
+  "parent": "minecraft:item/generated",
+  "textures": {
+    "layer0": "mechframe:item/mech_spawner_t4"
+  }
+}

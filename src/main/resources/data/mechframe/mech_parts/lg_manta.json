@@ -1,0 +1,235 @@
+{
+  "slot": "legs",
+  "display_name": "LG-KM Manta Legs",
+  "maker": "Kestrel Dynamics",
+  "tier": 5,
+  "transform_set": "manta",
+  "weight": 17.5,
+  "armor": 280,
+  "points": {
+    "hip": [
+      0,
+      2.9,
+      0
+    ]
+  },
+  "stats": {
+    "type": "biped",
+    "load_limit": 50,
+    "walk_speed": 0.32,
+    "boost_multiplier": 1.08,
+    "jump": 0.95,
+    "turn_rate": 18,
+    "step_height": 1.15,
+    "traction": 0.36,
+    "qb_multiplier": 1.0,
+    "hover_multiplier": 1.15,
+    "collision_width": 1.6,
+    "step_length": 1.5,
+    "step_lift": 0.5,
+    "step_ticks": 6,
+    "pelvis_groups": [
+      "pelvis"
+    ],
+    "chains": [
+      {
+        "name": "l",
+        "upper": "l_thigh",
+        "lower": "l_shin",
+        "foot": "l_foot",
+        "hip": [
+          0.42,
+          2.86,
+          0.0
+        ],
+        "knee": [
+          0.44,
+          1.62,
+          0.34
+        ],
+        "ankle": [
+          0.44,
+          0.42,
+          -0.02
+        ],
+        "pole": [
+          0,
+          0,
+          1
+        ],
+        "group": 0
+      },
+      {
+        "name": "r",
+        "upper": "r_thigh",
+        "lower": "r_shin",
+        "foot": "r_foot",
+        "hip": [
+          -0.42,
+          2.86,
+          0.0
+        ],
+        "knee": [
+          -0.44,
+          1.62,
+          0.34
+        ],
+        "ankle": [
+          -0.44,
+          0.42,
+          -0.02
+        ],
+        "pole": [
+          0,
+          0,
+          1
+        ],
+        "group": 1
+      }
+    ]
+  },
+  "jet_pose": {
+    "pelvis": {
+      "pos": [
+        0.0,
+        0.76021,
+        2.25336
+      ],
+      "quat": [
+        -0.707107,
+        0.0,
+        0.0,
+        0.707107
+      ],
+      "delay": 0.0,
+      "parent": "core:core",
+      "joint": [
+        0.0,
+        2.9,
+        0.0
+      ]
+    },
+    "l_thigh": {
+      "pos": [
+        -0.27443,
+        0.0049,
+        2.14469
+      ],
+      "quat": [
+        -0.606439,
+        -0.005549,
+        -0.005549,
+        0.795091
+      ],
+      "delay": 0.0,
+      "parent": "legs:pelvis",
+      "joint": [
+        0.42,
+        2.86,
+        0.0
+      ]
+    },
+    "l_shin": {
+      "pos": [
+        -0.25033,
+        0.89901,
+        2.32866
+      ],
+      "quat": [
+        -0.802292,
+        -0.000951,
+        0.000708,
+        0.59693
+      ],
+      "delay": 0.1,
+      "parent": "legs:l_thigh",
+      "joint": [
+        0.44,
+        1.62,
+        0.34
+      ]
+    },
+    "l_foot": {
+      "pos": [
+        -0.25,
+        0.34021,
+        1.95212
+      ],
+      "quat": [
+        0.0,
+        0.0,
+        0.0,
+        1.0
+      ],
+      "delay": 0.25,
+      "parent": "legs:l_shin",
+      "joint": [
+        0.44,
+        0.42,
+        -0.02
+      ]
+    },
+    "r_thigh": {
+      "pos": [
+        0.27443,
+        0.0049,
+        2.14469
+      ],
+      "quat": [
+        -0.606439,
+        0.005549,
+        0.005549,
+        0.795091
+      ],
+      "delay": 0.0,
+      "parent": "legs:pelvis",
+      "joint": [
+        -0.42,
+        2.86,
+        0.0
+      ]
+    },
+    "r_shin": {
+      "pos": [
+        0.25033,
+        0.89901,
+        2.32866
+      ],
+      "quat": [
+        -0.802292,
+        0.000951,
+        -0.000708,
+        0.59693
+      ],
+      "delay": 0.1,
+      "parent": "legs:r_thigh",
+      "joint": [
+        -0.44,
+        1.62,
+        0.34
+      ]
+    },
+    "r_foot": {
+      "pos": [
+        0.25,
+        0.34021,
+        1.95212
+      ],
+      "quat": [
+        0.0,
+        0.0,
+        0.0,
+        1.0
+      ],
+      "delay": 0.25,
+      "parent": "legs:r_shin",
+      "joint": [
+        -0.44,
+        0.42,
+        -0.02
+      ]
+    }
+  },
+  "model": "mechframe:models/obj/parts/lg_manta.obj",
+  "texture": "mechframe:textures/part/lg_manta.png"
+}

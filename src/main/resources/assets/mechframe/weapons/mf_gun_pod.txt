@@ -1,0 +1,19 @@
+; Mech Frame Addon - WR-KF Gun Pod
+DisplayName = WR-KF Gun Pod
+Type = MachineGun2
+Power = 18
+Acceleration = 9.0
+Gravity = -0.01
+Accuracy = 1.2
+Round = 60
+ReloadTime = 70
+Delay = 1
+MaxAmmo = 900
+SuppliedNum = 60
+Item = 3, iron_ingot
+Item = 2, gunpowder
+Sound = mf_gunpod
+SoundVolume = 2.2
+ModelBullet = mf_shell
+Recoil = 0.3
+AddMuzzleFlash = 0.6, 0.25, 1, 200, 255, 230, 190

@@ -1,0 +1,16 @@
+{
+  "required": true,
+  "minVersion": "0.8",
+  "package": "com.example.mechframe.client.mixin",
+  "compatibilityLevel": "JAVA_21",
+  "client": [
+    "EntityLookMixin",
+    "KeyBindingSuppressMixin",
+    "GameRendererFovMixin",
+    "MechCameraMixin",
+    "MinecraftClientAttackMixin"
+  ],
+  "injectors": {
+    "defaultRequire": 1
+  }
+}

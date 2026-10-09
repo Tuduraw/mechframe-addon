@@ -1,0 +1,23 @@
+{
+  "result": {
+    "part": "mechframe:wb_missile"
+  },
+  "ingredients": [
+    {
+      "item": "minecraft:iron_block",
+      "count": 4
+    },
+    {
+      "item": "minecraft:gunpowder",
+      "count": 1
+    },
+    {
+      "item": "minecraft:quartz",
+      "count": 1
+    },
+    {
+      "item": "minecraft:redstone",
+      "count": 2
+    }
+  ]
+}

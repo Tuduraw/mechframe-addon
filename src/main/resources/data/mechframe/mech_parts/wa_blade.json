@@ -1,0 +1,33 @@
+{
+  "slot": "weapon",
+  "display_name": "WM-K1 Laser Blade",
+  "maker": "Kestrel Dynamics",
+  "tier": 3,
+  "weight": 3.0,
+  "armor": 40,
+  "points": {
+    "muzzle": [
+      0.0,
+      0.14,
+      3.0
+    ]
+  },
+  "stats": {
+    "weapon": "mf_laser_blade",
+    "mount": "arm",
+    "projectile_item": "minecraft:iron_nugget",
+    "recoil_distance": 0.0,
+    "fcs": false,
+    "melee": {
+      "damage": 420,
+      "reach": 4.2,
+      "arc": 70,
+      "lunge_speed": 1.6,
+      "lunge_range": 11,
+      "en_cost": 350,
+      "cooldown": 30
+    }
+  },
+  "model": "mechframe:models/obj/parts/wa_blade.obj",
+  "texture": "mechframe:textures/part/wa_blade.png"
+}

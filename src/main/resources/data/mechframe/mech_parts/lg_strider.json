@@ -1,0 +1,166 @@
+{
+  "slot": "legs",
+  "display_name": "LG-A5 Strider",
+  "maker": "Arachne Systems",
+  "tier": 4,
+  "weight": 32.0,
+  "armor": 480,
+  "points": {
+    "hip": [
+      0,
+      2.95,
+      0
+    ]
+  },
+  "stats": {
+    "type": "quad",
+    "load_limit": 88,
+    "walk_speed": 0.3,
+    "boost_multiplier": 0.95,
+    "jump": 0.75,
+    "turn_rate": 13,
+    "step_height": 1.6,
+    "traction": 0.32,
+    "qb_multiplier": 0.9,
+    "hover_multiplier": 1.6,
+    "collision_width": 2.4,
+    "step_length": 1.5,
+    "step_lift": 0.75,
+    "step_ticks": 7,
+    "pelvis_groups": [
+      "pelvis"
+    ],
+    "chains": [
+      {
+        "coxa": "fl_coxa",
+        "coxa_pivot": [
+          0.6,
+          2.45,
+          0.66
+        ],
+        "upper": "fl_femur",
+        "lower": "fl_tibia",
+        "hip": [
+          0.86,
+          2.5,
+          0.92
+        ],
+        "knee": [
+          1.72,
+          3.15,
+          1.78
+        ],
+        "ankle": [
+          2.3,
+          0.4,
+          2.36
+        ],
+        "pole": [
+          0,
+          1,
+          0
+        ],
+        "name": "fl",
+        "group": 0
+      },
+      {
+        "coxa": "fr_coxa",
+        "coxa_pivot": [
+          -0.6,
+          2.45,
+          0.66
+        ],
+        "upper": "fr_femur",
+        "lower": "fr_tibia",
+        "hip": [
+          -0.86,
+          2.5,
+          0.92
+        ],
+        "knee": [
+          -1.72,
+          3.15,
+          1.78
+        ],
+        "ankle": [
+          -2.3,
+          0.4,
+          2.36
+        ],
+        "pole": [
+          0,
+          1,
+          0
+        ],
+        "name": "fr",
+        "group": 1
+      },
+      {
+        "coxa": "rl_coxa",
+        "coxa_pivot": [
+          0.6,
+          2.45,
+          -0.66
+        ],
+        "upper": "rl_femur",
+        "lower": "rl_tibia",
+        "hip": [
+          0.86,
+          2.5,
+          -0.92
+        ],
+        "knee": [
+          1.72,
+          3.15,
+          -1.78
+        ],
+        "ankle": [
+          2.3,
+          0.4,
+          -2.36
+        ],
+        "pole": [
+          0,
+          1,
+          0
+        ],
+        "name": "rl",
+        "group": 1
+      },
+      {
+        "coxa": "rr_coxa",
+        "coxa_pivot": [
+          -0.6,
+          2.45,
+          -0.66
+        ],
+        "upper": "rr_femur",
+        "lower": "rr_tibia",
+        "hip": [
+          -0.86,
+          2.5,
+          -0.92
+        ],
+        "knee": [
+          -1.72,
+          3.15,
+          -1.78
+        ],
+        "ankle": [
+          -2.3,
+          0.4,
+          -2.36
+        ],
+        "pole": [
+          0,
+          1,
+          0
+        ],
+        "name": "rr",
+        "group": 0
+      }
+    ]
+  },
+  "model": "mechframe:models/obj/parts/lg_strider.obj",
+  "texture": "mechframe:textures/part/lg_strider.png"
+}

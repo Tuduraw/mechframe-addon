@@ -1,0 +1,30 @@
+{
+  "schemaVersion": 1,
+  "id": "mechframe",
+  "version": "${version}",
+  "name": "Mech Frame Addon",
+  "description": "Assembled high-speed combat frames for Tudur's Vehicle Mod: bipeds, reverse-joint, tank, quad and spider legs, transforming jet frames, quick boosts, FCS lock-on and a parts garage.",
+  "authors": [ "Tuduraw" ],
+  "contact": {},
+  "license": "MIT",
+  "icon": "assets/mechframe/icon.png",
+  "environment": "*",
+  "entrypoints": {
+    "main": [ "com.example.mechframe.MechFrame" ],
+    "client": [ "com.example.mechframe.client.MechFrameClient" ]
+  },
+  "depends": {
+    "fabricloader": ">=0.18.0",
+    "fabric-api": "*",
+    "minecraft": "1.21.11",
+    "java": ">=21",
+    "tudursvehiclemod": ">=1.0.5"
+  },
+  "mixins": [
+    "mechframe.mixins.json",
+    {
+      "config": "mechframe.client.mixins.json",
+      "environment": "client"
+    }
+  ]
+}

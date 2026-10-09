@@ -1,0 +1,198 @@
+{
+  "slot": "legs",
+  "display_name": "LG-G4 Rampart",
+  "maker": "Grauwerk Heavy Industries",
+  "tier": 2,
+  "weight": 34.0,
+  "armor": 600,
+  "points": {
+    "hip": [
+      0,
+      1.76,
+      0
+    ]
+  },
+  "stats": {
+    "type": "tank",
+    "load_limit": 95,
+    "walk_speed": 0.5,
+    "boost_multiplier": 1.15,
+    "jump": 0.0,
+    "turn_rate": 11,
+    "step_height": 1.05,
+    "traction": 0.3,
+    "qb_multiplier": 0.75,
+    "hover_multiplier": 0.7,
+    "collision_width": 3.0,
+    "pelvis_groups": [
+      "ring"
+    ],
+    "chains": [],
+    "wheels": [
+      {
+        "group": "l_w0",
+        "pivot": [
+          1.5,
+          0.52,
+          -1.45
+        ],
+        "radius": 0.36
+      },
+      {
+        "group": "l_w1",
+        "pivot": [
+          1.5,
+          0.52,
+          -0.45
+        ],
+        "radius": 0.36
+      },
+      {
+        "group": "l_w2",
+        "pivot": [
+          1.5,
+          0.52,
+          0.55
+        ],
+        "radius": 0.36
+      },
+      {
+        "group": "l_w3",
+        "pivot": [
+          1.5,
+          0.52,
+          1.55
+        ],
+        "radius": 0.36
+      },
+      {
+        "group": "l_idler",
+        "pivot": [
+          1.51,
+          0.98,
+          2.68
+        ],
+        "radius": 0.3
+      },
+      {
+        "group": "l_sprocket",
+        "pivot": [
+          1.51,
+          1.5,
+          -2.32
+        ],
+        "radius": 0.3
+      },
+      {
+        "group": "l_r0",
+        "pivot": [
+          1.5,
+          1.74,
+          -1.5
+        ],
+        "radius": 0.14
+      },
+      {
+        "group": "l_r1",
+        "pivot": [
+          1.5,
+          1.74,
+          -0.3
+        ],
+        "radius": 0.14
+      },
+      {
+        "group": "l_r2",
+        "pivot": [
+          1.5,
+          1.74,
+          0.9
+        ],
+        "radius": 0.14
+      },
+      {
+        "group": "r_w0",
+        "pivot": [
+          -1.5,
+          0.52,
+          -1.45
+        ],
+        "radius": 0.36
+      },
+      {
+        "group": "r_w1",
+        "pivot": [
+          -1.5,
+          0.52,
+          -0.45
+        ],
+        "radius": 0.36
+      },
+      {
+        "group": "r_w2",
+        "pivot": [
+          -1.5,
+          0.52,
+          0.55
+        ],
+        "radius": 0.36
+      },
+      {
+        "group": "r_w3",
+        "pivot": [
+          -1.5,
+          0.52,
+          1.55
+        ],
+        "radius": 0.36
+      },
+      {
+        "group": "r_idler",
+        "pivot": [
+          -1.51,
+          0.98,
+          2.68
+        ],
+        "radius": 0.3
+      },
+      {
+        "group": "r_sprocket",
+        "pivot": [
+          -1.51,
+          1.5,
+          -2.32
+        ],
+        "radius": 0.3
+      },
+      {
+        "group": "r_r0",
+        "pivot": [
+          -1.5,
+          1.74,
+          -1.5
+        ],
+        "radius": 0.14
+      },
+      {
+        "group": "r_r1",
+        "pivot": [
+          -1.5,
+          1.74,
+          -0.3
+        ],
+        "radius": 0.14
+      },
+      {
+        "group": "r_r2",
+        "pivot": [
+          -1.5,
+          1.74,
+          0.9
+        ],
+        "radius": 0.14
+      }
+    ]
+  },
+  "model": "mechframe:models/obj/parts/lg_rampart.obj",
+  "texture": "mechframe:textures/part/lg_rampart.png"
+}

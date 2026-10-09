@@ -1,0 +1,39 @@
+{
+  "entity_type": "mechframe:mech",
+  "model": "mechframe:models/obj/parts/cr_swallow.obj",
+  "texture": "mechframe:textures/part/cr_swallow.png",
+  "width": 1.8,
+  "height": 4.0,
+  "spawn_item": {
+    "display_name": "KD) Swallow",
+    "tier": 5
+  },
+  "hud": "mech_hud",
+  "engine_sound": "mech_engine",
+  "engine_sound_volume": 1.2,
+  "weight_type": "car",
+  "max_health": 1000,
+  "armor_damage_factor": 0.8,
+  "armor_min_damage": 1.0,
+  "armor_max_damage": 260,
+  "damage_factor": 1.0,
+  "fuel_consumption": 0.25,
+  "inventory_size": 18,
+  "submerged_damage_height": 3.0,
+  "flare_type": 1,
+  "passenger_display": {
+    "hide_entity": true
+  },
+  "mechframe": {
+    "assembly": {
+      "legs": "mechframe:lg_swallow",
+      "core": "mechframe:cr_swallow",
+      "head": "mechframe:hd_swallow",
+      "arms": "mechframe:am_swallow",
+      "booster": "mechframe:bs_swallow",
+      "r_arm": "mechframe:wa_gunpod",
+      "l_arm": "mechframe:wa_gunpod",
+      "l_back": "mechframe:wb_missile"
+    }
+  }
+}

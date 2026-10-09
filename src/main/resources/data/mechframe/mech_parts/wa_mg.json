@@ -1,0 +1,23 @@
+{
+  "slot": "weapon",
+  "display_name": "WR-G2 Assault MG",
+  "maker": "Grauwerk Heavy Industries",
+  "tier": 2,
+  "weight": 4.0,
+  "armor": 50,
+  "points": {
+    "muzzle": [
+      0.0,
+      0.16,
+      1.4
+    ]
+  },
+  "stats": {
+    "weapon": "mf_assault_mg",
+    "mount": "arm",
+    "projectile_item": "minecraft:iron_nugget",
+    "recoil_distance": 0.06
+  },
+  "model": "mechframe:models/obj/parts/wa_mg.obj",
+  "texture": "mechframe:textures/part/wa_mg.png"
+}

@@ -1,0 +1,19 @@
+{
+  "result": {
+    "part": "mechframe:cr_bastion"
+  },
+  "ingredients": [
+    {
+      "item": "minecraft:gold_block",
+      "count": 7
+    },
+    {
+      "item": "minecraft:copper_ingot",
+      "count": 1
+    },
+    {
+      "item": "minecraft:redstone_block",
+      "count": 1
+    }
+  ]
+}

@@ -1,0 +1,15 @@
+{
+  "result": {
+    "part": "mechframe:lg_falcon"
+  },
+  "ingredients": [
+    {
+      "item": "minecraft:diamond",
+      "count": 6
+    },
+    {
+      "item": "minecraft:phantom_membrane",
+      "count": 1
+    }
+  ]
+}

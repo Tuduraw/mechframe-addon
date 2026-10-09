@@ -1,0 +1,149 @@
+; Mech Frame HUD (mechframe) - referenced by every frame preset as "hud": "mech_hud".
+; Uses the base mod's variables plus this mod's own mf_* variables (client.hud.MechHud).
+
+; ---- reticle --------------------------------------------------------------------------------
+Color = 200, 120, 255, 200
+DrawRect = -9, 0, 5, 1
+DrawRect = 5, 0, 5, 1
+DrawRect = 0, -9, 1, 5
+DrawRect = 0, 5, 1, 5
+DrawLine = -24, -18, -30, -18, -30, -12
+DrawLine = 24, -18, 30, -18, 30, -12
+DrawLine = -24, 18, -30, 18, -30, 12
+DrawLine = 24, 18, 30, 18, 30, 12
+
+; ---- FCS target ---------------------------------------------------------------------------------
+If = mf_soft
+Color = 230, 255, 160, 40
+DrawCenteredString = 0, -40, "FCS %s  %.0fm", mf_tgt_name, mf_tgt_dist
+EndIf
+If = mf_lock
+Color = 255, 255, 70, 60
+DrawCenteredString = 0, -40, "LOCK %s  %.0fm", mf_tgt_name, mf_tgt_dist
+EndIf
+If = mf_tgt
+Color = 140, 40, 40, 40
+DrawRect = -30, -30, 60, 3
+Color = 230, 255, 90, 70
+DrawRect = -30, -30, 60 * mf_tgt_hp_rto, 3
+EndIf
+
+; ---- missile lock-on (base mod) -----------------------------------------------------------------
+If = sight_type == 2
+Color = 160, 40, 40, 40
+DrawRect = -40, 26, 80, 3
+Color = 230, 255, 200, 60
+DrawRect = -40, 26, 80 * lock_progress, 3
+EndIf
+
+; ---- EN gauge (bottom centre) -------------------------------------------------------------------
+; Laid out for the smallest common GUI (427x240 scaled): everything stays above the hotbar
+; (y < 98 in the centre column) and inside x = +-212.
+Color = 150, 20, 26, 34
+DrawRect = -80, 62, 160, 6
+Color = 230, 90, 220, 255
+DrawRect = -80, 62, 160 * mf_en_rto, 6
+If = mf_overheat
+Color = 255, 255, 70, 60
+DrawRect = -80, 62, 160 * mf_en_rto, 6
+DrawCenteredString = 0, 71, "EN OUT"
+EndIf
+Color = 220, 200, 230, 240
+DrawString = -80, 52, "EN %.0f", mf_en
+If = mf_qb_ready
+Color = 230, 120, 255, 160
+DrawString = 68, 52, "QB"
+EndIf
+If = mf_boost
+Color = 240, 120, 220, 255
+DrawCenteredString = 0, 52, "BOOST"
+EndIf
+If = mf_hover
+Color = 240, 120, 220, 255
+DrawCenteredString = 0, 42, "HOVER"
+EndIf
+
+; ---- frame status (left) --------------------------------------------------------------------------
+Color = 220, 200, 230, 240
+DrawString = -210, 22, "%s", mf_frame
+DrawString = -210, 32, "AP  %d", hp
+Color = 150, 20, 26, 34
+DrawRect = -210, 42, 80, 3
+Color = 230, 120, 230, 140
+DrawRect = -210, 42, 80 * hp_rto, 3
+Color = 220, 200, 230, 240
+DrawString = -210, 48, "SPD %d km/h", speed_kbh
+DrawString = -210, 58, "ALT %d", altitude
+If = mf_overload
+Color = 255, 255, 170, 40
+DrawString = -210, 80, "OVERWEIGHT"
+EndIf
+If = mf_arm_overload
+Color = 255, 255, 170, 40
+DrawString = -210, 90, "ARM OVERLOAD"
+EndIf
+If = hp_per < 25
+Color = 255, 255, 70, 60
+DrawString = -210, 100, "AP CRITICAL"
+EndIf
+
+; ---- form ------------------------------------------------------------------------------------------
+If = mf_show_mode
+Color = 220, 200, 230, 240
+DrawCenteredString = 0, -64, "%s", mf_mode
+EndIf
+If = mf_jet
+Color = 220, 200, 230, 240
+DrawString = -210, 68, "THR %d%%", throttle * 100
+DrawGraduationPitch2 = pitch, roll, 0, 0
+EndIf
+
+; ---- weapons (right): slot + ammo, then the weapon name ---------------------------------------------
+Color = 220, 200, 230, 240
+If = mf_ra_has
+DrawString = 98, 22, "%s", mf_ra_slot
+DrawString = 98, 31, "%s", mf_ra_name
+EndIf
+If = mf_la_has
+DrawString = 98, 44, "%s", mf_la_slot
+DrawString = 98, 53, "%s", mf_la_name
+EndIf
+If = mf_rb_has
+DrawString = 98, 66, "%s", mf_rb_slot
+DrawString = 98, 75, "%s", mf_rb_name
+EndIf
+If = mf_lb_has
+DrawString = 98, 88, "%s", mf_lb_slot
+DrawString = 98, 97, "%s", mf_lb_name
+EndIf
+; Which key fires what: each arm's own trigger (Fire Left / Right Arm), the base mod's fire key for the selected weapon.
+Color = 255, 255, 200, 80
+If = mf_ra_sel
+DrawString = 91, 22, ">"
+EndIf
+If = mf_la_sel
+DrawString = 91, 44, ">"
+EndIf
+If = mf_rb_sel
+DrawString = 91, 66, ">"
+EndIf
+If = mf_lb_sel
+DrawString = 91, 88, ">"
+EndIf
+Color = 255, 140, 220, 255
+If = mf_ra_keyed
+DrawString = 186, 22, "%s", mf_ra_key
+EndIf
+If = mf_la_keyed
+DrawString = 186, 44, "%s", mf_la_key
+EndIf
+If = mf_rb_keyed
+DrawString = 186, 66, "%s", mf_rb_key
+EndIf
+If = mf_lb_keyed
+DrawString = 186, 88, "%s", mf_lb_key
+EndIf
+If = reloading
+Color = 230, 255, 170, 60
+DrawString = 98, 108, "RELOADING"
+EndIf

@@ -1,0 +1,23 @@
+{
+  "result": {
+    "part": "mechframe:wa_gunpod"
+  },
+  "ingredients": [
+    {
+      "item": "minecraft:diamond",
+      "count": 3
+    },
+    {
+      "item": "minecraft:phantom_membrane",
+      "count": 1
+    },
+    {
+      "item": "minecraft:gunpowder",
+      "count": 1
+    },
+    {
+      "item": "minecraft:redstone",
+      "count": 1
+    }
+  ]
+}

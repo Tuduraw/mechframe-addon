@@ -1,0 +1,19 @@
+{
+  "result": {
+    "part": "mechframe:cr_falcon"
+  },
+  "ingredients": [
+    {
+      "item": "minecraft:diamond",
+      "count": 7
+    },
+    {
+      "item": "minecraft:phantom_membrane",
+      "count": 1
+    },
+    {
+      "item": "minecraft:redstone_block",
+      "count": 1
+    }
+  ]
+}

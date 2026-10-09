@@ -1,0 +1,22 @@
+{
+  "slot": "head",
+  "display_name": "HD-K2 Wren",
+  "maker": "Kestrel Dynamics",
+  "tier": 2,
+  "weight": 2.0,
+  "armor": 105,
+  "points": {
+    "top": [
+      0,
+      0.25,
+      0
+    ]
+  },
+  "stats": {
+    "lock_range": 110,
+    "lock_cone": 18,
+    "stability": 0.95
+  },
+  "model": "mechframe:models/obj/parts/hd_wren.obj",
+  "texture": "mechframe:textures/part/hd_wren.png"
+}

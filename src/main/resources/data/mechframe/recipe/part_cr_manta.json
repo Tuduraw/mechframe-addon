@@ -1,0 +1,21 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "equipment",
+  "key": {
+    "T": "minecraft:diamond",
+    "F": "minecraft:prismarine_crystals",
+    "R": "minecraft:redstone_block"
+  },
+  "pattern": [
+    "TFT",
+    "TRT",
+    "TTT"
+  ],
+  "result": {
+    "id": "mechframe:part_core",
+    "count": 1,
+    "components": {
+      "mechframe:part_id": "mechframe:cr_manta"
+    }
+  }
+}

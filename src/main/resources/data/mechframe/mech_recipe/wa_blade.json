@@ -1,0 +1,19 @@
+{
+  "result": {
+    "part": "mechframe:wa_blade"
+  },
+  "ingredients": [
+    {
+      "item": "minecraft:quartz",
+      "count": 1
+    },
+    {
+      "item": "minecraft:gold_block",
+      "count": 1
+    },
+    {
+      "item": "minecraft:redstone_block",
+      "count": 1
+    }
+  ]
+}

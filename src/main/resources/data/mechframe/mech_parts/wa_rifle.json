@@ -1,0 +1,23 @@
+{
+  "slot": "weapon",
+  "display_name": "WR-K1 Burst Rifle",
+  "maker": "Kestrel Dynamics",
+  "tier": 1,
+  "weight": 3.0,
+  "armor": 40,
+  "points": {
+    "muzzle": [
+      0.0,
+      0.14,
+      1.62
+    ]
+  },
+  "stats": {
+    "weapon": "mf_burst_rifle",
+    "mount": "arm",
+    "projectile_item": "minecraft:iron_nugget",
+    "recoil_distance": 0.12
+  },
+  "model": "mechframe:models/obj/parts/wa_rifle.obj",
+  "texture": "mechframe:textures/part/wa_rifle.png"
+}

@@ -1,0 +1,21 @@
+{
+  "category": "frames",
+  "order": 2,
+  "result": {
+    "item": "mechframe:mech_spawner_t2"
+  },
+  "ingredients": [
+    {
+      "item": "minecraft:iron_block",
+      "count": 6
+    },
+    {
+      "item": "minecraft:redstone_block",
+      "count": 2
+    },
+    {
+      "item": "minecraft:quartz",
+      "count": 8
+    }
+  ]
+}

@@ -1,0 +1,20 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "equipment",
+  "key": {
+    "T": "minecraft:diamond",
+    "F": "minecraft:phantom_membrane"
+  },
+  "pattern": [
+    "TFT",
+    "T T",
+    "T T"
+  ],
+  "result": {
+    "id": "mechframe:part_legs",
+    "count": 1,
+    "components": {
+      "mechframe:part_id": "mechframe:lg_falcon"
+    }
+  }
+}

@@ -1,0 +1,92 @@
+{
+  "slot": "legs",
+  "display_name": "LG-K1 Stride",
+  "maker": "Kestrel Dynamics",
+  "tier": 1,
+  "weight": 16.0,
+  "armor": 260,
+  "points": {
+    "hip": [
+      0,
+      2.9,
+      0
+    ]
+  },
+  "stats": {
+    "type": "biped",
+    "load_limit": 46,
+    "walk_speed": 0.34,
+    "boost_multiplier": 1.05,
+    "jump": 0.98,
+    "turn_rate": 18,
+    "step_height": 1.15,
+    "traction": 0.36,
+    "qb_multiplier": 1.05,
+    "hover_multiplier": 1.0,
+    "collision_width": 1.6,
+    "step_length": 1.5,
+    "step_lift": 0.5,
+    "step_ticks": 6,
+    "pelvis_groups": [
+      "pelvis"
+    ],
+    "chains": [
+      {
+        "name": "l",
+        "upper": "l_thigh",
+        "lower": "l_shin",
+        "foot": "l_foot",
+        "hip": [
+          0.42,
+          2.86,
+          0.0
+        ],
+        "knee": [
+          0.44,
+          1.62,
+          0.34
+        ],
+        "ankle": [
+          0.44,
+          0.38,
+          -0.02
+        ],
+        "pole": [
+          0,
+          0,
+          1
+        ],
+        "group": 0
+      },
+      {
+        "name": "r",
+        "upper": "r_thigh",
+        "lower": "r_shin",
+        "foot": "r_foot",
+        "hip": [
+          -0.42,
+          2.86,
+          0.0
+        ],
+        "knee": [
+          -0.44,
+          1.62,
+          0.34
+        ],
+        "ankle": [
+          -0.44,
+          0.38,
+          -0.02
+        ],
+        "pole": [
+          0,
+          0,
+          1
+        ],
+        "group": 1
+      }
+    ]
+  },
+  "model": "mechframe:models/obj/parts/lg_stride.obj",
+  "texture": "mechframe:textures/part/lg_stride.png"
+}

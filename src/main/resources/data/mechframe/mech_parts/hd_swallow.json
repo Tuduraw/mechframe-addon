@@ -1,0 +1,45 @@
+{
+  "slot": "head",
+  "display_name": "HD-KS Swallow Head",
+  "maker": "Kestrel Dynamics",
+  "tier": 5,
+  "transform_set": "swallow",
+  "weight": 2.2,
+  "armor": 115,
+  "points": {
+    "top": [
+      0,
+      0.46,
+      0
+    ]
+  },
+  "stats": {
+    "lock_range": 125,
+    "lock_cone": 13,
+    "stability": 0.9
+  },
+  "jet_pose": {
+    "head": {
+      "pos": [
+        -0.0,
+        0.69391,
+        1.86432
+      ],
+      "quat": [
+        -0.0,
+        0.0,
+        1.0,
+        0.0
+      ],
+      "delay": 0.0,
+      "parent": "core:core",
+      "joint": [
+        0.0,
+        0.0,
+        0.0
+      ]
+    }
+  },
+  "model": "mechframe:models/obj/parts/hd_swallow.obj",
+  "texture": "mechframe:textures/part/hd_swallow.png"
+}

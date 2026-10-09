@@ -1,0 +1,25 @@
+{
+  "slot": "weapon",
+  "display_name": "WB-G2 Shoulder Cannon",
+  "maker": "Grauwerk Heavy Industries",
+  "tier": 3,
+  "weight": 8.0,
+  "armor": 80,
+  "points": {
+    "muzzle": [
+      0.0,
+      0.18,
+      1.98
+    ]
+  },
+  "stats": {
+    "weapon": "mf_shoulder_cannon",
+    "mount": "back",
+    "projectile_item": "minecraft:gunpowder",
+    "recoil_distance": 0.4,
+    "min_pitch": -45,
+    "max_pitch": 20
+  },
+  "model": "mechframe:models/obj/parts/wb_cannon.obj",
+  "texture": "mechframe:textures/part/wb_cannon.png"
+}

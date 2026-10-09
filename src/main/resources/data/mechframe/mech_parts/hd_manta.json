@@ -1,0 +1,45 @@
+{
+  "slot": "head",
+  "display_name": "HD-KM Manta Head",
+  "maker": "Kestrel Dynamics",
+  "tier": 5,
+  "transform_set": "manta",
+  "weight": 2.4,
+  "armor": 120,
+  "points": {
+    "top": [
+      0,
+      0.72,
+      0
+    ]
+  },
+  "stats": {
+    "lock_range": 115,
+    "lock_cone": 16,
+    "stability": 0.95
+  },
+  "jet_pose": {
+    "head": {
+      "pos": [
+        0.0,
+        0.64021,
+        -2.10664
+      ],
+      "quat": [
+        -0.0,
+        0.0,
+        0.0,
+        1.0
+      ],
+      "delay": 0.2,
+      "parent": "core:core",
+      "joint": [
+        0.0,
+        0.0,
+        0.0
+      ]
+    }
+  },
+  "model": "mechframe:models/obj/parts/hd_manta.obj",
+  "texture": "mechframe:textures/part/hd_manta.png"
+}

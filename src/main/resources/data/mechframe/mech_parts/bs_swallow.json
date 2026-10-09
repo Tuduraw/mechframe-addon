@@ -1,0 +1,138 @@
+{
+  "slot": "booster",
+  "display_name": "BS-KS Swallow Pack",
+  "maker": "Kestrel Dynamics",
+  "tier": 5,
+  "transform_set": "swallow",
+  "weight": 5.2,
+  "armor": 105,
+  "stats": {
+    "boost_speed": 1.12,
+    "qb_speed": 2.6,
+    "qb_cost": 320,
+    "qb_cooldown": 9,
+    "hover_thrust": 0.16,
+    "hover_cost": 14,
+    "air_boost_cost": 5,
+    "nozzles": [
+      {
+        "pos": [
+          0.24,
+          -0.62,
+          -0.32
+        ],
+        "dir": [
+          0,
+          -0.8,
+          -0.6
+        ],
+        "size": 0.3
+      },
+      {
+        "pos": [
+          -0.24,
+          -0.62,
+          -0.32
+        ],
+        "dir": [
+          0,
+          -0.8,
+          -0.6
+        ],
+        "size": 0.3
+      }
+    ],
+    "jet_nozzles": [
+      {
+        "pos": [
+          -0.2332,
+          0.4539,
+          -2.9476
+        ],
+        "dir": [
+          0.0,
+          -0.0,
+          -1.0
+        ],
+        "size": 0.4
+      },
+      {
+        "pos": [
+          0.2332,
+          0.4539,
+          -2.9476
+        ],
+        "dir": [
+          0.0,
+          -0.0,
+          -1.0
+        ],
+        "size": 0.4
+      }
+    ]
+  },
+  "jet_pose": {
+    "pack": {
+      "pos": [
+        -0.0,
+        0.51391,
+        1.26432
+      ],
+      "quat": [
+        -0.0,
+        0.707107,
+        0.707107,
+        0.0
+      ],
+      "delay": 0.1,
+      "parent": "core:core",
+      "joint": [
+        0.0,
+        0.0,
+        0.0
+      ]
+    },
+    "l_wing": {
+      "pos": [
+        0.02702,
+        0.11306,
+        1.7047
+      ],
+      "quat": [
+        -0.000349,
+        -0.000242,
+        0.821954,
+        0.569554
+      ],
+      "delay": 0.55,
+      "parent": "booster:pack",
+      "joint": [
+        0.42,
+        0.32,
+        -0.12
+      ]
+    },
+    "r_wing": {
+      "pos": [
+        -0.02702,
+        0.11306,
+        1.7047
+      ],
+      "quat": [
+        -0.000349,
+        0.000242,
+        -0.821954,
+        0.569554
+      ],
+      "delay": 0.55,
+      "parent": "booster:pack",
+      "joint": [
+        -0.42,
+        0.32,
+        -0.12
+      ]
+    }
+  },
+  "model": "mechframe:models/obj/parts/bs_swallow.obj",
+  "texture": "mechframe:textures/part/bs_swallow.png"
+}

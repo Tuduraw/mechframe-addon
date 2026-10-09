@@ -1,0 +1,22 @@
+{
+  "slot": "head",
+  "display_name": "HD-A3 Ocellus",
+  "maker": "Arachne Systems",
+  "tier": 2,
+  "weight": 2.8,
+  "armor": 150,
+  "points": {
+    "top": [
+      0,
+      0.46,
+      0
+    ]
+  },
+  "stats": {
+    "lock_range": 125,
+    "lock_cone": 15,
+    "stability": 1.0
+  },
+  "model": "mechframe:models/obj/parts/hd_ocellus.obj",
+  "texture": "mechframe:textures/part/hd_ocellus.png"
+}

@@ -1,0 +1,26 @@
+{
+  "slot": "weapon",
+  "display_name": "WB-K1 Missile Pod",
+  "maker": "Kestrel Dynamics",
+  "tier": 2,
+  "weight": 5.0,
+  "armor": 60,
+  "points": {
+    "muzzle": [
+      0.0,
+      0.16,
+      0.6
+    ]
+  },
+  "stats": {
+    "weapon": "mf_missile_pod",
+    "mount": "back",
+    "projectile_item": "minecraft:firework_rocket",
+    "recoil_distance": 0.0,
+    "min_pitch": -60,
+    "max_pitch": 25,
+    "fcs": false
+  },
+  "model": "mechframe:models/obj/parts/wb_missile.obj",
+  "texture": "mechframe:textures/part/wb_missile.png"
+}

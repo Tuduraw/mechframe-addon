@@ -1,0 +1,45 @@
+{
+  "slot": "head",
+  "display_name": "HD-KF Falcon Head",
+  "maker": "Kestrel Dynamics",
+  "tier": 5,
+  "transform_set": "falcon",
+  "weight": 2.3,
+  "armor": 120,
+  "points": {
+    "top": [
+      0,
+      0.48,
+      0
+    ]
+  },
+  "stats": {
+    "lock_range": 120,
+    "lock_cone": 15,
+    "stability": 0.9
+  },
+  "jet_pose": {
+    "head": {
+      "pos": [
+        0.0,
+        0.93443,
+        0.86721
+      ],
+      "quat": [
+        0.0,
+        0.0,
+        0.0,
+        1.0
+      ],
+      "delay": 0.15,
+      "parent": "core:core",
+      "joint": [
+        0.0,
+        0.0,
+        0.0
+      ]
+    }
+  },
+  "model": "mechframe:models/obj/parts/hd_falcon.obj",
+  "texture": "mechframe:textures/part/hd_falcon.png"
+}

@@ -1,0 +1,15 @@
+{
+  "result": {
+    "part": "mechframe:lg_strider"
+  },
+  "ingredients": [
+    {
+      "item": "minecraft:diamond",
+      "count": 6
+    },
+    {
+      "item": "minecraft:amethyst_shard",
+      "count": 1
+    }
+  ]
+}

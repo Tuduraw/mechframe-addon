@@ -1,0 +1,22 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "equipment",
+  "key": {
+    "T": "minecraft:iron_block",
+    "F": "minecraft:copper_ingot",
+    "G": "minecraft:gunpowder",
+    "R": "minecraft:redstone"
+  },
+  "pattern": [
+    "TTF",
+    " GR",
+    "  T"
+  ],
+  "result": {
+    "id": "mechframe:part_weapon",
+    "count": 1,
+    "components": {
+      "mechframe:part_id": "mechframe:wa_mg"
+    }
+  }
+}

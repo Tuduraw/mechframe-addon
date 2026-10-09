@@ -1,0 +1,19 @@
+{
+  "result": {
+    "part": "mechframe:hd_swallow"
+  },
+  "ingredients": [
+    {
+      "item": "minecraft:feather",
+      "count": 1
+    },
+    {
+      "item": "minecraft:diamond",
+      "count": 3
+    },
+    {
+      "item": "minecraft:glass",
+      "count": 1
+    }
+  ]
+}

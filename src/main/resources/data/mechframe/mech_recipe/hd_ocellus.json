@@ -1,0 +1,19 @@
+{
+  "result": {
+    "part": "mechframe:hd_ocellus"
+  },
+  "ingredients": [
+    {
+      "item": "minecraft:amethyst_shard",
+      "count": 1
+    },
+    {
+      "item": "minecraft:iron_block",
+      "count": 3
+    },
+    {
+      "item": "minecraft:glass",
+      "count": 1
+    }
+  ]
+}

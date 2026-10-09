@@ -1,0 +1,15 @@
+{
+  "result": {
+    "part": "mechframe:am_talon"
+  },
+  "ingredients": [
+    {
+      "item": "minecraft:iron_ingot",
+      "count": 4
+    },
+    {
+      "item": "minecraft:quartz",
+      "count": 2
+    }
+  ]
+}

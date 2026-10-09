@@ -1,0 +1,40 @@
+{
+  "entity_type": "mechframe:mech",
+  "model": "mechframe:models/obj/parts/cr_thorax.obj",
+  "texture": "mechframe:textures/part/cr_thorax.png",
+  "width": 1.8,
+  "height": 4.0,
+  "spawn_item": {
+    "display_name": "AR) Strider",
+    "tier": 4
+  },
+  "hud": "mech_hud",
+  "engine_sound": "mech_engine",
+  "engine_sound_volume": 1.2,
+  "weight_type": "car",
+  "max_health": 1000,
+  "armor_damage_factor": 0.8,
+  "armor_min_damage": 1.0,
+  "armor_max_damage": 260,
+  "damage_factor": 1.0,
+  "fuel_consumption": 0.25,
+  "inventory_size": 18,
+  "submerged_damage_height": 3.0,
+  "flare_type": 0,
+  "passenger_display": {
+    "hide_entity": true
+  },
+  "mechframe": {
+    "assembly": {
+      "legs": "mechframe:lg_strider",
+      "core": "mechframe:cr_thorax",
+      "head": "mechframe:hd_ocellus",
+      "arms": "mechframe:am_mandible",
+      "booster": "mechframe:bs_glide",
+      "r_arm": "mechframe:wa_laser",
+      "l_arm": "mechframe:wa_laser",
+      "r_back": "mechframe:wb_gatling",
+      "l_back": "mechframe:wb_missile"
+    }
+  }
+}

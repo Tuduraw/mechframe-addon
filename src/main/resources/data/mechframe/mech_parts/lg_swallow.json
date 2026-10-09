@@ -1,0 +1,235 @@
+{
+  "slot": "legs",
+  "display_name": "LG-KS Swallow Legs",
+  "maker": "Kestrel Dynamics",
+  "tier": 5,
+  "transform_set": "swallow",
+  "weight": 16.0,
+  "armor": 250,
+  "points": {
+    "hip": [
+      0,
+      2.9,
+      0
+    ]
+  },
+  "stats": {
+    "type": "biped",
+    "load_limit": 46,
+    "walk_speed": 0.34,
+    "boost_multiplier": 1.12,
+    "jump": 0.95,
+    "turn_rate": 18,
+    "step_height": 1.15,
+    "traction": 0.35,
+    "qb_multiplier": 1.0,
+    "hover_multiplier": 1.1,
+    "collision_width": 1.6,
+    "step_length": 1.5,
+    "step_lift": 0.5,
+    "step_ticks": 6,
+    "pelvis_groups": [
+      "pelvis"
+    ],
+    "chains": [
+      {
+        "name": "l",
+        "upper": "l_thigh",
+        "lower": "l_shin",
+        "foot": "l_foot",
+        "hip": [
+          0.42,
+          2.86,
+          0.0
+        ],
+        "knee": [
+          0.44,
+          1.62,
+          0.34
+        ],
+        "ankle": [
+          0.44,
+          0.42,
+          -0.02
+        ],
+        "pole": [
+          0,
+          0,
+          1
+        ],
+        "group": 0
+      },
+      {
+        "name": "r",
+        "upper": "r_thigh",
+        "lower": "r_shin",
+        "foot": "r_foot",
+        "hip": [
+          -0.42,
+          2.86,
+          0.0
+        ],
+        "knee": [
+          -0.44,
+          1.62,
+          0.34
+        ],
+        "ankle": [
+          -0.44,
+          0.42,
+          -0.02
+        ],
+        "pole": [
+          0,
+          0,
+          1
+        ],
+        "group": 1
+      }
+    ]
+  },
+  "jet_pose": {
+    "pelvis": {
+      "pos": [
+        0.0,
+        0.77391,
+        -2.47568
+      ],
+      "quat": [
+        -0.0,
+        0.707107,
+        0.707107,
+        0.0
+      ],
+      "delay": 0.0,
+      "parent": "core:core",
+      "joint": [
+        0.0,
+        2.9,
+        0.0
+      ]
+    },
+    "l_thigh": {
+      "pos": [
+        0.23809,
+        0.01403,
+        -2.32594
+      ],
+      "quat": [
+        -0.023926,
+        0.794255,
+        0.605934,
+        0.037819
+      ],
+      "delay": 0.0,
+      "parent": "legs:pelvis",
+      "joint": [
+        0.42,
+        2.86,
+        0.0
+      ]
+    },
+    "l_shin": {
+      "pos": [
+        0.23644,
+        0.90833,
+        -2.51053
+      ],
+      "quat": [
+        -0.025866,
+        0.596333,
+        0.801869,
+        0.0269
+      ],
+      "delay": 0.1,
+      "parent": "legs:l_thigh",
+      "joint": [
+        0.44,
+        1.62,
+        0.34
+      ]
+    },
+    "l_foot": {
+      "pos": [
+        0.20678,
+        0.35391,
+        -2.16756
+      ],
+      "quat": [
+        -0.0,
+        1.0,
+        -0.0,
+        0.0
+      ],
+      "delay": 0.25,
+      "parent": "legs:l_shin",
+      "joint": [
+        0.44,
+        0.42,
+        -0.02
+      ]
+    },
+    "r_thigh": {
+      "pos": [
+        -0.23809,
+        0.01403,
+        -2.32594
+      ],
+      "quat": [
+        0.023926,
+        0.794255,
+        0.605934,
+        -0.037819
+      ],
+      "delay": 0.0,
+      "parent": "legs:pelvis",
+      "joint": [
+        -0.42,
+        2.86,
+        0.0
+      ]
+    },
+    "r_shin": {
+      "pos": [
+        -0.23644,
+        0.90833,
+        -2.51053
+      ],
+      "quat": [
+        0.025866,
+        0.596333,
+        0.801869,
+        -0.0269
+      ],
+      "delay": 0.1,
+      "parent": "legs:r_thigh",
+      "joint": [
+        -0.44,
+        1.62,
+        0.34
+      ]
+    },
+    "r_foot": {
+      "pos": [
+        -0.20678,
+        0.35391,
+        -2.16756
+      ],
+      "quat": [
+        -0.0,
+        1.0,
+        0.0,
+        0.0
+      ],
+      "delay": 0.25,
+      "parent": "legs:r_shin",
+      "joint": [
+        -0.44,
+        0.42,
+        -0.02
+      ]
+    }
+  },
+  "model": "mechframe:models/obj/parts/lg_swallow.obj",
+  "texture": "mechframe:textures/part/lg_swallow.png"
+}

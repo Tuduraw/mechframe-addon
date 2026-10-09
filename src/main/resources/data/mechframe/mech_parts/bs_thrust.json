@@ -1,0 +1,73 @@
+{
+  "slot": "booster",
+  "display_name": "BS-G2 Thrust",
+  "maker": "Grauwerk Heavy Industries",
+  "tier": 2,
+  "weight": 7.0,
+  "armor": 140,
+  "stats": {
+    "boost_speed": 0.95,
+    "qb_speed": 2.2,
+    "qb_cost": 380,
+    "qb_cooldown": 12,
+    "hover_thrust": 0.19,
+    "hover_cost": 13,
+    "air_boost_cost": 6,
+    "nozzles": [
+      {
+        "pos": [
+          0.32,
+          -0.68,
+          -0.6
+        ],
+        "dir": [
+          0,
+          -0.75,
+          -0.66
+        ],
+        "size": 0.35
+      },
+      {
+        "pos": [
+          0.3,
+          0.24,
+          -0.82
+        ],
+        "dir": [
+          0,
+          0,
+          -1
+        ],
+        "size": 0.3
+      },
+      {
+        "pos": [
+          -0.32,
+          -0.68,
+          -0.6
+        ],
+        "dir": [
+          0,
+          -0.75,
+          -0.66
+        ],
+        "size": 0.35
+      },
+      {
+        "pos": [
+          -0.3,
+          0.24,
+          -0.82
+        ],
+        "dir": [
+          0,
+          0,
+          -1
+        ],
+        "size": 0.3
+      }
+    ]
+  },
+  "model": "mechframe:models/obj/parts/bs_thrust.obj",
+  "texture": "mechframe:textures/part/bs_thrust.png"
+}

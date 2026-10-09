@@ -1,0 +1,15 @@
+{
+  "result": {
+    "part": "mechframe:lg_stride"
+  },
+  "ingredients": [
+    {
+      "item": "minecraft:iron_ingot",
+      "count": 6
+    },
+    {
+      "item": "minecraft:quartz",
+      "count": 1
+    }
+  ]
+}

@@ -1,0 +1,19 @@
+{
+  "result": {
+    "part": "mechframe:hd_manta"
+  },
+  "ingredients": [
+    {
+      "item": "minecraft:prismarine_crystals",
+      "count": 1
+    },
+    {
+      "item": "minecraft:diamond",
+      "count": 3
+    },
+    {
+      "item": "minecraft:glass",
+      "count": 1
+    }
+  ]
+}

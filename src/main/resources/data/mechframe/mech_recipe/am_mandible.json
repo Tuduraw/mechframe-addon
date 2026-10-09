@@ -1,0 +1,15 @@
+{
+  "result": {
+    "part": "mechframe:am_mandible"
+  },
+  "ingredients": [
+    {
+      "item": "minecraft:iron_block",
+      "count": 4
+    },
+    {
+      "item": "minecraft:amethyst_shard",
+      "count": 2
+    }
+  ]
+}

@@ -1,0 +1,138 @@
+{
+  "slot": "booster",
+  "display_name": "BS-KF Falcon Pack",
+  "maker": "Kestrel Dynamics",
+  "tier": 5,
+  "transform_set": "falcon",
+  "weight": 5.5,
+  "armor": 110,
+  "stats": {
+    "boost_speed": 1.1,
+    "qb_speed": 2.6,
+    "qb_cost": 320,
+    "qb_cooldown": 9,
+    "hover_thrust": 0.17,
+    "hover_cost": 14,
+    "air_boost_cost": 5,
+    "nozzles": [
+      {
+        "pos": [
+          0.2,
+          -0.56,
+          -0.36
+        ],
+        "dir": [
+          0,
+          -0.7,
+          -0.7
+        ],
+        "size": 0.3
+      },
+      {
+        "pos": [
+          -0.2,
+          -0.56,
+          -0.36
+        ],
+        "dir": [
+          0,
+          -0.7,
+          -0.7
+        ],
+        "size": 0.3
+      }
+    ],
+    "jet_nozzles": [
+      {
+        "pos": [
+          0.4949,
+          0.6108,
+          -1.3051
+        ],
+        "dir": [
+          -0.1244,
+          -0.0,
+          -0.9922
+        ],
+        "size": 0.4
+      },
+      {
+        "pos": [
+          -0.4949,
+          0.6108,
+          -1.3051
+        ],
+        "dir": [
+          0.1244,
+          -0.0,
+          -0.9922
+        ],
+        "size": 0.4
+      }
+    ]
+  },
+  "jet_pose": {
+    "pack": {
+      "pos": [
+        0.0,
+        1.27443,
+        0.68721
+      ],
+      "quat": [
+        0.707107,
+        0.0,
+        0.0,
+        0.707107
+      ],
+      "delay": 0.1,
+      "parent": "core:core",
+      "joint": [
+        0.0,
+        0.0,
+        0.0
+      ]
+    },
+    "l_wing": {
+      "pos": [
+        0.77953,
+        1.01291,
+        1.16721
+      ],
+      "quat": [
+        -0.0,
+        0.0,
+        0.724547,
+        0.689225
+      ],
+      "delay": 0.55,
+      "parent": "booster:pack",
+      "joint": [
+        0.4,
+        0.36,
+        -0.12
+      ]
+    },
+    "r_wing": {
+      "pos": [
+        -0.77953,
+        1.01291,
+        1.16721
+      ],
+      "quat": [
+        -0.0,
+        -0.0,
+        -0.724547,
+        0.689225
+      ],
+      "delay": 0.55,
+      "parent": "booster:pack",
+      "joint": [
+        -0.4,
+        0.36,
+        -0.12
+      ]
+    }
+  },
+  "model": "mechframe:models/obj/parts/bs_falcon.obj",
+  "texture": "mechframe:textures/part/bs_falcon.png"
+}

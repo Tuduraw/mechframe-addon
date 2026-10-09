@@ -1,0 +1,15 @@
+{
+  "result": {
+    "part": "mechframe:am_swallow"
+  },
+  "ingredients": [
+    {
+      "item": "minecraft:diamond",
+      "count": 4
+    },
+    {
+      "item": "minecraft:feather",
+      "count": 2
+    }
+  ]
+}

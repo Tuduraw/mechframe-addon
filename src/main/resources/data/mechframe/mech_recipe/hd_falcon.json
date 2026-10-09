@@ -1,0 +1,19 @@
+{
+  "result": {
+    "part": "mechframe:hd_falcon"
+  },
+  "ingredients": [
+    {
+      "item": "minecraft:phantom_membrane",
+      "count": 1
+    },
+    {
+      "item": "minecraft:diamond",
+      "count": 3
+    },
+    {
+      "item": "minecraft:glass",
+      "count": 1
+    }
+  ]
+}

@@ -1,0 +1,22 @@
+{
+  "slot": "head",
+  "display_name": "HD-G2 Visor",
+  "maker": "Grauwerk Heavy Industries",
+  "tier": 2,
+  "weight": 3.5,
+  "armor": 200,
+  "points": {
+    "top": [
+      0,
+      0.44,
+      0
+    ]
+  },
+  "stats": {
+    "lock_range": 150,
+    "lock_cone": 11,
+    "stability": 1.2
+  },
+  "model": "mechframe:models/obj/parts/hd_visor.obj",
+  "texture": "mechframe:textures/part/hd_visor.png"
+}

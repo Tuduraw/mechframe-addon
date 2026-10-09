@@ -1,0 +1,23 @@
+{
+  "result": {
+    "part": "mechframe:wa_bazooka"
+  },
+  "ingredients": [
+    {
+      "item": "minecraft:gold_block",
+      "count": 3
+    },
+    {
+      "item": "minecraft:copper_ingot",
+      "count": 1
+    },
+    {
+      "item": "minecraft:gunpowder",
+      "count": 1
+    },
+    {
+      "item": "minecraft:redstone",
+      "count": 1
+    }
+  ]
+}

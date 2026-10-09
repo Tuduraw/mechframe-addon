@@ -1,0 +1,27 @@
+{
+  "slot": "arms",
+  "display_name": "AM-A3 Mandible",
+  "maker": "Arachne Systems",
+  "tier": 2,
+  "weight": 11.0,
+  "armor": 320,
+  "points": {
+    "elbow": [
+      0.16,
+      -1.0,
+      0.08
+    ],
+    "grip": [
+      0.16,
+      -1.11,
+      0.98
+    ]
+  },
+  "stats": {
+    "load_limit": 20,
+    "aim_speed": 360,
+    "recoil_control": 1.1
+  },
+  "model": "mechframe:models/obj/parts/am_mandible.obj",
+  "texture": "mechframe:textures/part/am_mandible.png"
+}

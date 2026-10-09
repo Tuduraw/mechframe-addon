@@ -1,0 +1,20 @@
+; Mech Frame Addon - WB-G2 Shoulder Cannon
+DisplayName = WB-G2 Shoulder Cannon
+Type = MachineGun2
+Power = 160
+Explosion = 3.5
+Acceleration = 7.0
+Gravity = -0.03
+Accuracy = 0.3
+Round = 4
+ReloadTime = 120
+Delay = 40
+MaxAmmo = 40
+SuppliedNum = 4
+Item = 5, iron_ingot
+Item = 5, gunpowder
+Sound = mf_cannon
+SoundVolume = 4.0
+ModelBullet = mf_shell
+Recoil = 2.0
+AddMuzzleFlash = 1.6, 0.7, 1, 200, 255, 210, 160

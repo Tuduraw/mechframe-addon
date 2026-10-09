@@ -1,0 +1,92 @@
+{
+  "slot": "legs",
+  "display_name": "LG-G2 Pillar",
+  "maker": "Grauwerk Heavy Industries",
+  "tier": 3,
+  "weight": 30.0,
+  "armor": 520,
+  "points": {
+    "hip": [
+      0,
+      3.2,
+      0
+    ]
+  },
+  "stats": {
+    "type": "biped",
+    "load_limit": 78,
+    "walk_speed": 0.27,
+    "boost_multiplier": 0.9,
+    "jump": 0.8,
+    "turn_rate": 12,
+    "step_height": 1.2,
+    "traction": 0.38,
+    "qb_multiplier": 0.85,
+    "hover_multiplier": 0.85,
+    "collision_width": 2.0,
+    "step_length": 1.7,
+    "step_lift": 0.45,
+    "step_ticks": 8,
+    "pelvis_groups": [
+      "pelvis"
+    ],
+    "chains": [
+      {
+        "name": "l",
+        "upper": "l_thigh",
+        "lower": "l_shin",
+        "foot": "l_foot",
+        "hip": [
+          0.56,
+          3.15,
+          0.0
+        ],
+        "knee": [
+          0.58,
+          1.8,
+          0.4
+        ],
+        "ankle": [
+          0.58,
+          0.46,
+          -0.02
+        ],
+        "pole": [
+          0,
+          0,
+          1
+        ],
+        "group": 0
+      },
+      {
+        "name": "r",
+        "upper": "r_thigh",
+        "lower": "r_shin",
+        "foot": "r_foot",
+        "hip": [
+          -0.56,
+          3.15,
+          0.0
+        ],
+        "knee": [
+          -0.58,
+          1.8,
+          0.4
+        ],
+        "ankle": [
+          -0.58,
+          0.46,
+          -0.02
+        ],
+        "pole": [
+          0,
+          0,
+          1
+        ],
+        "group": 1
+      }
+    ]
+  },
+  "model": "mechframe:models/obj/parts/lg_pillar.obj",
+  "texture": "mechframe:textures/part/lg_pillar.png"
+}

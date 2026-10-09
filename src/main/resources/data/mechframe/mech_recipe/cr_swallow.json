@@ -1,0 +1,19 @@
+{
+  "result": {
+    "part": "mechframe:cr_swallow"
+  },
+  "ingredients": [
+    {
+      "item": "minecraft:diamond",
+      "count": 7
+    },
+    {
+      "item": "minecraft:feather",
+      "count": 1
+    },
+    {
+      "item": "minecraft:redstone_block",
+      "count": 1
+    }
+  ]
+}

@@ -1,0 +1,110 @@
+{
+  "slot": "arms",
+  "display_name": "AM-KS Swallow Arms",
+  "maker": "Kestrel Dynamics",
+  "tier": 5,
+  "transform_set": "swallow",
+  "weight": 9.0,
+  "armor": 240,
+  "points": {
+    "elbow": [
+      0.11,
+      -0.96,
+      0.07
+    ],
+    "grip": [
+      0.11,
+      -1.05,
+      0.95
+    ]
+  },
+  "stats": {
+    "load_limit": 15,
+    "aim_speed": 410,
+    "recoil_control": 0.92
+  },
+  "jet_pose": {
+    "l_upper": {
+      "pos": [
+        -0.88,
+        0.77391,
+        1.64432
+      ],
+      "quat": [
+        0.024678,
+        0.706676,
+        0.706676,
+        -0.024678
+      ],
+      "delay": 0.1,
+      "parent": "core:core",
+      "joint": [
+        0.0,
+        0.0,
+        0.0
+      ]
+    },
+    "l_fore": {
+      "pos": [
+        -0.9631,
+        1.79516,
+        0.85233
+      ],
+      "quat": [
+        -0.015204,
+        0.996985,
+        0.051841,
+        -0.055706
+      ],
+      "delay": 0.15,
+      "parent": "arms:l_upper",
+      "joint": [
+        0.11,
+        -0.96,
+        0.07
+      ]
+    },
+    "r_upper": {
+      "pos": [
+        0.88,
+        0.77391,
+        1.64432
+      ],
+      "quat": [
+        -0.024678,
+        0.706676,
+        0.706676,
+        0.024678
+      ],
+      "delay": 0.1,
+      "parent": "core:core",
+      "joint": [
+        0.0,
+        0.0,
+        0.0
+      ]
+    },
+    "r_fore": {
+      "pos": [
+        0.9631,
+        1.79516,
+        0.85233
+      ],
+      "quat": [
+        0.015204,
+        0.996985,
+        0.051841,
+        0.055706
+      ],
+      "delay": 0.15,
+      "parent": "arms:r_upper",
+      "joint": [
+        -0.11,
+        -0.96,
+        0.07
+      ]
+    }
+  },
+  "model": "mechframe:models/obj/parts/am_swallow.obj",
+  "texture": "mechframe:textures/part/am_swallow.png"
+}

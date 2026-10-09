@@ -1,0 +1,20 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "equipment",
+  "key": {
+    "T": "minecraft:iron_block",
+    "F": "minecraft:amethyst_shard"
+  },
+  "pattern": [
+    "T T",
+    "F F",
+    "T T"
+  ],
+  "result": {
+    "id": "mechframe:part_arms",
+    "count": 1,
+    "components": {
+      "mechframe:part_id": "mechframe:am_mandible"
+    }
+  }
+}

@@ -1,0 +1,178 @@
+{
+  "slot": "booster",
+  "display_name": "BS-KM Manta Pack",
+  "maker": "Kestrel Dynamics",
+  "tier": 5,
+  "transform_set": "manta",
+  "weight": 5.8,
+  "armor": 115,
+  "stats": {
+    "boost_speed": 1.08,
+    "qb_speed": 2.65,
+    "qb_cost": 325,
+    "qb_cooldown": 9,
+    "hover_thrust": 0.17,
+    "hover_cost": 14,
+    "air_boost_cost": 5,
+    "nozzles": [
+      {
+        "pos": [
+          0.2,
+          -0.6,
+          -0.24
+        ],
+        "dir": [
+          0,
+          -0.94,
+          -0.34
+        ],
+        "size": 0.3
+      },
+      {
+        "pos": [
+          -0.2,
+          -0.6,
+          -0.24
+        ],
+        "dir": [
+          0,
+          -0.94,
+          -0.34
+        ],
+        "size": 0.3
+      }
+    ],
+    "jet_nozzles": [
+      {
+        "pos": [
+          -0.2,
+          0.2602,
+          -2.0866
+        ],
+        "dir": [
+          0.0,
+          -0.3401,
+          -0.9404
+        ],
+        "size": 0.4
+      },
+      {
+        "pos": [
+          0.2,
+          0.2602,
+          -2.0866
+        ],
+        "dir": [
+          0.0,
+          -0.3401,
+          -0.9404
+        ],
+        "size": 0.4
+      }
+    ]
+  },
+  "jet_pose": {
+    "pack": {
+      "pos": [
+        0.0,
+        0.50021,
+        -1.48664
+      ],
+      "quat": [
+        -0.0,
+        0.707107,
+        0.707107,
+        0.0
+      ],
+      "delay": 0.15,
+      "parent": "core:core",
+      "joint": [
+        0.0,
+        0.0,
+        0.0
+      ]
+    },
+    "l_wing": {
+      "pos": [
+        -0.47142,
+        0.50021,
+        -1.4288
+      ],
+      "quat": [
+        0.444997,
+        0.549525,
+        0.549525,
+        -0.444997
+      ],
+      "delay": 0.5,
+      "parent": "booster:pack",
+      "joint": [
+        0.2,
+        0.32,
+        -0.33
+      ]
+    },
+    "l_wing_out": {
+      "pos": [
+        -0.72924,
+        -0.20479,
+        -0.2159
+      ],
+      "quat": [
+        0.549525,
+        0.444997,
+        -0.444997,
+        0.549525
+      ],
+      "delay": 0.7,
+      "parent": "booster:l_wing",
+      "joint": [
+        0.62,
+        -0.7,
+        -0.3525
+      ]
+    },
+    "r_wing": {
+      "pos": [
+        0.47142,
+        0.50021,
+        -1.4288
+      ],
+      "quat": [
+        -0.444997,
+        0.549525,
+        0.549525,
+        0.444997
+      ],
+      "delay": 0.5,
+      "parent": "booster:pack",
+      "joint": [
+        -0.2,
+        0.32,
+        -0.33
+      ]
+    },
+    "r_wing_out": {
+      "pos": [
+        0.72924,
+        -0.20479,
+        -0.2159
+      ],
+      "quat": [
+        0.549525,
+        -0.444997,
+        0.444997,
+        0.549525
+      ],
+      "delay": 0.7,
+      "parent": "booster:r_wing",
+      "joint": [
+        -0.62,
+        -0.7,
+        -0.3525
+      ]
+    }
+  },
+  "model": "mechframe:models/obj/parts/bs_manta.obj",
+  "texture": "mechframe:textures/part/bs_manta.png"
+}

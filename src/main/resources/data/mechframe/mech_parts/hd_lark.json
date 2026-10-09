@@ -1,0 +1,22 @@
+{
+  "slot": "head",
+  "display_name": "HD-K1 Lark",
+  "maker": "Kestrel Dynamics",
+  "tier": 1,
+  "weight": 2.2,
+  "armor": 110,
+  "points": {
+    "top": [
+      0,
+      0.52,
+      0
+    ]
+  },
+  "stats": {
+    "lock_range": 105,
+    "lock_cone": 17,
+    "stability": 0.9
+  },
+  "model": "mechframe:models/obj/parts/hd_lark.obj",
+  "texture": "mechframe:textures/part/hd_lark.png"
+}

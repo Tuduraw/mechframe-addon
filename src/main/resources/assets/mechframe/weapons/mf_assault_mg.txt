@@ -1,0 +1,19 @@
+; Mech Frame Addon - WR-G2 Assault MG
+DisplayName = WR-G2 Assault MG
+Type = MachineGun2
+Power = 14
+Acceleration = 7.0
+Gravity = -0.01
+Accuracy = 2.0
+Round = 80
+ReloadTime = 80
+Delay = 1
+MaxAmmo = 960
+SuppliedNum = 80
+Item = 4, iron_ingot
+Item = 2, gunpowder
+Sound = mf_mg
+SoundVolume = 2.2
+ModelBullet = mf_shell
+Recoil = 0.3
+AddMuzzleFlash = 0.6, 0.25, 1, 200, 255, 220, 170

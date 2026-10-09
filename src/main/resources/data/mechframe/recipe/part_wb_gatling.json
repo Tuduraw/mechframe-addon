@@ -1,0 +1,22 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "equipment",
+  "key": {
+    "T": "minecraft:gold_block",
+    "F": "minecraft:amethyst_shard",
+    "G": "minecraft:gunpowder",
+    "R": "minecraft:redstone"
+  },
+  "pattern": [
+    "TGT",
+    "TFT",
+    "R R"
+  ],
+  "result": {
+    "id": "mechframe:part_weapon",
+    "count": 1,
+    "components": {
+      "mechframe:part_id": "mechframe:wb_gatling"
+    }
+  }
+}

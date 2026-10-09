@@ -1,0 +1,27 @@
+{
+  "slot": "arms",
+  "display_name": "AM-K1 Talon",
+  "maker": "Kestrel Dynamics",
+  "tier": 1,
+  "weight": 9.0,
+  "armor": 240,
+  "points": {
+    "elbow": [
+      0.11,
+      -0.96,
+      0.07
+    ],
+    "grip": [
+      0.11,
+      -1.05,
+      0.95
+    ]
+  },
+  "stats": {
+    "load_limit": 15,
+    "aim_speed": 420,
+    "recoil_control": 0.9
+  },
+  "model": "mechframe:models/obj/parts/am_talon.obj",
+  "texture": "mechframe:textures/part/am_talon.png"
+}

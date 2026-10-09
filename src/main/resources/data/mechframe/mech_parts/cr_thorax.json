@@ -1,0 +1,50 @@
+{
+  "slot": "core",
+  "display_name": "CR-A3 Thorax",
+  "maker": "Arachne Systems",
+  "tier": 2,
+  "weight": 18.0,
+  "armor": 600,
+  "points": {
+    "neck": [
+      0,
+      1.88,
+      0.04
+    ],
+    "shoulder_l": [
+      1.12,
+      1.5,
+      0
+    ],
+    "back": [
+      0,
+      1.15,
+      -0.54
+    ],
+    "back_l": [
+      0.5,
+      1.82,
+      -0.36
+    ],
+    "seat": [
+      0,
+      1.0,
+      0.1
+    ],
+    "eye": [
+      0,
+      2.24,
+      0.42
+    ]
+  },
+  "stats": {
+    "en_capacity": 1900,
+    "en_recharge": 34,
+    "recharge_delay": 12,
+    "defense": 1.1,
+    "fuel": 850,
+    "stability": 1.1
+  },
+  "model": "mechframe:models/obj/parts/cr_thorax.obj",
+  "texture": "mechframe:textures/part/cr_thorax.png"
+}

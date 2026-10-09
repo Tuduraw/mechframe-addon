@@ -1,0 +1,47 @@
+{
+  "slot": "booster",
+  "display_name": "BS-A3 Glide",
+  "maker": "Arachne Systems",
+  "tier": 2,
+  "weight": 5.0,
+  "armor": 100,
+  "stats": {
+    "boost_speed": 1.0,
+    "qb_speed": 2.4,
+    "qb_cost": 280,
+    "qb_cooldown": 10,
+    "hover_thrust": 0.15,
+    "hover_cost": 10,
+    "air_boost_cost": 4,
+    "nozzles": [
+      {
+        "pos": [
+          0.22,
+          -0.52,
+          -0.54
+        ],
+        "dir": [
+          0,
+          -0.6,
+          -0.8
+        ],
+        "size": 0.28
+      },
+      {
+        "pos": [
+          -0.22,
+          -0.52,
+          -0.54
+        ],
+        "dir": [
+          0,
+          -0.6,
+          -0.8
+        ],
+        "size": 0.28
+      }
+    ]
+  },
+  "model": "mechframe:models/obj/parts/bs_glide.obj",
+  "texture": "mechframe:textures/part/bs_glide.png"
+}

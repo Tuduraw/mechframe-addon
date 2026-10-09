@@ -1,0 +1,47 @@
+{
+  "slot": "booster",
+  "display_name": "BS-K1 Zephyr",
+  "maker": "Kestrel Dynamics",
+  "tier": 1,
+  "weight": 4.5,
+  "armor": 90,
+  "stats": {
+    "boost_speed": 1.05,
+    "qb_speed": 2.7,
+    "qb_cost": 330,
+    "qb_cooldown": 9,
+    "hover_thrust": 0.15,
+    "hover_cost": 15,
+    "air_boost_cost": 6,
+    "nozzles": [
+      {
+        "pos": [
+          0.5,
+          -0.44,
+          -0.58
+        ],
+        "dir": [
+          0,
+          -0.7,
+          -0.7
+        ],
+        "size": 0.3
+      },
+      {
+        "pos": [
+          -0.5,
+          -0.44,
+          -0.58
+        ],
+        "dir": [
+          0,
+          -0.7,
+          -0.7
+        ],
+        "size": 0.3
+      }
+    ]
+  },
+  "model": "mechframe:models/obj/parts/bs_zephyr.obj",
+  "texture": "mechframe:textures/part/bs_zephyr.png"
+}

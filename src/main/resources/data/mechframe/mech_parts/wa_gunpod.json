@@ -1,0 +1,23 @@
+{
+  "slot": "weapon",
+  "display_name": "WR-KF Gun Pod",
+  "maker": "Kestrel Dynamics",
+  "tier": 4,
+  "weight": 3.5,
+  "armor": 40,
+  "points": {
+    "muzzle": [
+      0.0,
+      0.13,
+      1.55
+    ]
+  },
+  "stats": {
+    "weapon": "mf_gun_pod",
+    "mount": "arm",
+    "projectile_item": "minecraft:iron_nugget",
+    "recoil_distance": 0.05
+  },
+  "model": "mechframe:models/obj/parts/wa_gunpod.obj",
+  "texture": "mechframe:textures/part/wa_gunpod.png"
+}

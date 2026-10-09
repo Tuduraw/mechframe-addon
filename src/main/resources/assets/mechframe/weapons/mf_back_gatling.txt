@@ -1,0 +1,18 @@
+; Mech Frame Addon - WB-A3 Back Gatling
+DisplayName = WB-A3 Back Gatling
+Type = MachineGun2
+Power = 9
+Acceleration = 8.0
+Gravity = -0.01
+Accuracy = 2.5
+Round = 200
+ReloadTime = 100
+Delay = 0
+MaxAmmo = 2000
+SuppliedNum = 200
+Item = 4, iron_ingot
+Item = 3, gunpowder
+Sound = mf_gatling
+SoundVolume = 2.0
+ModelBullet = mf_shell
+AddMuzzleFlash = 0.5, 0.25, 1, 200, 255, 220, 170

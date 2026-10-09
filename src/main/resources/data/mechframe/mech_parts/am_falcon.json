@@ -1,0 +1,110 @@
+{
+  "slot": "arms",
+  "display_name": "AM-KF Falcon Arms",
+  "maker": "Kestrel Dynamics",
+  "tier": 5,
+  "transform_set": "falcon",
+  "weight": 9.5,
+  "armor": 250,
+  "points": {
+    "elbow": [
+      0.11,
+      -0.96,
+      0.07
+    ],
+    "grip": [
+      0.11,
+      -1.05,
+      0.95
+    ]
+  },
+  "stats": {
+    "load_limit": 16,
+    "aim_speed": 400,
+    "recoil_control": 0.95
+  },
+  "jet_pose": {
+    "l_upper": {
+      "pos": [
+        0.98,
+        0.59443,
+        0.92721
+      ],
+      "quat": [
+        0.706138,
+        -0.037007,
+        0.037007,
+        0.706138
+      ],
+      "delay": 0.1,
+      "parent": "core:core",
+      "joint": [
+        0.0,
+        0.0,
+        0.0
+      ]
+    },
+    "l_fore": {
+      "pos": [
+        0.82715,
+        1.39258,
+        -0.24722
+      ],
+      "quat": [
+        -0.10134,
+        0.056035,
+        0.126884,
+        0.985135
+      ],
+      "delay": 0.15,
+      "parent": "arms:l_upper",
+      "joint": [
+        0.11,
+        -0.96,
+        0.07
+      ]
+    },
+    "r_upper": {
+      "pos": [
+        -0.98,
+        0.59443,
+        0.92721
+      ],
+      "quat": [
+        0.706138,
+        0.037007,
+        -0.037007,
+        0.706138
+      ],
+      "delay": 0.1,
+      "parent": "core:core",
+      "joint": [
+        0.0,
+        0.0,
+        0.0
+      ]
+    },
+    "r_fore": {
+      "pos": [
+        -0.82715,
+        1.39258,
+        -0.24722
+      ],
+      "quat": [
+        -0.10134,
+        -0.056035,
+        -0.126884,
+        0.985135
+      ],
+      "delay": 0.15,
+      "parent": "arms:r_upper",
+      "joint": [
+        -0.11,
+        -0.96,
+        0.07
+      ]
+    }
+  },
+  "model": "mechframe:models/obj/parts/am_falcon.obj",
+  "texture": "mechframe:textures/part/am_falcon.png"
+}

@@ -1,0 +1,21 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "equipment",
+  "key": {
+    "T": "minecraft:iron_block",
+    "F": "minecraft:amethyst_shard",
+    "B": "minecraft:fire_charge"
+  },
+  "pattern": [
+    "TFT",
+    "TBT",
+    "F F"
+  ],
+  "result": {
+    "id": "mechframe:part_booster",
+    "count": 1,
+    "components": {
+      "mechframe:part_id": "mechframe:bs_glide"
+    }
+  }
+}

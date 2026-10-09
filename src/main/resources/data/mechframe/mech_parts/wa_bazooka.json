@@ -1,0 +1,23 @@
+{
+  "slot": "weapon",
+  "display_name": "WR-G3 Bazooka",
+  "maker": "Grauwerk Heavy Industries",
+  "tier": 3,
+  "weight": 6.5,
+  "armor": 60,
+  "points": {
+    "muzzle": [
+      0.0,
+      0.22,
+      1.45
+    ]
+  },
+  "stats": {
+    "weapon": "mf_bazooka",
+    "mount": "arm",
+    "projectile_item": "minecraft:gunpowder",
+    "recoil_distance": 0.3
+  },
+  "model": "mechframe:models/obj/parts/wa_bazooka.obj",
+  "texture": "mechframe:textures/part/wa_bazooka.png"
+}

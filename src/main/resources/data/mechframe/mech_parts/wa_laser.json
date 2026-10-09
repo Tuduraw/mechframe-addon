@@ -1,0 +1,23 @@
+{
+  "slot": "weapon",
+  "display_name": "WR-A4 Pulse Laser",
+  "maker": "Arachne Systems",
+  "tier": 4,
+  "weight": 4.5,
+  "armor": 40,
+  "points": {
+    "muzzle": [
+      0.0,
+      0.18,
+      1.58
+    ]
+  },
+  "stats": {
+    "weapon": "mf_pulse_laser",
+    "mount": "arm",
+    "projectile_item": "minecraft:redstone",
+    "recoil_distance": 0.04
+  },
+  "model": "mechframe:models/obj/parts/wa_laser.obj",
+  "texture": "mechframe:textures/part/wa_laser.png"
+}

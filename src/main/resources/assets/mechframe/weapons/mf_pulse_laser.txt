@@ -1,0 +1,18 @@
+; Mech Frame Addon - WR-A4 Pulse Laser
+DisplayName = WR-A4 Pulse Laser
+Type = MachineGun2
+Power = 45
+Acceleration = 14.0
+Gravity = 0.0
+Accuracy = 0.3
+Round = 20
+ReloadTime = 70
+Delay = 6
+MaxAmmo = 400
+SuppliedNum = 20
+Item = 2, iron_ingot
+Item = 3, redstone
+Sound = mf_laser
+SoundVolume = 2.0
+ModelBullet = mf_laser
+AddMuzzleFlash = 0.6, 0.3, 1, 200, 255, 90, 80

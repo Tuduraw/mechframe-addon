@@ -1,0 +1,15 @@
+{
+  "result": {
+    "part": "mechframe:lg_rampart"
+  },
+  "ingredients": [
+    {
+      "item": "minecraft:iron_block",
+      "count": 6
+    },
+    {
+      "item": "minecraft:copper_ingot",
+      "count": 1
+    }
+  ]
+}

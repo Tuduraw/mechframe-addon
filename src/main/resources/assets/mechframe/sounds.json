@@ -1,0 +1,38 @@
+{
+  "quick_boost": {
+    "sounds": [
+      "mechframe:quick_boost"
+    ],
+    "subtitle": "subtitles.mechframe.quick_boost"
+  },
+  "land": {
+    "sounds": [
+      "mechframe:land"
+    ],
+    "subtitle": "subtitles.mechframe.land"
+  },
+  "step": {
+    "sounds": [
+      "mechframe:step"
+    ],
+    "subtitle": "subtitles.mechframe.step"
+  },
+  "transform": {
+    "sounds": [
+      "mechframe:transform"
+    ],
+    "subtitle": "subtitles.mechframe.transform"
+  },
+  "brake": {
+    "sounds": [
+      "mechframe:brake"
+    ],
+    "subtitle": "subtitles.mechframe.brake"
+  },
+  "jump": {
+    "sounds": [
+      "mechframe:jump"
+    ],
+    "subtitle": "subtitles.mechframe.jump"
+  }
+}

@@ -1,0 +1,19 @@
+{
+  "result": {
+    "part": "mechframe:bs_manta"
+  },
+  "ingredients": [
+    {
+      "item": "minecraft:diamond",
+      "count": 4
+    },
+    {
+      "item": "minecraft:prismarine_crystals",
+      "count": 3
+    },
+    {
+      "item": "minecraft:fire_charge",
+      "count": 1
+    }
+  ]
+}

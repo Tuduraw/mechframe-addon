@@ -1,0 +1,21 @@
+{
+  "category": "frames",
+  "order": 4,
+  "result": {
+    "item": "mechframe:mech_spawner_t4"
+  },
+  "ingredients": [
+    {
+      "item": "minecraft:iron_block",
+      "count": 8
+    },
+    {
+      "item": "minecraft:diamond",
+      "count": 4
+    },
+    {
+      "item": "minecraft:redstone_block",
+      "count": 4
+    }
+  ]
+}

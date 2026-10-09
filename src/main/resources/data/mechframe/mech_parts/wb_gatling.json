@@ -1,0 +1,25 @@
+{
+  "slot": "weapon",
+  "display_name": "WB-A3 Back Gatling",
+  "maker": "Arachne Systems",
+  "tier": 3,
+  "weight": 6.0,
+  "armor": 60,
+  "points": {
+    "muzzle": [
+      0.0,
+      0.18,
+      1.3
+    ]
+  },
+  "stats": {
+    "weapon": "mf_back_gatling",
+    "mount": "back",
+    "projectile_item": "minecraft:iron_nugget",
+    "recoil_distance": 0.02,
+    "min_pitch": -50,
+    "max_pitch": 25
+  },
+  "model": "mechframe:models/obj/parts/wb_gatling.obj",
+  "texture": "mechframe:textures/part/wb_gatling.png"
+}

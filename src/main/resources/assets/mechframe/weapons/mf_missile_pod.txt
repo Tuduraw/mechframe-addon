@@ -1,0 +1,20 @@
+; Mech Frame Addon - WB-K1 Missile Pod
+DisplayName = WB-K1 Missile Pod
+Type = Missile
+Power = 60
+Explosion = 2.5
+Acceleration = 2.6
+Gravity = -0.01
+LockTime = 12
+LockRange = 140
+Round = 8
+ReloadTime = 160
+Delay = 6
+MaxAmmo = 64
+SuppliedNum = 8
+Item = 4, iron_ingot
+Item = 2, gunpowder
+Item = 1, redstone
+Sound = mf_missile
+SoundVolume = 2.5
+ModelBullet = mf_missile

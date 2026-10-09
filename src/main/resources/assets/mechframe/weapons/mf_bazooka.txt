@@ -1,0 +1,20 @@
+; Mech Frame Addon - WR-G3 Bazooka
+DisplayName = WR-G3 Bazooka
+Type = MachineGun2
+Power = 110
+Explosion = 3.0
+Acceleration = 4.0
+Gravity = -0.04
+Accuracy = 0.5
+Round = 6
+ReloadTime = 100
+Delay = 30
+MaxAmmo = 36
+SuppliedNum = 6
+Item = 4, iron_ingot
+Item = 4, gunpowder
+Sound = mf_bazooka
+SoundVolume = 3.0
+ModelBullet = mf_missile
+Recoil = 1.5
+AddMuzzleFlash = 1.2, 0.5, 1, 200, 255, 200, 140

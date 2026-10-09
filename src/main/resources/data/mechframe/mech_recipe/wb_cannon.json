@@ -1,0 +1,23 @@
+{
+  "result": {
+    "part": "mechframe:wb_cannon"
+  },
+  "ingredients": [
+    {
+      "item": "minecraft:gold_block",
+      "count": 4
+    },
+    {
+      "item": "minecraft:gunpowder",
+      "count": 1
+    },
+    {
+      "item": "minecraft:copper_ingot",
+      "count": 1
+    },
+    {
+      "item": "minecraft:redstone",
+      "count": 2
+    }
+  ]
+}

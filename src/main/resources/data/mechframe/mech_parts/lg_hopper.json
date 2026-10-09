@@ -1,0 +1,105 @@
+{
+  "slot": "legs",
+  "display_name": "LG-K3 Hopper",
+  "maker": "Kestrel Dynamics",
+  "tier": 2,
+  "weight": 17.0,
+  "armor": 240,
+  "points": {
+    "hip": [
+      0,
+      2.54,
+      0
+    ]
+  },
+  "stats": {
+    "type": "reverse_joint",
+    "core_tilt": 8,
+    "load_limit": 44,
+    "walk_speed": 0.31,
+    "boost_multiplier": 1.0,
+    "jump": 1.55,
+    "turn_rate": 17,
+    "step_height": 1.6,
+    "traction": 0.34,
+    "qb_multiplier": 1.0,
+    "hover_multiplier": 1.1,
+    "collision_width": 1.6,
+    "step_length": 1.6,
+    "step_lift": 0.35,
+    "step_ticks": 6,
+    "pelvis_groups": [
+      "pelvis"
+    ],
+    "chains": [
+      {
+        "name": "l",
+        "upper": "l_thigh",
+        "mid": "l_mid",
+        "lower": "l_shin",
+        "foot": "l_foot",
+        "hip": [
+          0.46,
+          2.5,
+          0.0
+        ],
+        "knee": [
+          0.46,
+          1.6,
+          0.45
+        ],
+        "knee2": [
+          0.46,
+          1.82,
+          -0.25
+        ],
+        "ankle": [
+          0.46,
+          0.5,
+          0.15
+        ],
+        "pole": [
+          0,
+          0,
+          1
+        ],
+        "group": 0
+      },
+      {
+        "name": "r",
+        "upper": "r_thigh",
+        "mid": "r_mid",
+        "lower": "r_shin",
+        "foot": "r_foot",
+        "hip": [
+          -0.46,
+          2.5,
+          0.0
+        ],
+        "knee": [
+          -0.46,
+          1.6,
+          0.45
+        ],
+        "knee2": [
+          -0.46,
+          1.82,
+          -0.25
+        ],
+        "ankle": [
+          -0.46,
+          0.5,
+          0.15
+        ],
+        "pole": [
+          0,
+          0,
+          1
+        ],
+        "group": 1
+      }
+    ]
+  },
+  "model": "mechframe:models/obj/parts/lg_hopper.obj",
+  "texture": "mechframe:textures/part/lg_hopper.png"
+}

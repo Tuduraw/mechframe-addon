@@ -1,0 +1,15 @@
+{
+  "result": {
+    "part": "mechframe:lg_hopper"
+  },
+  "ingredients": [
+    {
+      "item": "minecraft:iron_block",
+      "count": 6
+    },
+    {
+      "item": "minecraft:quartz",
+      "count": 1
+    }
+  ]
+}

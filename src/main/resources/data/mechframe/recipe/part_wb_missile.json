@@ -1,0 +1,22 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "equipment",
+  "key": {
+    "T": "minecraft:iron_block",
+    "F": "minecraft:quartz",
+    "G": "minecraft:gunpowder",
+    "R": "minecraft:redstone"
+  },
+  "pattern": [
+    "TGT",
+    "TFT",
+    "R R"
+  ],
+  "result": {
+    "id": "mechframe:part_weapon",
+    "count": 1,
+    "components": {
+      "mechframe:part_id": "mechframe:wb_missile"
+    }
+  }
+}

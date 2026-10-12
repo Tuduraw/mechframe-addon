@@ -15,7 +15,7 @@
   `tudursvehiclemod-addons/` に置く拡張パックで追加できます。拡張パック「Frontier Frames」(4社・42パーツ・標準機12機、
   ホバー脚や武器内蔵腕などの特殊規格を含む)を `packs/mechframe_expansion1` に同梱しています。
 
-mod作者の Tuduraw 氏に感謝します。前提MODの公開API(`AbstractVehicleEntity`のオーバーライド可能なメソッド、
+前提MODの公開API(`AbstractVehicleEntity`のオーバーライド可能なメソッド、
 `VehicleConverterTargets`、`HudVariableProvider`など)を使っています。前提MODへの変更は必要ありません。
 前提MOD側の仕様に合わせる必要があった箇所はアドオン側で対応しています(後述の「前提MODとの関係」)。
 

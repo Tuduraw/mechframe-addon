@@ -1,0 +1,123 @@
+{
+  "slot": "legs",
+  "display_name": "LG-C5 Lynx",
+  "maker": "Corvid Systems",
+  "tier": 3,
+  "weight": 30.0,
+  "armor": 520,
+  "points": {
+    "hip": [
+      0,
+      1.6,
+      0
+    ]
+  },
+  "stats": {
+    "type": "tank",
+    "load_limit": 90,
+    "walk_speed": 0.52,
+    "boost_multiplier": 1.15,
+    "jump": 0.0,
+    "turn_rate": 12,
+    "step_height": 1.05,
+    "traction": 0.31,
+    "qb_multiplier": 0.8,
+    "hover_multiplier": 0.75,
+    "collision_width": 3.0,
+    "pelvis_groups": [
+      "ring"
+    ],
+    "wheels": [
+      {
+        "group": "l_w0",
+        "pivot": [
+          1.41,
+          0.38,
+          -1.5
+        ],
+        "radius": 0.32
+      },
+      {
+        "group": "l_w1",
+        "pivot": [
+          1.41,
+          0.38,
+          -0.5
+        ],
+        "radius": 0.32
+      },
+      {
+        "group": "l_w2",
+        "pivot": [
+          1.41,
+          0.38,
+          0.5
+        ],
+        "radius": 0.32
+      },
+      {
+        "group": "l_w3",
+        "pivot": [
+          1.41,
+          0.38,
+          1.5
+        ],
+        "radius": 0.32
+      },
+      {
+        "group": "r_w0",
+        "pivot": [
+          -1.41,
+          0.38,
+          -1.5
+        ],
+        "radius": 0.32
+      },
+      {
+        "group": "r_w1",
+        "pivot": [
+          -1.41,
+          0.38,
+          -0.5
+        ],
+        "radius": 0.32
+      },
+      {
+        "group": "r_w2",
+        "pivot": [
+          -1.41,
+          0.38,
+          0.5
+        ],
+        "radius": 0.32
+      },
+      {
+        "group": "r_w3",
+        "pivot": [
+          -1.41,
+          0.38,
+          1.5
+        ],
+        "radius": 0.32
+      }
+    ]
+  },
+  "recipe": {
+    "ingredients": [
+      {
+        "item": "minecraft:gold_ingot",
+        "count": 6
+      },
+      {
+        "item": "minecraft:black_dye",
+        "count": 2
+      },
+      {
+        "item": "minecraft:iron_ingot",
+        "count": 2
+      }
+    ]
+  },
+  "model": "mfx:models/obj/parts/lg_lynx.obj",
+  "texture": "mfx:textures/vehicle/part/lg_lynx.png"
+}

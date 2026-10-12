@@ -1,0 +1,63 @@
+{
+  "slot": "booster",
+  "display_name": "BS-V1 Flare",
+  "maker": "Vesper Aeronautics",
+  "tier": 2,
+  "weight": 6.0,
+  "armor": 80,
+  "stats": {
+    "boost_speed": 1.35,
+    "qb_speed": 3.2,
+    "qb_cost": 310,
+    "qb_cooldown": 8,
+    "hover_thrust": 0.2,
+    "hover_cost": 19,
+    "air_boost_cost": 8,
+    "nozzles": [
+      {
+        "pos": [
+          0.6493,
+          -0.9475,
+          -0.5902
+        ],
+        "dir": [
+          0.0465,
+          -0.9874,
+          -0.151
+        ],
+        "size": 0.42
+      },
+      {
+        "pos": [
+          -0.6493,
+          -0.9475,
+          -0.5902
+        ],
+        "dir": [
+          -0.0465,
+          -0.9874,
+          -0.151
+        ],
+        "size": 0.42
+      }
+    ]
+  },
+  "recipe": {
+    "ingredients": [
+      {
+        "item": "minecraft:iron_ingot",
+        "count": 4
+      },
+      {
+        "item": "minecraft:feather",
+        "count": 2
+      },
+      {
+        "item": "minecraft:fire_charge",
+        "count": 2
+      }
+    ]
+  },
+  "model": "mfx:models/obj/parts/bs_flare.obj",
+  "texture": "mfx:textures/vehicle/part/bs_flare.png"
+}

@@ -1,0 +1,50 @@
+{
+  "slot": "legs",
+  "display_name": "LG-X1 Halo",
+  "maker": "Orrery Experimental",
+  "tier": 4,
+  "weight": 18.0,
+  "armor": 380,
+  "points": {
+    "hip": [
+      0,
+      1.68,
+      0
+    ]
+  },
+  "stats": {
+    "type": "hover",
+    "load_limit": 62,
+    "walk_speed": 0.46,
+    "boost_multiplier": 1.25,
+    "jump": 0.0,
+    "turn_rate": 16,
+    "step_height": 1.05,
+    "traction": 0.24,
+    "qb_multiplier": 1.05,
+    "hover_multiplier": 1.6,
+    "collision_width": 2.7,
+    "pelvis_groups": [
+      "skirt"
+    ],
+    "chains": []
+  },
+  "recipe": {
+    "ingredients": [
+      {
+        "item": "minecraft:diamond",
+        "count": 8
+      },
+      {
+        "item": "minecraft:ender_pearl",
+        "count": 2
+      },
+      {
+        "item": "minecraft:iron_ingot",
+        "count": 2
+      }
+    ]
+  },
+  "model": "mfx:models/obj/parts/lg_halo.obj",
+  "texture": "mfx:textures/vehicle/part/lg_halo.png"
+}

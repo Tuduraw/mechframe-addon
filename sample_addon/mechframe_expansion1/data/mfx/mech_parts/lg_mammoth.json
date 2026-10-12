@@ -1,0 +1,182 @@
+{
+  "slot": "legs",
+  "display_name": "LG-T4 Mammoth",
+  "maker": "Talos Heavy Machinery",
+  "tier": 4,
+  "weight": 52.0,
+  "armor": 1000,
+  "points": {
+    "hip": [
+      0,
+      2.92,
+      0
+    ]
+  },
+  "stats": {
+    "type": "quad",
+    "load_limit": 150,
+    "walk_speed": 0.24,
+    "boost_multiplier": 0.85,
+    "jump": 0.5,
+    "turn_rate": 10,
+    "step_height": 1.6,
+    "traction": 0.45,
+    "qb_multiplier": 0.65,
+    "hover_multiplier": 0.9,
+    "collision_width": 3.2,
+    "step_length": 1.2,
+    "step_lift": 0.6,
+    "step_ticks": 8,
+    "pelvis_groups": [
+      "pelvis"
+    ],
+    "chains": [
+      {
+        "name": "fl",
+        "coxa": "fl_coxa",
+        "coxa_pivot": [
+          0.9,
+          2.1,
+          1.0
+        ],
+        "upper": "fl_femur",
+        "lower": "fl_tibia",
+        "hip": [
+          1.236,
+          2.1,
+          1.252
+        ],
+        "knee": [
+          1.956,
+          2.45,
+          1.792
+        ],
+        "ankle": [
+          2.356,
+          0.0,
+          2.092
+        ],
+        "pole": [
+          0,
+          1,
+          0
+        ],
+        "group": 0
+      },
+      {
+        "name": "fr",
+        "coxa": "fr_coxa",
+        "coxa_pivot": [
+          -0.9,
+          2.1,
+          1.0
+        ],
+        "upper": "fr_femur",
+        "lower": "fr_tibia",
+        "hip": [
+          -1.236,
+          2.1,
+          1.252
+        ],
+        "knee": [
+          -1.956,
+          2.45,
+          1.792
+        ],
+        "ankle": [
+          -2.356,
+          0.0,
+          2.092
+        ],
+        "pole": [
+          0,
+          1,
+          0
+        ],
+        "group": 1
+      },
+      {
+        "name": "rl",
+        "coxa": "rl_coxa",
+        "coxa_pivot": [
+          0.9,
+          2.1,
+          -1.0
+        ],
+        "upper": "rl_femur",
+        "lower": "rl_tibia",
+        "hip": [
+          1.236,
+          2.1,
+          -1.252
+        ],
+        "knee": [
+          1.956,
+          2.45,
+          -1.792
+        ],
+        "ankle": [
+          2.356,
+          0.0,
+          -2.092
+        ],
+        "pole": [
+          0,
+          1,
+          0
+        ],
+        "group": 1
+      },
+      {
+        "name": "rr",
+        "coxa": "rr_coxa",
+        "coxa_pivot": [
+          -0.9,
+          2.1,
+          -1.0
+        ],
+        "upper": "rr_femur",
+        "lower": "rr_tibia",
+        "hip": [
+          -1.236,
+          2.1,
+          -1.252
+        ],
+        "knee": [
+          -1.956,
+          2.45,
+          -1.792
+        ],
+        "ankle": [
+          -2.356,
+          0.0,
+          -2.092
+        ],
+        "pole": [
+          0,
+          1,
+          0
+        ],
+        "group": 0
+      }
+    ]
+  },
+  "recipe": {
+    "ingredients": [
+      {
+        "item": "minecraft:diamond",
+        "count": 8
+      },
+      {
+        "item": "minecraft:iron_block",
+        "count": 2
+      },
+      {
+        "item": "minecraft:iron_ingot",
+        "count": 2
+      }
+    ]
+  },
+  "model": "mfx:models/obj/parts/lg_mammoth.obj",
+  "texture": "mfx:textures/vehicle/part/lg_mammoth.png"
+}

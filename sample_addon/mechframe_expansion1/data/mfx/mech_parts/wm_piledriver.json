@@ -1,0 +1,58 @@
+{
+  "slot": "weapon",
+  "display_name": "WM-X3 Pile Driver",
+  "maker": "Orrery Experimental",
+  "tier": 4,
+  "weight": 4.5,
+  "armor": 60,
+  "points": {
+    "muzzle": [
+      0.0,
+      0.06,
+      1.7
+    ]
+  },
+  "stats": {
+    "weapon": "mfx_pile_driver",
+    "mount": "arm",
+    "projectile_item": "minecraft:iron_nugget",
+    "recoil_distance": 0.0,
+    "fcs": false,
+    "melee": {
+      "style": "thrust",
+      "damage": 680,
+      "reach": 3.4,
+      "arc": 25,
+      "lunge_speed": 1.8,
+      "lunge_range": 12,
+      "en_cost": 460,
+      "cooldown": 42
+    }
+  },
+  "recipe": {
+    "ingredients": [
+      {
+        "item": "minecraft:diamond",
+        "count": 5
+      },
+      {
+        "item": "minecraft:ender_pearl",
+        "count": 1
+      },
+      {
+        "item": "minecraft:iron_ingot",
+        "count": 2
+      },
+      {
+        "item": "minecraft:gunpowder",
+        "count": 2
+      },
+      {
+        "item": "minecraft:redstone",
+        "count": 1
+      }
+    ]
+  },
+  "model": "mfx:models/obj/parts/wm_piledriver.obj",
+  "texture": "mfx:textures/vehicle/part/wm_piledriver.png"
+}

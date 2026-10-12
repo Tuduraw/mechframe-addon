@@ -1,0 +1,100 @@
+{
+  "slot": "core",
+  "display_name": "CR-VK Kite Core",
+  "maker": "Vesper Aeronautics",
+  "tier": 4,
+  "transform_set": "kite",
+  "weight": 8.5,
+  "armor": 270,
+  "points": {
+    "neck": [
+      0,
+      1.46,
+      0.0
+    ],
+    "shoulder_l": [
+      0.96,
+      1.2,
+      0
+    ],
+    "back": [
+      0,
+      0.86,
+      -0.74
+    ],
+    "back_l": [
+      0.32,
+      1.42,
+      -0.46
+    ],
+    "seat": [
+      0,
+      0.82,
+      0.06
+    ],
+    "eye": [
+      0,
+      1.72,
+      0.3
+    ]
+  },
+  "stats": {
+    "en_capacity": 1350,
+    "en_recharge": 48,
+    "recharge_delay": 8,
+    "defense": 0.8,
+    "fuel": 1000,
+    "stability": 0.85,
+    "jet": {
+      "max_speed": 2.6,
+      "acceleration": 0.06,
+      "turn_speed": 3.2,
+      "stall_fraction": 0.18,
+      "afterburner": 1.35,
+      "afterburner_cost": 8,
+      "collision_height": 1.6
+    }
+  },
+  "jet_pose": {
+    "core": {
+      "pos": [
+        0.0,
+        1.13345,
+        0.77198
+      ],
+      "quat": [
+        -0.0,
+        0.707107,
+        0.707107,
+        0.0
+      ],
+      "delay": 0.05
+    }
+  },
+  "recipe": {
+    "ingredients": [
+      {
+        "item": "minecraft:diamond",
+        "count": 7
+      },
+      {
+        "item": "minecraft:feather",
+        "count": 2
+      },
+      {
+        "item": "minecraft:iron_ingot",
+        "count": 2
+      },
+      {
+        "item": "minecraft:redstone_block",
+        "count": 1
+      },
+      {
+        "item": "minecraft:phantom_membrane",
+        "count": 2
+      }
+    ]
+  },
+  "model": "mfx:models/obj/parts/cr_kite.obj",
+  "texture": "mfx:textures/vehicle/part/cr_kite.png"
+}

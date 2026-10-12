@@ -1,0 +1,47 @@
+{
+  "slot": "arms",
+  "display_name": "AM-X2 Arbalest",
+  "maker": "Orrery Experimental",
+  "tier": 4,
+  "weight": 8.0,
+  "armor": 220,
+  "points": {
+    "elbow": [
+      0.12,
+      -0.92,
+      0.06
+    ],
+    "grip": [
+      0.12,
+      -1.0,
+      0.62
+    ]
+  },
+  "stats": {
+    "load_limit": 22,
+    "aim_speed": 380,
+    "recoil_control": 1.2,
+    "integrated": {
+      "r_arm": "mfx:wi_arbalest",
+      "l_arm": "mfx:wi_arbalest"
+    }
+  },
+  "recipe": {
+    "ingredients": [
+      {
+        "item": "minecraft:diamond",
+        "count": 6
+      },
+      {
+        "item": "minecraft:ender_pearl",
+        "count": 2
+      },
+      {
+        "item": "minecraft:iron_ingot",
+        "count": 2
+      }
+    ]
+  },
+  "model": "mfx:models/obj/parts/am_arbalest.obj",
+  "texture": "mfx:textures/vehicle/part/am_arbalest.png"
+}

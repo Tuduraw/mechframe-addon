@@ -1,0 +1,108 @@
+{
+  "slot": "legs",
+  "display_name": "LG-C2 Raven",
+  "maker": "Corvid Systems",
+  "tier": 3,
+  "weight": 21.0,
+  "armor": 360,
+  "points": {
+    "hip": [
+      0,
+      3.3,
+      0
+    ]
+  },
+  "stats": {
+    "type": "biped",
+    "load_limit": 58,
+    "walk_speed": 0.32,
+    "boost_multiplier": 1.02,
+    "jump": 0.95,
+    "turn_rate": 16,
+    "step_height": 1.2,
+    "traction": 0.37,
+    "qb_multiplier": 1.0,
+    "hover_multiplier": 1.0,
+    "collision_width": 1.8,
+    "step_length": 1.6,
+    "step_lift": 0.5,
+    "step_ticks": 6,
+    "pelvis_groups": [
+      "pelvis"
+    ],
+    "chains": [
+      {
+        "name": "l",
+        "upper": "l_thigh",
+        "lower": "l_shin",
+        "foot": "l_foot",
+        "hip": [
+          0.5,
+          3.0,
+          0.0
+        ],
+        "knee": [
+          0.52,
+          1.72,
+          0.38
+        ],
+        "ankle": [
+          0.52,
+          0.42,
+          -0.04
+        ],
+        "pole": [
+          0,
+          0,
+          1
+        ],
+        "group": 0
+      },
+      {
+        "name": "r",
+        "upper": "r_thigh",
+        "lower": "r_shin",
+        "foot": "r_foot",
+        "hip": [
+          -0.5,
+          3.0,
+          0.0
+        ],
+        "knee": [
+          -0.52,
+          1.72,
+          0.38
+        ],
+        "ankle": [
+          -0.52,
+          0.42,
+          -0.04
+        ],
+        "pole": [
+          0,
+          0,
+          1
+        ],
+        "group": 1
+      }
+    ]
+  },
+  "recipe": {
+    "ingredients": [
+      {
+        "item": "minecraft:gold_ingot",
+        "count": 6
+      },
+      {
+        "item": "minecraft:black_dye",
+        "count": 2
+      },
+      {
+        "item": "minecraft:iron_ingot",
+        "count": 2
+      }
+    ]
+  },
+  "model": "mfx:models/obj/parts/lg_raven.obj",
+  "texture": "mfx:textures/vehicle/part/lg_raven.png"
+}

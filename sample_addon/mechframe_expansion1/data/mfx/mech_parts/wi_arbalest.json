@@ -1,0 +1,23 @@
+{
+  "slot": "weapon",
+  "display_name": "WI-X2 Arbalest Rail",
+  "maker": "Orrery Experimental",
+  "tier": 4,
+  "weight": 3.0,
+  "armor": 30,
+  "points": {
+    "muzzle": [
+      0.0,
+      0.0,
+      1.95
+    ]
+  },
+  "stats": {
+    "weapon": "mfx_arbalest_rail",
+    "mount": "integrated",
+    "projectile_item": "minecraft:prismarine_crystals",
+    "recoil_distance": 0.18
+  },
+  "model": "mfx:models/obj/parts/wi_arbalest.obj",
+  "texture": "mfx:textures/vehicle/part/wi_arbalest.png"
+}

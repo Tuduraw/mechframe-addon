@@ -1,0 +1,40 @@
+{
+  "entity_type": "mechframe:mech",
+  "model": "mfx:models/obj/parts/cr_keep.obj",
+  "texture": "mfx:textures/vehicle/part/cr_keep.png",
+  "width": 1.8,
+  "height": 4.0,
+  "spawn_item": {
+    "display_name": "TH) Mammoth",
+    "tier": 4
+  },
+  "hud": "mech_hud",
+  "engine_sound": "mech_engine",
+  "engine_sound_volume": 1.2,
+  "weight_type": "car",
+  "max_health": 1000,
+  "armor_damage_factor": 0.8,
+  "armor_min_damage": 1.0,
+  "armor_max_damage": 260,
+  "damage_factor": 1.0,
+  "fuel_consumption": 0.25,
+  "inventory_size": 18,
+  "submerged_damage_height": 3.0,
+  "flare_type": 0,
+  "passenger_display": {
+    "hide_entity": true
+  },
+  "mechframe": {
+    "assembly": {
+      "legs": "mfx:lg_mammoth",
+      "core": "mfx:cr_keep",
+      "head": "mfx:hd_bascinet",
+      "arms": "mfx:am_gauntlet",
+      "booster": "mfx:bs_furnace",
+      "r_arm": "mechframe:wa_mg",
+      "l_arm": "mechframe:wa_bazooka",
+      "r_back": "mechframe:wb_gatling",
+      "l_back": "mechframe:wb_cannon"
+    }
+  }
+}

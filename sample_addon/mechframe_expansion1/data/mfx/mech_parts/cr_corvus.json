@@ -1,0 +1,100 @@
+{
+  "slot": "core",
+  "display_name": "CR-CC Corvus Core",
+  "maker": "Corvid Systems",
+  "tier": 5,
+  "transform_set": "corvus",
+  "weight": 16.5,
+  "armor": 570,
+  "points": {
+    "neck": [
+      0,
+      1.6,
+      0.0
+    ],
+    "shoulder_l": [
+      1.04,
+      1.24,
+      0
+    ],
+    "back": [
+      0,
+      0.9,
+      -0.78
+    ],
+    "back_l": [
+      0.34,
+      1.56,
+      -0.5
+    ],
+    "seat": [
+      0,
+      0.84,
+      0.06
+    ],
+    "eye": [
+      0,
+      1.84,
+      0.3
+    ]
+  },
+  "stats": {
+    "en_capacity": 1800,
+    "en_recharge": 36,
+    "recharge_delay": 11,
+    "defense": 1.0,
+    "fuel": 1000,
+    "stability": 1.0,
+    "jet": {
+      "max_speed": 3.1,
+      "acceleration": 0.05,
+      "turn_speed": 2.3,
+      "stall_fraction": 0.22,
+      "afterburner": 1.4,
+      "afterburner_cost": 9,
+      "collision_height": 1.68
+    }
+  },
+  "jet_pose": {
+    "core": {
+      "pos": [
+        0.0,
+        1.28781,
+        -0.00603
+      ],
+      "quat": [
+        -0.0,
+        0.707107,
+        0.707107,
+        0.0
+      ],
+      "delay": 0.05
+    }
+  },
+  "recipe": {
+    "ingredients": [
+      {
+        "item": "minecraft:diamond",
+        "count": 7
+      },
+      {
+        "item": "minecraft:black_dye",
+        "count": 2
+      },
+      {
+        "item": "minecraft:iron_ingot",
+        "count": 2
+      },
+      {
+        "item": "minecraft:redstone_block",
+        "count": 1
+      },
+      {
+        "item": "minecraft:phantom_membrane",
+        "count": 2
+      }
+    ]
+  },
+  "model": "mfx:models/obj/parts/cr_corvus.obj",
+  "texture": "mfx:textures/vehicle/part/cr_corvus.png"
+}

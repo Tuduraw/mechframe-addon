@@ -1,0 +1,39 @@
+{
+  "slot": "arms",
+  "display_name": "AM-V1 Reed",
+  "maker": "Vesper Aeronautics",
+  "tier": 2,
+  "weight": 5.0,
+  "armor": 130,
+  "points": {
+    "elbow": [
+      0.1,
+      -0.95,
+      0.06
+    ],
+    "grip": [
+      0.1,
+      -1.02,
+      0.92
+    ]
+  },
+  "stats": {
+    "load_limit": 11,
+    "aim_speed": 500,
+    "recoil_control": 0.75
+  },
+  "recipe": {
+    "ingredients": [
+      {
+        "item": "minecraft:iron_ingot",
+        "count": 4
+      },
+      {
+        "item": "minecraft:feather",
+        "count": 2
+      }
+    ]
+  },
+  "model": "mfx:models/obj/parts/am_reed.obj",
+  "texture": "mfx:textures/vehicle/part/am_reed.png"
+}

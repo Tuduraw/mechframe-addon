@@ -1,0 +1,202 @@
+{
+  "slot": "booster",
+  "display_name": "BS-VK Kite Pack",
+  "maker": "Vesper Aeronautics",
+  "tier": 4,
+  "transform_set": "kite",
+  "weight": 5.5,
+  "armor": 90,
+  "stats": {
+    "boost_speed": 1.28,
+    "qb_speed": 3.0,
+    "qb_cost": 300,
+    "qb_cooldown": 8,
+    "hover_thrust": 0.2,
+    "hover_cost": 16,
+    "air_boost_cost": 6,
+    "nozzles": [
+      {
+        "pos": [
+          0.66,
+          -0.8499,
+          -0.1646
+        ],
+        "dir": [
+          0.0,
+          -0.9995,
+          -0.0308
+        ],
+        "size": 0.32
+      },
+      {
+        "pos": [
+          -0.66,
+          -0.8499,
+          -0.1646
+        ],
+        "dir": [
+          0.0,
+          -0.9995,
+          -0.0308
+        ],
+        "size": 0.32
+      }
+    ],
+    "jet_nozzles": [
+      {
+        "pos": [
+          -0.66,
+          0.2289,
+          0.7821
+        ],
+        "dir": [
+          0.0,
+          -0.0308,
+          -0.9995
+        ],
+        "size": 0.36
+      },
+      {
+        "pos": [
+          0.66,
+          0.2289,
+          0.7821
+        ],
+        "dir": [
+          0.0,
+          -0.0308,
+          -0.9995
+        ],
+        "size": 0.36
+      }
+    ]
+  },
+  "jet_pose": {
+    "pack": {
+      "pos": [
+        -0.0,
+        0.39345,
+        1.63198
+      ],
+      "quat": [
+        -0.0,
+        0.707107,
+        0.707107,
+        0.0
+      ],
+      "delay": 0.1,
+      "parent": "core:core",
+      "joint": [
+        0.0,
+        0.0,
+        0.0
+      ]
+    },
+    "l_wing": {
+      "pos": [
+        -0.73165,
+        0.41128,
+        1.79198
+      ],
+      "quat": [
+        0.509894,
+        0.489906,
+        0.509894,
+        -0.489906
+      ],
+      "delay": 0.45,
+      "parent": "booster:pack",
+      "joint": [
+        0.29,
+        0.45,
+        -0.2
+      ]
+    },
+    "l_wing_out": {
+      "pos": [
+        -3.54779,
+        0.06356,
+        1.79198
+      ],
+      "quat": [
+        0.489906,
+        -0.509894,
+        0.489906,
+        0.509894
+      ],
+      "delay": 0.7,
+      "parent": "booster:l_wing",
+      "joint": [
+        0.29,
+        -1.4,
+        -0.23
+      ]
+    },
+    "r_wing": {
+      "pos": [
+        0.73165,
+        0.41128,
+        1.79198
+      ],
+      "quat": [
+        0.509894,
+        -0.489906,
+        -0.509894,
+        -0.489906
+      ],
+      "delay": 0.45,
+      "parent": "booster:pack",
+      "joint": [
+        -0.29,
+        0.45,
+        -0.2
+      ]
+    },
+    "r_wing_out": {
+      "pos": [
+        3.54779,
+        0.06356,
+        1.79198
+      ],
+      "quat": [
+        0.489906,
+        0.509894,
+        -0.489906,
+        0.509894
+      ],
+      "delay": 0.7,
+      "parent": "booster:r_wing",
+      "joint": [
+        -0.29,
+        -1.4,
+        -0.23
+      ]
+    }
+  },
+  "recipe": {
+    "ingredients": [
+      {
+        "item": "minecraft:diamond",
+        "count": 6
+      },
+      {
+        "item": "minecraft:feather",
+        "count": 2
+      },
+      {
+        "item": "minecraft:iron_ingot",
+        "count": 2
+      },
+      {
+        "item": "minecraft:fire_charge",
+        "count": 2
+      },
+      {
+        "item": "minecraft:phantom_membrane",
+        "count": 2
+      }
+    ]
+  },
+  "model": "mfx:models/obj/parts/bs_kite.obj",
+  "texture": "mfx:textures/vehicle/part/bs_kite.png"
+}

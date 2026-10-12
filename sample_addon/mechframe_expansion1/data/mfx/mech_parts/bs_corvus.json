@@ -1,0 +1,202 @@
+{
+  "slot": "booster",
+  "display_name": "BS-CC Corvus Pack",
+  "maker": "Corvid Systems",
+  "tier": 5,
+  "transform_set": "corvus",
+  "weight": 6.0,
+  "armor": 120,
+  "stats": {
+    "boost_speed": 1.05,
+    "qb_speed": 2.55,
+    "qb_cost": 300,
+    "qb_cooldown": 10,
+    "hover_thrust": 0.16,
+    "hover_cost": 12,
+    "air_boost_cost": 5,
+    "nozzles": [
+      {
+        "pos": [
+          0.24,
+          -0.6,
+          -0.4
+        ],
+        "dir": [
+          0,
+          -0.6,
+          -0.8
+        ],
+        "size": 0.3
+      },
+      {
+        "pos": [
+          -0.24,
+          -0.6,
+          -0.4
+        ],
+        "dir": [
+          0,
+          -0.6,
+          -0.8
+        ],
+        "size": 0.3
+      }
+    ],
+    "jet_nozzles": [
+      {
+        "pos": [
+          -0.2295,
+          0.6955,
+          -0.9129
+        ],
+        "dir": [
+          0.0,
+          -0.0,
+          -1.0
+        ],
+        "size": 0.42
+      },
+      {
+        "pos": [
+          0.2295,
+          0.6955,
+          -0.9129
+        ],
+        "dir": [
+          0.0,
+          -0.0,
+          -1.0
+        ],
+        "size": 0.42
+      }
+    ]
+  },
+  "jet_pose": {
+    "pack": {
+      "pos": [
+        -0.0,
+        0.50781,
+        0.89397
+      ],
+      "quat": [
+        -0.0,
+        0.707107,
+        0.707107,
+        0.0
+      ],
+      "delay": 0.1,
+      "parent": "core:core",
+      "joint": [
+        0.0,
+        0.0,
+        0.0
+      ]
+    },
+    "l_wing": {
+      "pos": [
+        -0.39445,
+        0.50781,
+        0.89076
+      ],
+      "quat": [
+        0.353553,
+        0.612372,
+        0.612372,
+        -0.353553
+      ],
+      "delay": 0.45,
+      "parent": "booster:pack",
+      "joint": [
+        0.2,
+        0.34,
+        -0.34
+      ]
+    },
+    "l_wing_out": {
+      "pos": [
+        -1.09445,
+        -0.21719,
+        2.1032
+      ],
+      "quat": [
+        0.612372,
+        0.353553,
+        -0.353553,
+        0.612372
+      ],
+      "delay": 0.7,
+      "parent": "booster:l_wing",
+      "joint": [
+        0.7,
+        -0.7,
+        -0.3625
+      ]
+    },
+    "r_wing": {
+      "pos": [
+        0.39445,
+        0.50781,
+        0.89076
+      ],
+      "quat": [
+        -0.353553,
+        0.612372,
+        0.612372,
+        0.353553
+      ],
+      "delay": 0.45,
+      "parent": "booster:pack",
+      "joint": [
+        -0.2,
+        0.34,
+        -0.34
+      ]
+    },
+    "r_wing_out": {
+      "pos": [
+        1.09445,
+        -0.21719,
+        2.1032
+      ],
+      "quat": [
+        0.612372,
+        -0.353553,
+        0.353553,
+        0.612372
+      ],
+      "delay": 0.7,
+      "parent": "booster:r_wing",
+      "joint": [
+        -0.7,
+        -0.7,
+        -0.3625
+      ]
+    }
+  },
+  "recipe": {
+    "ingredients": [
+      {
+        "item": "minecraft:diamond",
+        "count": 6
+      },
+      {
+        "item": "minecraft:black_dye",
+        "count": 2
+      },
+      {
+        "item": "minecraft:iron_ingot",
+        "count": 2
+      },
+      {
+        "item": "minecraft:fire_charge",
+        "count": 2
+      },
+      {
+        "item": "minecraft:phantom_membrane",
+        "count": 2
+      }
+    ]
+  },
+  "model": "mfx:models/obj/parts/bs_corvus.obj",
+  "texture": "mfx:textures/vehicle/part/bs_corvus.png"
+}

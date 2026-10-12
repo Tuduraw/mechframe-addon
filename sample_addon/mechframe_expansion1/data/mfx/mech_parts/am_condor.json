@@ -1,0 +1,130 @@
+{
+  "slot": "arms",
+  "display_name": "AM-TC Condor Arms",
+  "maker": "Talos Heavy Machinery",
+  "tier": 5,
+  "transform_set": "condor",
+  "weight": 16.5,
+  "armor": 430,
+  "points": {
+    "elbow": [
+      0.13,
+      -0.98,
+      0.06
+    ],
+    "grip": [
+      0.13,
+      -1.08,
+      0.98
+    ]
+  },
+  "stats": {
+    "load_limit": 34,
+    "aim_speed": 270,
+    "recoil_control": 1.5
+  },
+  "jet_pose": {
+    "l_upper": {
+      "pos": [
+        -1.197,
+        1.95216,
+        2.22052
+      ],
+      "quat": [
+        0.024678,
+        0.706676,
+        0.706676,
+        -0.024678
+      ],
+      "delay": 0.1,
+      "parent": "core:core",
+      "joint": [
+        0.0,
+        0.0,
+        0.0
+      ]
+    },
+    "l_fore": {
+      "pos": [
+        -1.14977,
+        1.0861,
+        1.00068
+      ],
+      "quat": [
+        -0.014568,
+        -0.102525,
+        0.99295,
+        -0.057673
+      ],
+      "delay": 0.15,
+      "parent": "arms:l_upper",
+      "joint": [
+        0.13,
+        -0.98,
+        0.06
+      ]
+    },
+    "r_upper": {
+      "pos": [
+        1.197,
+        1.95216,
+        2.22052
+      ],
+      "quat": [
+        -0.024678,
+        0.706676,
+        0.706676,
+        0.024678
+      ],
+      "delay": 0.1,
+      "parent": "core:core",
+      "joint": [
+        0.0,
+        0.0,
+        0.0
+      ]
+    },
+    "r_fore": {
+      "pos": [
+        1.14977,
+        1.0861,
+        1.00068
+      ],
+      "quat": [
+        0.014568,
+        -0.102525,
+        0.99295,
+        0.057673
+      ],
+      "delay": 0.15,
+      "parent": "arms:r_upper",
+      "joint": [
+        -0.13,
+        -0.98,
+        0.06
+      ]
+    }
+  },
+  "recipe": {
+    "ingredients": [
+      {
+        "item": "minecraft:diamond",
+        "count": 6
+      },
+      {
+        "item": "minecraft:iron_block",
+        "count": 2
+      },
+      {
+        "item": "minecraft:iron_ingot",
+        "count": 2
+      },
+      {
+        "item": "minecraft:phantom_membrane",
+        "count": 2
+      }
+    ]
+  },
+  "model": "mfx:models/obj/parts/am_condor.obj",
+  "texture": "mfx:textures/vehicle/part/am_condor.png"
+}

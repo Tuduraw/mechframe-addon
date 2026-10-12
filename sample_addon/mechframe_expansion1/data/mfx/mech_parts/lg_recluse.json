@@ -1,0 +1,246 @@
+{
+  "slot": "legs",
+  "display_name": "LG-C4 Recluse",
+  "maker": "Corvid Systems",
+  "tier": 3,
+  "weight": 27.0,
+  "armor": 430,
+  "points": {
+    "hip": [
+      0,
+      2.12,
+      0
+    ]
+  },
+  "stats": {
+    "type": "hexapod",
+    "load_limit": 78,
+    "walk_speed": 0.35,
+    "boost_multiplier": 0.98,
+    "jump": 0.75,
+    "turn_rate": 15,
+    "step_height": 2.0,
+    "traction": 0.4,
+    "qb_multiplier": 0.9,
+    "hover_multiplier": 1.2,
+    "collision_width": 2.4,
+    "step_length": 1.3,
+    "step_lift": 0.65,
+    "step_ticks": 5,
+    "pelvis_groups": [
+      "pelvis"
+    ],
+    "chains": [
+      {
+        "coxa": "l1_coxa",
+        "coxa_pivot": [
+          0.72,
+          1.58,
+          0.95
+        ],
+        "upper": "l1_femur",
+        "lower": "l1_tibia",
+        "hip": [
+          0.98,
+          1.6,
+          1.026
+        ],
+        "knee": [
+          1.9,
+          2.5,
+          1.587
+        ],
+        "ankle": [
+          2.6,
+          0.0,
+          1.9532
+        ],
+        "pole": [
+          0,
+          1,
+          0
+        ],
+        "name": "l1",
+        "group": 0
+      },
+      {
+        "coxa": "r1_coxa",
+        "coxa_pivot": [
+          -0.72,
+          1.58,
+          0.95
+        ],
+        "upper": "r1_femur",
+        "lower": "r1_tibia",
+        "hip": [
+          -0.98,
+          1.6,
+          1.026
+        ],
+        "knee": [
+          -1.9,
+          2.5,
+          1.587
+        ],
+        "ankle": [
+          -2.6,
+          0.0,
+          1.9532
+        ],
+        "pole": [
+          0,
+          1,
+          0
+        ],
+        "name": "r1",
+        "group": 1
+      },
+      {
+        "coxa": "l2_coxa",
+        "coxa_pivot": [
+          0.72,
+          1.58,
+          0.0
+        ],
+        "upper": "l2_femur",
+        "lower": "l2_tibia",
+        "hip": [
+          0.98,
+          1.6,
+          0.0
+        ],
+        "knee": [
+          1.9,
+          2.5,
+          0.0
+        ],
+        "ankle": [
+          2.6,
+          0.0,
+          0.0
+        ],
+        "pole": [
+          0,
+          1,
+          0
+        ],
+        "name": "l2",
+        "group": 1
+      },
+      {
+        "coxa": "r2_coxa",
+        "coxa_pivot": [
+          -0.72,
+          1.58,
+          0.0
+        ],
+        "upper": "r2_femur",
+        "lower": "r2_tibia",
+        "hip": [
+          -0.98,
+          1.6,
+          0.0
+        ],
+        "knee": [
+          -1.9,
+          2.5,
+          0.0
+        ],
+        "ankle": [
+          -2.6,
+          0.0,
+          0.0
+        ],
+        "pole": [
+          0,
+          1,
+          0
+        ],
+        "name": "r2",
+        "group": 0
+      },
+      {
+        "coxa": "l3_coxa",
+        "coxa_pivot": [
+          0.72,
+          1.58,
+          -0.95
+        ],
+        "upper": "l3_femur",
+        "lower": "l3_tibia",
+        "hip": [
+          0.98,
+          1.6,
+          -1.026
+        ],
+        "knee": [
+          1.9,
+          2.5,
+          -1.587
+        ],
+        "ankle": [
+          2.6,
+          0.0,
+          -1.9532
+        ],
+        "pole": [
+          0,
+          1,
+          0
+        ],
+        "name": "l3",
+        "group": 0
+      },
+      {
+        "coxa": "r3_coxa",
+        "coxa_pivot": [
+          -0.72,
+          1.58,
+          -0.95
+        ],
+        "upper": "r3_femur",
+        "lower": "r3_tibia",
+        "hip": [
+          -0.98,
+          1.6,
+          -1.026
+        ],
+        "knee": [
+          -1.9,
+          2.5,
+          -1.587
+        ],
+        "ankle": [
+          -2.6,
+          0.0,
+          -1.9532
+        ],
+        "pole": [
+          0,
+          1,
+          0
+        ],
+        "name": "r3",
+        "group": 1
+      }
+    ]
+  },
+  "recipe": {
+    "ingredients": [
+      {
+        "item": "minecraft:gold_ingot",
+        "count": 6
+      },
+      {
+        "item": "minecraft:black_dye",
+        "count": 2
+      },
+      {
+        "item": "minecraft:iron_ingot",
+        "count": 2
+      }
+    ]
+  },
+  "model": "mfx:models/obj/parts/lg_recluse.obj",
+  "texture": "mfx:textures/vehicle/part/lg_recluse.png"
+}

@@ -1,0 +1,108 @@
+{
+  "slot": "legs",
+  "display_name": "LG-T3 Colossus",
+  "maker": "Talos Heavy Machinery",
+  "tier": 4,
+  "weight": 46.0,
+  "armor": 900,
+  "points": {
+    "hip": [
+      0,
+      3.7199999999999998,
+      0
+    ]
+  },
+  "stats": {
+    "type": "biped",
+    "load_limit": 130,
+    "walk_speed": 0.22,
+    "boost_multiplier": 0.85,
+    "jump": 0.6,
+    "turn_rate": 10,
+    "step_height": 1.3,
+    "traction": 0.42,
+    "qb_multiplier": 0.7,
+    "hover_multiplier": 0.7,
+    "collision_width": 2.4,
+    "step_length": 1.8,
+    "step_lift": 0.4,
+    "step_ticks": 9,
+    "pelvis_groups": [
+      "pelvis"
+    ],
+    "chains": [
+      {
+        "name": "l",
+        "upper": "l_thigh",
+        "lower": "l_shin",
+        "foot": "l_foot",
+        "hip": [
+          0.68,
+          3.3,
+          0.0
+        ],
+        "knee": [
+          0.72,
+          1.86,
+          0.4
+        ],
+        "ankle": [
+          0.72,
+          0.5,
+          -0.02
+        ],
+        "pole": [
+          0,
+          0,
+          1
+        ],
+        "group": 0
+      },
+      {
+        "name": "r",
+        "upper": "r_thigh",
+        "lower": "r_shin",
+        "foot": "r_foot",
+        "hip": [
+          -0.68,
+          3.3,
+          0.0
+        ],
+        "knee": [
+          -0.72,
+          1.86,
+          0.4
+        ],
+        "ankle": [
+          -0.72,
+          0.5,
+          -0.02
+        ],
+        "pole": [
+          0,
+          0,
+          1
+        ],
+        "group": 1
+      }
+    ]
+  },
+  "recipe": {
+    "ingredients": [
+      {
+        "item": "minecraft:diamond",
+        "count": 8
+      },
+      {
+        "item": "minecraft:iron_block",
+        "count": 2
+      },
+      {
+        "item": "minecraft:iron_ingot",
+        "count": 2
+      }
+    ]
+  },
+  "model": "mfx:models/obj/parts/lg_colossus.obj",
+  "texture": "mfx:textures/vehicle/part/lg_colossus.png"
+}

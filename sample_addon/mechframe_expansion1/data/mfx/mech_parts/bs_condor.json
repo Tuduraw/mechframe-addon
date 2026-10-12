@@ -1,0 +1,228 @@
+{
+  "slot": "booster",
+  "display_name": "BS-TC Condor Pack",
+  "maker": "Talos Heavy Machinery",
+  "tier": 5,
+  "transform_set": "condor",
+  "weight": 11.0,
+  "armor": 220,
+  "stats": {
+    "boost_speed": 0.88,
+    "qb_speed": 2.05,
+    "qb_cost": 380,
+    "qb_cooldown": 13,
+    "hover_thrust": 0.14,
+    "hover_cost": 15,
+    "air_boost_cost": 7,
+    "nozzles": [
+      {
+        "pos": [
+          0.3,
+          -0.64,
+          -0.6
+        ],
+        "dir": [
+          0,
+          -0.4,
+          -0.92
+        ],
+        "size": 0.36
+      },
+      {
+        "pos": [
+          -0.3,
+          -0.64,
+          -0.6
+        ],
+        "dir": [
+          0,
+          -0.4,
+          -0.92
+        ],
+        "size": 0.36
+      }
+    ],
+    "jet_nozzles": [
+      {
+        "pos": [
+          -0.5173,
+          0.3592,
+          1.9105
+        ],
+        "dir": [
+          0.0,
+          -0.0,
+          -1.0
+        ],
+        "size": 0.5
+      },
+      {
+        "pos": [
+          0.5173,
+          0.3592,
+          1.9105
+        ],
+        "dir": [
+          0.0,
+          0.0,
+          -1.0
+        ],
+        "size": 0.5
+      },
+      {
+        "pos": [
+          -0.3,
+          0.4922,
+          1.3205
+        ],
+        "dir": [
+          0.0,
+          -0.9171,
+          -0.3987
+        ],
+        "size": 0.4
+      },
+      {
+        "pos": [
+          0.3,
+          0.4922,
+          1.3205
+        ],
+        "dir": [
+          0.0,
+          -0.9171,
+          -0.3987
+        ],
+        "size": 0.4
+      }
+    ]
+  },
+  "jet_pose": {
+    "pack": {
+      "pos": [
+        -0.0,
+        1.09216,
+        1.96052
+      ],
+      "quat": [
+        -0.0,
+        0.707107,
+        0.707107,
+        0.0
+      ],
+      "delay": 0.1,
+      "parent": "core:core",
+      "joint": [
+        0.0,
+        0.0,
+        0.0
+      ]
+    },
+    "l_wing": {
+      "pos": [
+        -0.97662,
+        1.13835,
+        2.14052
+      ],
+      "quat": [
+        0.519554,
+        0.47965,
+        0.519554,
+        -0.47965
+      ],
+      "delay": 0.45,
+      "parent": "booster:pack",
+      "joint": [
+        0.42,
+        0.6,
+        -0.52
+      ]
+    },
+    "l_wing_out": {
+      "pos": [
+        -3.06276,
+        0.14153,
+        2.14052
+      ],
+      "quat": [
+        0.47965,
+        -0.519554,
+        0.47965,
+        0.519554
+      ],
+      "delay": 0.7,
+      "parent": "booster:l_wing",
+      "joint": [
+        0.5,
+        -1.0,
+        -0.58
+      ]
+    },
+    "r_wing": {
+      "pos": [
+        0.97662,
+        1.13835,
+        2.14052
+      ],
+      "quat": [
+        0.519554,
+        -0.47965,
+        -0.519554,
+        -0.47965
+      ],
+      "delay": 0.45,
+      "parent": "booster:pack",
+      "joint": [
+        -0.42,
+        0.6,
+        -0.52
+      ]
+    },
+    "r_wing_out": {
+      "pos": [
+        3.06276,
+        0.14153,
+        2.14052
+      ],
+      "quat": [
+        0.47965,
+        0.519554,
+        -0.47965,
+        0.519554
+      ],
+      "delay": 0.7,
+      "parent": "booster:r_wing",
+      "joint": [
+        -0.5,
+        -1.0,
+        -0.58
+      ]
+    }
+  },
+  "recipe": {
+    "ingredients": [
+      {
+        "item": "minecraft:diamond",
+        "count": 6
+      },
+      {
+        "item": "minecraft:iron_block",
+        "count": 2
+      },
+      {
+        "item": "minecraft:iron_ingot",
+        "count": 2
+      },
+      {
+        "item": "minecraft:fire_charge",
+        "count": 2
+      },
+      {
+        "item": "minecraft:phantom_membrane",
+        "count": 2
+      }
+    ]
+  },
+  "model": "mfx:models/obj/parts/bs_condor.obj",
+  "texture": "mfx:textures/vehicle/part/bs_condor.png"
+}

@@ -1,0 +1,69 @@
+{
+  "slot": "head",
+  "display_name": "HD-TC Condor Head",
+  "maker": "Talos Heavy Machinery",
+  "tier": 5,
+  "weight": 3.6,
+  "armor": 220,
+  "points": {
+    "top": [
+      0,
+      0.46,
+      0
+    ]
+  },
+  "stats": {
+    "lock_range": 100,
+    "lock_cone": 12,
+    "stability": 1.3
+  },
+  "transform_set": "condor",
+  "jet_pose": {
+    "head": {
+      "pos": [
+        -0.0,
+        1.95216,
+        2.68052
+      ],
+      "quat": [
+        -0.0,
+        0.0,
+        1.0,
+        0.0
+      ],
+      "delay": 0.2,
+      "parent": "core:core",
+      "joint": [
+        0.0,
+        0.0,
+        0.0
+      ]
+    }
+  },
+  "recipe": {
+    "ingredients": [
+      {
+        "item": "minecraft:diamond",
+        "count": 4
+      },
+      {
+        "item": "minecraft:iron_block",
+        "count": 1
+      },
+      {
+        "item": "minecraft:iron_ingot",
+        "count": 2
+      },
+      {
+        "item": "minecraft:glass",
+        "count": 1
+      },
+      {
+        "item": "minecraft:phantom_membrane",
+        "count": 2
+      }
+    ]
+  },
+  "model": "mfx:models/obj/parts/hd_condor.obj",
+  "texture": "mfx:textures/vehicle/part/hd_condor.png"
+}

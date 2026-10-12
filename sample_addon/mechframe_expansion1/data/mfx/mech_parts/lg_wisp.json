@@ -1,0 +1,104 @@
+{
+  "slot": "legs",
+  "display_name": "LG-V1 Wisp",
+  "maker": "Vesper Aeronautics",
+  "tier": 2,
+  "weight": 9.0,
+  "armor": 150,
+  "points": {
+    "hip": [
+      0,
+      3.2800000000000002,
+      0
+    ]
+  },
+  "stats": {
+    "type": "biped",
+    "load_limit": 32,
+    "walk_speed": 0.4,
+    "boost_multiplier": 1.15,
+    "jump": 1.1,
+    "turn_rate": 20,
+    "step_height": 1.2,
+    "traction": 0.42,
+    "qb_multiplier": 1.15,
+    "hover_multiplier": 1.1,
+    "collision_width": 1.5,
+    "step_length": 1.7,
+    "step_lift": 0.55,
+    "step_ticks": 5,
+    "pelvis_groups": [
+      "pelvis"
+    ],
+    "chains": [
+      {
+        "name": "l",
+        "upper": "l_thigh",
+        "lower": "l_shin",
+        "foot": "l_foot",
+        "hip": [
+          0.48,
+          3.1,
+          0.0
+        ],
+        "knee": [
+          0.5,
+          1.72,
+          0.38
+        ],
+        "ankle": [
+          0.52,
+          0.36,
+          -0.06
+        ],
+        "pole": [
+          0,
+          0,
+          1
+        ],
+        "group": 0
+      },
+      {
+        "name": "r",
+        "upper": "r_thigh",
+        "lower": "r_shin",
+        "foot": "r_foot",
+        "hip": [
+          -0.48,
+          3.1,
+          0.0
+        ],
+        "knee": [
+          -0.5,
+          1.72,
+          0.38
+        ],
+        "ankle": [
+          -0.52,
+          0.36,
+          -0.06
+        ],
+        "pole": [
+          0,
+          0,
+          1
+        ],
+        "group": 1
+      }
+    ]
+  },
+  "recipe": {
+    "ingredients": [
+      {
+        "item": "minecraft:iron_ingot",
+        "count": 6
+      },
+      {
+        "item": "minecraft:feather",
+        "count": 2
+      }
+    ]
+  },
+  "model": "mfx:models/obj/parts/lg_wisp.obj",
+  "texture": "mfx:textures/vehicle/part/lg_wisp.png"
+}

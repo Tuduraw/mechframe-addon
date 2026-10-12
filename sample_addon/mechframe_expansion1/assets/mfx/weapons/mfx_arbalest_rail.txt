@@ -1,0 +1,19 @@
+; Mech Frame Expansion 1 - WI-X2 Arbalest Rail
+DisplayName = WI-X2 Arbalest Rail
+Type = MachineGun2
+Power = 95
+Acceleration = 16.0
+Gravity = 0.0
+Accuracy = 0.15
+Round = 4
+ReloadTime = 90
+Delay = 16
+MaxAmmo = 48
+SuppliedNum = 4
+Item = 2, iron_ingot
+Item = 2, prismarine_crystals
+Sound = mf_laser
+SoundVolume = 2.6
+ModelBullet = mf_laser
+Recoil = 1.2
+AddMuzzleFlash = 0.9, 0.4, 1, 200, 90, 255, 230

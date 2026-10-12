@@ -1,0 +1,70 @@
+{
+  "slot": "core",
+  "display_name": "CR-C2 Facet",
+  "maker": "Corvid Systems",
+  "tier": 3,
+  "weight": 16.0,
+  "armor": 560,
+  "points": {
+    "neck": [
+      0,
+      1.6,
+      0.0
+    ],
+    "shoulder_l": [
+      1.04,
+      1.24,
+      0
+    ],
+    "back": [
+      0,
+      0.9,
+      -0.78
+    ],
+    "back_l": [
+      0.34,
+      1.56,
+      -0.5
+    ],
+    "seat": [
+      0,
+      0.84,
+      0.06
+    ],
+    "eye": [
+      0,
+      1.84,
+      0.3
+    ]
+  },
+  "stats": {
+    "en_capacity": 1750,
+    "en_recharge": 36,
+    "recharge_delay": 11,
+    "defense": 1.0,
+    "fuel": 800,
+    "stability": 1.0
+  },
+  "recipe": {
+    "ingredients": [
+      {
+        "item": "minecraft:gold_ingot",
+        "count": 5
+      },
+      {
+        "item": "minecraft:black_dye",
+        "count": 2
+      },
+      {
+        "item": "minecraft:iron_ingot",
+        "count": 2
+      },
+      {
+        "item": "minecraft:redstone_block",
+        "count": 1
+      }
+    ]
+  },
+  "model": "mfx:models/obj/parts/cr_facet.obj",
+  "texture": "mfx:textures/vehicle/part/cr_facet.png"
+}

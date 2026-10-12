@@ -1,0 +1,130 @@
+{
+  "slot": "arms",
+  "display_name": "AM-VK Kite Arms",
+  "maker": "Vesper Aeronautics",
+  "tier": 4,
+  "transform_set": "kite",
+  "weight": 5.2,
+  "armor": 130,
+  "points": {
+    "elbow": [
+      0.1,
+      -0.95,
+      0.06
+    ],
+    "grip": [
+      0.1,
+      -1.02,
+      0.92
+    ]
+  },
+  "stats": {
+    "load_limit": 12,
+    "aim_speed": 490,
+    "recoil_control": 0.75
+  },
+  "jet_pose": {
+    "l_upper": {
+      "pos": [
+        -0.96,
+        1.13345,
+        1.97198
+      ],
+      "quat": [
+        0.024678,
+        0.706676,
+        0.706676,
+        -0.024678
+      ],
+      "delay": 0.1,
+      "parent": "core:core",
+      "joint": [
+        0.0,
+        0.0,
+        0.0
+      ]
+    },
+    "l_fore": {
+      "pos": [
+        -0.89319,
+        0.29053,
+        0.81536
+      ],
+      "quat": [
+        -0.025231,
+        -0.08813,
+        0.993501,
+        -0.067467
+      ],
+      "delay": 0.15,
+      "parent": "arms:l_upper",
+      "joint": [
+        0.1,
+        -0.95,
+        0.06
+      ]
+    },
+    "r_upper": {
+      "pos": [
+        0.96,
+        1.13345,
+        1.97198
+      ],
+      "quat": [
+        -0.024678,
+        0.706676,
+        0.706676,
+        0.024678
+      ],
+      "delay": 0.1,
+      "parent": "core:core",
+      "joint": [
+        0.0,
+        0.0,
+        0.0
+      ]
+    },
+    "r_fore": {
+      "pos": [
+        0.89319,
+        0.29053,
+        0.81536
+      ],
+      "quat": [
+        0.025231,
+        -0.08813,
+        0.993501,
+        0.067467
+      ],
+      "delay": 0.15,
+      "parent": "arms:r_upper",
+      "joint": [
+        -0.1,
+        -0.95,
+        0.06
+      ]
+    }
+  },
+  "recipe": {
+    "ingredients": [
+      {
+        "item": "minecraft:diamond",
+        "count": 6
+      },
+      {
+        "item": "minecraft:feather",
+        "count": 2
+      },
+      {
+        "item": "minecraft:iron_ingot",
+        "count": 2
+      },
+      {
+        "item": "minecraft:phantom_membrane",
+        "count": 2
+      }
+    ]
+  },
+  "model": "mfx:models/obj/parts/am_kite.obj",
+  "texture": "mfx:textures/vehicle/part/am_kite.png"
+}

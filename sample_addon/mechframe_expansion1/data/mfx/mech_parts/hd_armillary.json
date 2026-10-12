@@ -1,0 +1,42 @@
+{
+  "slot": "head",
+  "display_name": "HD-X5 Armillary",
+  "maker": "Orrery Experimental",
+  "tier": 4,
+  "weight": 2.4,
+  "armor": 90,
+  "points": {
+    "top": [
+      0,
+      0.6,
+      0
+    ]
+  },
+  "stats": {
+    "lock_range": 190,
+    "lock_cone": 6,
+    "stability": 1.05
+  },
+  "recipe": {
+    "ingredients": [
+      {
+        "item": "minecraft:diamond",
+        "count": 4
+      },
+      {
+        "item": "minecraft:ender_pearl",
+        "count": 1
+      },
+      {
+        "item": "minecraft:iron_ingot",
+        "count": 2
+      },
+      {
+        "item": "minecraft:glass",
+        "count": 1
+      }
+    ]
+  },
+  "model": "mfx:models/obj/parts/hd_armillary.obj",
+  "texture": "mfx:textures/vehicle/part/hd_armillary.png"
+}

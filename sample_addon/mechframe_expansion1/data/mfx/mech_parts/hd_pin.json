@@ -1,0 +1,38 @@
+{
+  "slot": "head",
+  "display_name": "HD-V1 Pin",
+  "maker": "Vesper Aeronautics",
+  "tier": 2,
+  "weight": 1.0,
+  "armor": 70,
+  "points": {
+    "top": [
+      0,
+      0.36,
+      0
+    ]
+  },
+  "stats": {
+    "lock_range": 130,
+    "lock_cone": 14,
+    "stability": 0.85
+  },
+  "recipe": {
+    "ingredients": [
+      {
+        "item": "minecraft:iron_ingot",
+        "count": 2
+      },
+      {
+        "item": "minecraft:feather",
+        "count": 1
+      },
+      {
+        "item": "minecraft:glass",
+        "count": 1
+      }
+    ]
+  },
+  "model": "mfx:models/obj/parts/hd_pin.obj",
+  "texture": "mfx:textures/vehicle/part/hd_pin.png"
+}

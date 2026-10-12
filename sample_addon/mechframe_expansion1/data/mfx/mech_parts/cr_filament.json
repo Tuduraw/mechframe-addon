@@ -1,0 +1,66 @@
+{
+  "slot": "core",
+  "display_name": "CR-V1 Filament",
+  "maker": "Vesper Aeronautics",
+  "tier": 2,
+  "weight": 8.0,
+  "armor": 260,
+  "points": {
+    "neck": [
+      0,
+      1.46,
+      0.0
+    ],
+    "shoulder_l": [
+      0.96,
+      1.2,
+      0
+    ],
+    "back": [
+      0,
+      0.86,
+      -0.74
+    ],
+    "back_l": [
+      0.32,
+      1.42,
+      -0.46
+    ],
+    "seat": [
+      0,
+      0.82,
+      0.06
+    ],
+    "eye": [
+      0,
+      1.72,
+      0.3
+    ]
+  },
+  "stats": {
+    "en_capacity": 1300,
+    "en_recharge": 50,
+    "recharge_delay": 8,
+    "defense": 0.8,
+    "fuel": 650,
+    "stability": 0.85
+  },
+  "recipe": {
+    "ingredients": [
+      {
+        "item": "minecraft:iron_ingot",
+        "count": 5
+      },
+      {
+        "item": "minecraft:feather",
+        "count": 2
+      },
+      {
+        "item": "minecraft:redstone_block",
+        "count": 1
+      }
+    ]
+  },
+  "model": "mfx:models/obj/parts/cr_filament.obj",
+  "texture": "mfx:textures/vehicle/part/cr_filament.png"
+}

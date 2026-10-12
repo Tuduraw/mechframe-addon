@@ -1,0 +1,67 @@
+{
+  "slot": "booster",
+  "display_name": "BS-C2 Shroud",
+  "maker": "Corvid Systems",
+  "tier": 3,
+  "weight": 5.0,
+  "armor": 110,
+  "stats": {
+    "boost_speed": 1.02,
+    "qb_speed": 2.5,
+    "qb_cost": 290,
+    "qb_cooldown": 10,
+    "hover_thrust": 0.16,
+    "hover_cost": 11,
+    "air_boost_cost": 5,
+    "nozzles": [
+      {
+        "pos": [
+          0.3,
+          -0.58,
+          -0.46
+        ],
+        "dir": [
+          0,
+          -0.6,
+          -0.8
+        ],
+        "size": 0.3
+      },
+      {
+        "pos": [
+          -0.3,
+          -0.58,
+          -0.46
+        ],
+        "dir": [
+          0,
+          -0.6,
+          -0.8
+        ],
+        "size": 0.3
+      }
+    ]
+  },
+  "recipe": {
+    "ingredients": [
+      {
+        "item": "minecraft:gold_ingot",
+        "count": 4
+      },
+      {
+        "item": "minecraft:black_dye",
+        "count": 2
+      },
+      {
+        "item": "minecraft:iron_ingot",
+        "count": 2
+      },
+      {
+        "item": "minecraft:fire_charge",
+        "count": 2
+      }
+    ]
+  },
+  "model": "mfx:models/obj/parts/bs_shroud.obj",
+  "texture": "mfx:textures/vehicle/part/bs_shroud.png"
+}

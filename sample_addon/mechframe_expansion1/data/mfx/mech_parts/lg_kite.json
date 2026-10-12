@@ -1,0 +1,255 @@
+{
+  "slot": "legs",
+  "display_name": "LG-VK Kite Legs",
+  "maker": "Vesper Aeronautics",
+  "tier": 4,
+  "transform_set": "kite",
+  "weight": 9.5,
+  "armor": 160,
+  "points": {
+    "hip": [
+      0,
+      3.18,
+      0
+    ]
+  },
+  "stats": {
+    "type": "biped",
+    "load_limit": 34,
+    "walk_speed": 0.38,
+    "boost_multiplier": 1.12,
+    "jump": 1.05,
+    "turn_rate": 20,
+    "step_height": 1.2,
+    "traction": 0.4,
+    "qb_multiplier": 1.1,
+    "hover_multiplier": 1.2,
+    "collision_width": 1.5,
+    "step_length": 1.7,
+    "step_lift": 0.55,
+    "step_ticks": 5,
+    "pelvis_groups": [
+      "pelvis"
+    ],
+    "chains": [
+      {
+        "name": "l",
+        "upper": "l_thigh",
+        "lower": "l_shin",
+        "foot": "l_foot",
+        "hip": [
+          0.46,
+          3.0,
+          0.0
+        ],
+        "knee": [
+          0.48,
+          1.66,
+          0.36
+        ],
+        "ankle": [
+          0.5,
+          0.36,
+          -0.06
+        ],
+        "pole": [
+          0,
+          0,
+          1
+        ],
+        "group": 0
+      },
+      {
+        "name": "r",
+        "upper": "r_thigh",
+        "lower": "r_shin",
+        "foot": "r_foot",
+        "hip": [
+          -0.46,
+          3.0,
+          0.0
+        ],
+        "knee": [
+          -0.48,
+          1.66,
+          0.36
+        ],
+        "ankle": [
+          -0.5,
+          0.36,
+          -0.06
+        ],
+        "pole": [
+          0,
+          0,
+          1
+        ],
+        "group": 1
+      }
+    ]
+  },
+  "jet_pose": {
+    "pelvis": {
+      "pos": [
+        0.0,
+        1.13345,
+        -2.40802
+      ],
+      "quat": [
+        -0.0,
+        0.707107,
+        0.707107,
+        0.0
+      ],
+      "delay": 0.0,
+      "parent": "core:core",
+      "joint": [
+        0.0,
+        3.18,
+        0.0
+      ]
+    },
+    "l_thigh": {
+      "pos": [
+        0.35319,
+        0.35604,
+        -2.29835
+      ],
+      "quat": [
+        -0.00514,
+        0.793529,
+        0.608489,
+        0.00514
+      ],
+      "delay": 0.0,
+      "parent": "legs:pelvis",
+      "joint": [
+        0.46,
+        3.0,
+        0.0
+      ]
+    },
+    "l_shin": {
+      "pos": [
+        0.1318,
+        1.58451,
+        -2.47875
+      ],
+      "quat": [
+        -0.204977,
+        0.551621,
+        0.762126,
+        -0.269931
+      ],
+      "delay": 0.12,
+      "parent": "legs:l_thigh",
+      "joint": [
+        0.48,
+        1.66,
+        0.36
+      ]
+    },
+    "l_foot": {
+      "pos": [
+        0.46376,
+        1.18732,
+        -2.22198
+      ],
+      "quat": [
+        -0.34832,
+        0.937376,
+        0.0,
+        0.0
+      ],
+      "delay": 0.25,
+      "parent": "legs:l_shin",
+      "joint": [
+        0.5,
+        0.36,
+        -0.06
+      ]
+    },
+    "r_thigh": {
+      "pos": [
+        -0.35319,
+        0.35604,
+        -2.29835
+      ],
+      "quat": [
+        0.00514,
+        0.793529,
+        0.608489,
+        -0.00514
+      ],
+      "delay": 0.0,
+      "parent": "legs:pelvis",
+      "joint": [
+        -0.46,
+        3.0,
+        0.0
+      ]
+    },
+    "r_shin": {
+      "pos": [
+        -0.1318,
+        1.58451,
+        -2.47875
+      ],
+      "quat": [
+        0.204977,
+        0.551621,
+        0.762126,
+        0.269931
+      ],
+      "delay": 0.12,
+      "parent": "legs:r_thigh",
+      "joint": [
+        -0.48,
+        1.66,
+        0.36
+      ]
+    },
+    "r_foot": {
+      "pos": [
+        -0.46376,
+        1.18732,
+        -2.22198
+      ],
+      "quat": [
+        0.34832,
+        0.937376,
+        0.0,
+        0.0
+      ],
+      "delay": 0.25,
+      "parent": "legs:r_shin",
+      "joint": [
+        -0.5,
+        0.36,
+        -0.06
+      ]
+    }
+  },
+  "recipe": {
+    "ingredients": [
+      {
+        "item": "minecraft:diamond",
+        "count": 8
+      },
+      {
+        "item": "minecraft:feather",
+        "count": 2
+      },
+      {
+        "item": "minecraft:iron_ingot",
+        "count": 2
+      },
+      {
+        "item": "minecraft:phantom_membrane",
+        "count": 2
+      }
+    ]
+  },
+  "model": "mfx:models/obj/parts/lg_kite.obj",
+  "texture": "mfx:textures/vehicle/part/lg_kite.png"
+}

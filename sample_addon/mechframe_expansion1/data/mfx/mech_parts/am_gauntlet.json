@@ -1,0 +1,43 @@
+{
+  "slot": "arms",
+  "display_name": "AM-T3 Gauntlet",
+  "maker": "Talos Heavy Machinery",
+  "tier": 4,
+  "weight": 18.0,
+  "armor": 460,
+  "points": {
+    "elbow": [
+      0.14,
+      -1.0,
+      0.06
+    ],
+    "grip": [
+      0.14,
+      -1.1,
+      1.0
+    ]
+  },
+  "stats": {
+    "load_limit": 36,
+    "aim_speed": 260,
+    "recoil_control": 1.6
+  },
+  "recipe": {
+    "ingredients": [
+      {
+        "item": "minecraft:diamond",
+        "count": 6
+      },
+      {
+        "item": "minecraft:iron_block",
+        "count": 2
+      },
+      {
+        "item": "minecraft:iron_ingot",
+        "count": 2
+      }
+    ]
+  },
+  "model": "mfx:models/obj/parts/am_gauntlet.obj",
+  "texture": "mfx:textures/vehicle/part/am_gauntlet.png"
+}

@@ -1,0 +1,178 @@
+{
+  "slot": "legs",
+  "display_name": "LG-V3 Gnat",
+  "maker": "Vesper Aeronautics",
+  "tier": 2,
+  "weight": 13.0,
+  "armor": 190,
+  "points": {
+    "hip": [
+      0,
+      2.1999999999999997,
+      0
+    ]
+  },
+  "stats": {
+    "type": "quad",
+    "load_limit": 40,
+    "walk_speed": 0.38,
+    "boost_multiplier": 1.12,
+    "jump": 0.95,
+    "turn_rate": 19,
+    "step_height": 1.5,
+    "traction": 0.4,
+    "qb_multiplier": 1.1,
+    "hover_multiplier": 1.4,
+    "collision_width": 2.0,
+    "step_length": 1.6,
+    "step_lift": 0.7,
+    "step_ticks": 5,
+    "pelvis_groups": [
+      "pelvis"
+    ],
+    "chains": [
+      {
+        "name": "fl",
+        "coxa": "fl_coxa",
+        "coxa_pivot": [
+          0.223,
+          1.82,
+          0.2007
+        ],
+        "upper": "fl_femur",
+        "lower": "fl_tibia",
+        "hip": [
+          0.4162,
+          1.84,
+          0.3746
+        ],
+        "knee": [
+          1.271,
+          3.04,
+          1.1439
+        ],
+        "ankle": [
+          2.3116,
+          0.02,
+          2.0805
+        ],
+        "pole": [
+          0,
+          1,
+          0
+        ],
+        "group": 0
+      },
+      {
+        "name": "fr",
+        "coxa": "fr_coxa",
+        "coxa_pivot": [
+          -0.223,
+          1.82,
+          0.2007
+        ],
+        "upper": "fr_femur",
+        "lower": "fr_tibia",
+        "hip": [
+          -0.4162,
+          1.84,
+          0.3746
+        ],
+        "knee": [
+          -1.271,
+          3.04,
+          1.1439
+        ],
+        "ankle": [
+          -2.3116,
+          0.02,
+          2.0805
+        ],
+        "pole": [
+          0,
+          1,
+          0
+        ],
+        "group": 1
+      },
+      {
+        "name": "rl",
+        "coxa": "rl_coxa",
+        "coxa_pivot": [
+          0.223,
+          1.82,
+          -0.2007
+        ],
+        "upper": "rl_femur",
+        "lower": "rl_tibia",
+        "hip": [
+          0.4162,
+          1.84,
+          -0.3746
+        ],
+        "knee": [
+          1.271,
+          3.04,
+          -1.1439
+        ],
+        "ankle": [
+          2.3116,
+          0.02,
+          -2.0805
+        ],
+        "pole": [
+          0,
+          1,
+          0
+        ],
+        "group": 1
+      },
+      {
+        "name": "rr",
+        "coxa": "rr_coxa",
+        "coxa_pivot": [
+          -0.223,
+          1.82,
+          -0.2007
+        ],
+        "upper": "rr_femur",
+        "lower": "rr_tibia",
+        "hip": [
+          -0.4162,
+          1.84,
+          -0.3746
+        ],
+        "knee": [
+          -1.271,
+          3.04,
+          -1.1439
+        ],
+        "ankle": [
+          -2.3116,
+          0.02,
+          -2.0805
+        ],
+        "pole": [
+          0,
+          1,
+          0
+        ],
+        "group": 0
+      }
+    ]
+  },
+  "recipe": {
+    "ingredients": [
+      {
+        "item": "minecraft:iron_ingot",
+        "count": 6
+      },
+      {
+        "item": "minecraft:feather",
+        "count": 2
+      }
+    ]
+  },
+  "model": "mfx:models/obj/parts/lg_gnat.obj",
+  "texture": "mfx:textures/vehicle/part/lg_gnat.png"
+}

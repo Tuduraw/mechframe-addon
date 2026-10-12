@@ -1,0 +1,39 @@
+{
+  "entity_type": "mechframe:mech",
+  "model": "mfx:models/obj/parts/cr_corvus.obj",
+  "texture": "mfx:textures/vehicle/part/cr_corvus.png",
+  "width": 1.8,
+  "height": 4.0,
+  "spawn_item": {
+    "display_name": "CV) Corvus",
+    "tier": 5
+  },
+  "hud": "mech_hud",
+  "engine_sound": "mech_engine",
+  "engine_sound_volume": 1.2,
+  "weight_type": "car",
+  "max_health": 1000,
+  "armor_damage_factor": 0.8,
+  "armor_min_damage": 1.0,
+  "armor_max_damage": 260,
+  "damage_factor": 1.0,
+  "fuel_consumption": 0.25,
+  "inventory_size": 18,
+  "submerged_damage_height": 3.0,
+  "flare_type": 1,
+  "passenger_display": {
+    "hide_entity": true
+  },
+  "mechframe": {
+    "assembly": {
+      "legs": "mfx:lg_corvus",
+      "core": "mfx:cr_corvus",
+      "head": "mfx:hd_corvus",
+      "arms": "mfx:am_corvus",
+      "booster": "mfx:bs_corvus",
+      "r_arm": "mechframe:wa_laser",
+      "l_arm": "mechframe:wa_rifle",
+      "r_back": "mechframe:wb_missile"
+    }
+  }
+}

@@ -1,0 +1,69 @@
+{
+  "slot": "head",
+  "display_name": "HD-CC Corvus Head",
+  "maker": "Corvid Systems",
+  "tier": 5,
+  "transform_set": "corvus",
+  "weight": 2.2,
+  "armor": 120,
+  "points": {
+    "top": [
+      0,
+      0.34,
+      0
+    ]
+  },
+  "stats": {
+    "lock_range": 125,
+    "lock_cone": 15,
+    "stability": 1.0
+  },
+  "jet_pose": {
+    "head": {
+      "pos": [
+        -0.0,
+        1.40781,
+        1.54397
+      ],
+      "quat": [
+        -0.0,
+        0.0,
+        1.0,
+        0.0
+      ],
+      "delay": 0.2,
+      "parent": "core:core",
+      "joint": [
+        0.0,
+        0.0,
+        0.0
+      ]
+    }
+  },
+  "recipe": {
+    "ingredients": [
+      {
+        "item": "minecraft:diamond",
+        "count": 4
+      },
+      {
+        "item": "minecraft:black_dye",
+        "count": 1
+      },
+      {
+        "item": "minecraft:iron_ingot",
+        "count": 2
+      },
+      {
+        "item": "minecraft:glass",
+        "count": 1
+      },
+      {
+        "item": "minecraft:phantom_membrane",
+        "count": 2
+      }
+    ]
+  },
+  "model": "mfx:models/obj/parts/hd_corvus.obj",
+  "texture": "mfx:textures/vehicle/part/hd_corvus.png"
+}

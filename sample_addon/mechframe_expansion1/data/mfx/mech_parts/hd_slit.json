@@ -1,0 +1,42 @@
+{
+  "slot": "head",
+  "display_name": "HD-C2 Slit",
+  "maker": "Corvid Systems",
+  "tier": 3,
+  "weight": 2.2,
+  "armor": 120,
+  "points": {
+    "top": [
+      0,
+      0.42,
+      0
+    ]
+  },
+  "stats": {
+    "lock_range": 120,
+    "lock_cone": 15,
+    "stability": 1.0
+  },
+  "recipe": {
+    "ingredients": [
+      {
+        "item": "minecraft:gold_ingot",
+        "count": 2
+      },
+      {
+        "item": "minecraft:black_dye",
+        "count": 1
+      },
+      {
+        "item": "minecraft:iron_ingot",
+        "count": 2
+      },
+      {
+        "item": "minecraft:glass",
+        "count": 1
+      }
+    ]
+  },
+  "model": "mfx:models/obj/parts/hd_slit.obj",
+  "texture": "mfx:textures/vehicle/part/hd_slit.png"
+}

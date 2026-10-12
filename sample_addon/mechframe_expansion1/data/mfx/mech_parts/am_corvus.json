@@ -1,0 +1,130 @@
+{
+  "slot": "arms",
+  "display_name": "AM-CC Corvus Arms",
+  "maker": "Corvid Systems",
+  "tier": 5,
+  "transform_set": "corvus",
+  "weight": 10.5,
+  "armor": 280,
+  "points": {
+    "elbow": [
+      0.12,
+      -0.98,
+      0.06
+    ],
+    "grip": [
+      0.12,
+      -1.06,
+      0.95
+    ]
+  },
+  "stats": {
+    "load_limit": 20,
+    "aim_speed": 400,
+    "recoil_control": 1.0
+  },
+  "jet_pose": {
+    "l_upper": {
+      "pos": [
+        -1.04,
+        1.28781,
+        1.23397
+      ],
+      "quat": [
+        0.024678,
+        0.706676,
+        0.706676,
+        -0.024678
+      ],
+      "delay": 0.1,
+      "parent": "core:core",
+      "joint": [
+        0.0,
+        0.0,
+        0.0
+      ]
+    },
+    "l_fore": {
+      "pos": [
+        -0.9951,
+        0.41545,
+        0.03058
+      ],
+      "quat": [
+        -0.0151,
+        -0.093298,
+        0.993925,
+        -0.05639
+      ],
+      "delay": 0.15,
+      "parent": "arms:l_upper",
+      "joint": [
+        0.12,
+        -0.98,
+        0.06
+      ]
+    },
+    "r_upper": {
+      "pos": [
+        1.04,
+        1.28781,
+        1.23397
+      ],
+      "quat": [
+        -0.024678,
+        0.706676,
+        0.706676,
+        0.024678
+      ],
+      "delay": 0.1,
+      "parent": "core:core",
+      "joint": [
+        0.0,
+        0.0,
+        0.0
+      ]
+    },
+    "r_fore": {
+      "pos": [
+        0.9951,
+        0.41545,
+        0.03058
+      ],
+      "quat": [
+        0.0151,
+        -0.093298,
+        0.993925,
+        0.05639
+      ],
+      "delay": 0.15,
+      "parent": "arms:r_upper",
+      "joint": [
+        -0.12,
+        -0.98,
+        0.06
+      ]
+    }
+  },
+  "recipe": {
+    "ingredients": [
+      {
+        "item": "minecraft:diamond",
+        "count": 6
+      },
+      {
+        "item": "minecraft:black_dye",
+        "count": 2
+      },
+      {
+        "item": "minecraft:iron_ingot",
+        "count": 2
+      },
+      {
+        "item": "minecraft:phantom_membrane",
+        "count": 2
+      }
+    ]
+  },
+  "model": "mfx:models/obj/parts/am_corvus.obj",
+  "texture": "mfx:textures/vehicle/part/am_corvus.png"
+}

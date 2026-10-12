@@ -1,0 +1,155 @@
+{
+  "slot": "legs",
+  "display_name": "LG-V4 Skiff",
+  "maker": "Vesper Aeronautics",
+  "tier": 2,
+  "weight": 15.0,
+  "armor": 260,
+  "points": {
+    "hip": [
+      0,
+      1.4,
+      0
+    ]
+  },
+  "stats": {
+    "type": "tank",
+    "load_limit": 52,
+    "walk_speed": 0.62,
+    "boost_multiplier": 1.3,
+    "jump": 0.0,
+    "turn_rate": 15,
+    "step_height": 1.0,
+    "traction": 0.34,
+    "qb_multiplier": 1.0,
+    "hover_multiplier": 0.9,
+    "collision_width": 2.6,
+    "pelvis_groups": [
+      "ring"
+    ],
+    "wheels": [
+      {
+        "group": "l_w0",
+        "pivot": [
+          1.25,
+          0.34,
+          -1.25
+        ],
+        "radius": 0.26
+      },
+      {
+        "group": "l_w1",
+        "pivot": [
+          1.25,
+          0.34,
+          -0.4
+        ],
+        "radius": 0.26
+      },
+      {
+        "group": "l_w2",
+        "pivot": [
+          1.25,
+          0.34,
+          0.45
+        ],
+        "radius": 0.26
+      },
+      {
+        "group": "l_w3",
+        "pivot": [
+          1.25,
+          0.34,
+          1.3
+        ],
+        "radius": 0.26
+      },
+      {
+        "group": "l_idler",
+        "pivot": [
+          1.25,
+          0.42,
+          2.0
+        ],
+        "radius": 0.3
+      },
+      {
+        "group": "l_sprocket",
+        "pivot": [
+          1.25,
+          0.42,
+          -1.92
+        ],
+        "radius": 0.3
+      },
+      {
+        "group": "r_w0",
+        "pivot": [
+          -1.25,
+          0.34,
+          -1.25
+        ],
+        "radius": 0.26
+      },
+      {
+        "group": "r_w1",
+        "pivot": [
+          -1.25,
+          0.34,
+          -0.4
+        ],
+        "radius": 0.26
+      },
+      {
+        "group": "r_w2",
+        "pivot": [
+          -1.25,
+          0.34,
+          0.45
+        ],
+        "radius": 0.26
+      },
+      {
+        "group": "r_w3",
+        "pivot": [
+          -1.25,
+          0.34,
+          1.3
+        ],
+        "radius": 0.26
+      },
+      {
+        "group": "r_idler",
+        "pivot": [
+          -1.25,
+          0.42,
+          2.0
+        ],
+        "radius": 0.3
+      },
+      {
+        "group": "r_sprocket",
+        "pivot": [
+          -1.25,
+          0.42,
+          -1.92
+        ],
+        "radius": 0.3
+      }
+    ]
+  },
+  "recipe": {
+    "ingredients": [
+      {
+        "item": "minecraft:iron_ingot",
+        "count": 6
+      },
+      {
+        "item": "minecraft:feather",
+        "count": 2
+      }
+    ]
+  },
+  "model": "mfx:models/obj/parts/lg_skiff.obj",
+  "texture": "mfx:textures/vehicle/part/lg_skiff.png"
+}

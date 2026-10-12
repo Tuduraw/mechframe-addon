@@ -1,0 +1,39 @@
+{
+  "entity_type": "mechframe:mech",
+  "model": "mfx:models/obj/parts/cr_facet.obj",
+  "texture": "mfx:textures/vehicle/part/cr_facet.png",
+  "width": 1.8,
+  "height": 4.0,
+  "spawn_item": {
+    "display_name": "CV) Lynx",
+    "tier": 3
+  },
+  "hud": "mech_hud",
+  "engine_sound": "mech_engine",
+  "engine_sound_volume": 1.2,
+  "weight_type": "car",
+  "max_health": 1000,
+  "armor_damage_factor": 0.8,
+  "armor_min_damage": 1.0,
+  "armor_max_damage": 260,
+  "damage_factor": 1.0,
+  "fuel_consumption": 0.25,
+  "inventory_size": 18,
+  "submerged_damage_height": 3.0,
+  "flare_type": 0,
+  "passenger_display": {
+    "hide_entity": true
+  },
+  "mechframe": {
+    "assembly": {
+      "legs": "mfx:lg_lynx",
+      "core": "mfx:cr_facet",
+      "head": "mfx:hd_slit",
+      "arms": "mfx:am_shard",
+      "booster": "mfx:bs_shroud",
+      "r_arm": "mechframe:wa_mg",
+      "l_arm": "mechframe:wa_laser",
+      "r_back": "mechframe:wb_cannon"
+    }
+  }
+}

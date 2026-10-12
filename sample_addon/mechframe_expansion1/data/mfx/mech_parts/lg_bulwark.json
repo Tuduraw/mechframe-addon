@@ -1,0 +1,195 @@
+{
+  "slot": "legs",
+  "display_name": "LG-T5 Bulwark",
+  "maker": "Talos Heavy Machinery",
+  "tier": 4,
+  "weight": 60.0,
+  "armor": 1150,
+  "points": {
+    "hip": [
+      0,
+      1.8,
+      0
+    ]
+  },
+  "stats": {
+    "type": "tank",
+    "load_limit": 175,
+    "walk_speed": 0.36,
+    "boost_multiplier": 0.95,
+    "jump": 0.0,
+    "turn_rate": 9,
+    "step_height": 1.1,
+    "traction": 0.28,
+    "qb_multiplier": 0.6,
+    "hover_multiplier": 0.55,
+    "collision_width": 3.8,
+    "pelvis_groups": [
+      "ring"
+    ],
+    "wheels": [
+      {
+        "group": "l_t0w0",
+        "pivot": [
+          1.15,
+          0.42,
+          -1.7
+        ],
+        "radius": 0.4
+      },
+      {
+        "group": "l_t0w1",
+        "pivot": [
+          1.15,
+          0.42,
+          -0.6
+        ],
+        "radius": 0.4
+      },
+      {
+        "group": "l_t0w2",
+        "pivot": [
+          1.15,
+          0.42,
+          0.5
+        ],
+        "radius": 0.4
+      },
+      {
+        "group": "l_t0w3",
+        "pivot": [
+          1.15,
+          0.42,
+          1.6
+        ],
+        "radius": 0.4
+      },
+      {
+        "group": "l_t1w0",
+        "pivot": [
+          1.67,
+          0.42,
+          -1.7
+        ],
+        "radius": 0.4
+      },
+      {
+        "group": "l_t1w1",
+        "pivot": [
+          1.67,
+          0.42,
+          -0.6
+        ],
+        "radius": 0.4
+      },
+      {
+        "group": "l_t1w2",
+        "pivot": [
+          1.67,
+          0.42,
+          0.5
+        ],
+        "radius": 0.4
+      },
+      {
+        "group": "l_t1w3",
+        "pivot": [
+          1.67,
+          0.42,
+          1.6
+        ],
+        "radius": 0.4
+      },
+      {
+        "group": "r_t0w0",
+        "pivot": [
+          -1.15,
+          0.42,
+          -1.7
+        ],
+        "radius": 0.4
+      },
+      {
+        "group": "r_t0w1",
+        "pivot": [
+          -1.15,
+          0.42,
+          -0.6
+        ],
+        "radius": 0.4
+      },
+      {
+        "group": "r_t0w2",
+        "pivot": [
+          -1.15,
+          0.42,
+          0.5
+        ],
+        "radius": 0.4
+      },
+      {
+        "group": "r_t0w3",
+        "pivot": [
+          -1.15,
+          0.42,
+          1.6
+        ],
+        "radius": 0.4
+      },
+      {
+        "group": "r_t1w0",
+        "pivot": [
+          -1.67,
+          0.42,
+          -1.7
+        ],
+        "radius": 0.4
+      },
+      {
+        "group": "r_t1w1",
+        "pivot": [
+          -1.67,
+          0.42,
+          -0.6
+        ],
+        "radius": 0.4
+      },
+      {
+        "group": "r_t1w2",
+        "pivot": [
+          -1.67,
+          0.42,
+          0.5
+        ],
+        "radius": 0.4
+      },
+      {
+        "group": "r_t1w3",
+        "pivot": [
+          -1.67,
+          0.42,
+          1.6
+        ],
+        "radius": 0.4
+      }
+    ]
+  },
+  "recipe": {
+    "ingredients": [
+      {
+        "item": "minecraft:diamond",
+        "count": 8
+      },
+      {
+        "item": "minecraft:iron_block",
+        "count": 2
+      },
+      {
+        "item": "minecraft:iron_ingot",
+        "count": 2
+      }
+    ]
+  },
+  "model": "mfx:models/obj/parts/lg_bulwark.obj",
+  "texture": "mfx:textures/vehicle/part/lg_bulwark.png"
+}

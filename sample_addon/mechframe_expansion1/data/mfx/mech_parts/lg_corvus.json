@@ -1,0 +1,255 @@
+{
+  "slot": "legs",
+  "display_name": "LG-CC Corvus Legs",
+  "maker": "Corvid Systems",
+  "tier": 5,
+  "transform_set": "corvus",
+  "weight": 21.5,
+  "armor": 370,
+  "points": {
+    "hip": [
+      0,
+      3.3,
+      0
+    ]
+  },
+  "stats": {
+    "type": "biped",
+    "load_limit": 58,
+    "walk_speed": 0.32,
+    "boost_multiplier": 1.05,
+    "jump": 0.95,
+    "turn_rate": 16,
+    "step_height": 1.2,
+    "traction": 0.37,
+    "qb_multiplier": 1.0,
+    "hover_multiplier": 1.05,
+    "collision_width": 1.8,
+    "step_length": 1.6,
+    "step_lift": 0.5,
+    "step_ticks": 6,
+    "pelvis_groups": [
+      "pelvis"
+    ],
+    "chains": [
+      {
+        "name": "l",
+        "upper": "l_thigh",
+        "lower": "l_shin",
+        "foot": "l_foot",
+        "hip": [
+          0.5,
+          3.0,
+          0.0
+        ],
+        "knee": [
+          0.52,
+          1.72,
+          0.38
+        ],
+        "ankle": [
+          0.52,
+          0.42,
+          -0.04
+        ],
+        "pole": [
+          0,
+          0,
+          1
+        ],
+        "group": 0
+      },
+      {
+        "name": "r",
+        "upper": "r_thigh",
+        "lower": "r_shin",
+        "foot": "r_foot",
+        "hip": [
+          -0.5,
+          3.0,
+          0.0
+        ],
+        "knee": [
+          -0.52,
+          1.72,
+          0.38
+        ],
+        "ankle": [
+          -0.52,
+          0.42,
+          -0.04
+        ],
+        "pole": [
+          0,
+          0,
+          1
+        ],
+        "group": 1
+      }
+    ]
+  },
+  "jet_pose": {
+    "pelvis": {
+      "pos": [
+        0.0,
+        1.28781,
+        -3.30603
+      ],
+      "quat": [
+        -0.0,
+        0.707107,
+        0.707107,
+        0.0
+      ],
+      "delay": 0.0,
+      "parent": "core:core",
+      "joint": [
+        0.0,
+        3.3,
+        0.0
+      ]
+    },
+    "l_thigh": {
+      "pos": [
+        0.30487,
+        0.4352,
+        -3.17416
+      ],
+      "quat": [
+        -0.005351,
+        0.801408,
+        0.59807,
+        0.005351
+      ],
+      "delay": 0.0,
+      "parent": "legs:pelvis",
+      "joint": [
+        0.5,
+        3.0,
+        0.0
+      ]
+    },
+    "l_shin": {
+      "pos": [
+        0.28554,
+        0.64136,
+        -0.0046
+      ],
+      "quat": [
+        -0.012526,
+        0.885273,
+        -0.464742,
+        0.012265
+      ],
+      "delay": 0.12,
+      "parent": "legs:l_thigh",
+      "joint": [
+        0.52,
+        1.72,
+        0.38
+      ]
+    },
+    "l_foot": {
+      "pos": [
+        0.25712,
+        1.34209,
+        -0.29285
+      ],
+      "quat": [
+        -0.0,
+        0.0,
+        0.999652,
+        -0.026382
+      ],
+      "delay": 0.25,
+      "parent": "legs:l_shin",
+      "joint": [
+        0.52,
+        0.42,
+        -0.04
+      ]
+    },
+    "r_thigh": {
+      "pos": [
+        -0.30487,
+        0.4352,
+        -3.17416
+      ],
+      "quat": [
+        0.005351,
+        0.801408,
+        0.59807,
+        -0.005351
+      ],
+      "delay": 0.0,
+      "parent": "legs:pelvis",
+      "joint": [
+        -0.5,
+        3.0,
+        0.0
+      ]
+    },
+    "r_shin": {
+      "pos": [
+        -0.28554,
+        0.64136,
+        -0.0046
+      ],
+      "quat": [
+        0.012526,
+        0.885273,
+        -0.464742,
+        -0.012265
+      ],
+      "delay": 0.12,
+      "parent": "legs:r_thigh",
+      "joint": [
+        -0.52,
+        1.72,
+        0.38
+      ]
+    },
+    "r_foot": {
+      "pos": [
+        -0.25712,
+        1.34209,
+        -0.29285
+      ],
+      "quat": [
+        -0.0,
+        0.0,
+        0.999652,
+        0.026382
+      ],
+      "delay": 0.25,
+      "parent": "legs:r_shin",
+      "joint": [
+        -0.52,
+        0.42,
+        -0.04
+      ]
+    }
+  },
+  "recipe": {
+    "ingredients": [
+      {
+        "item": "minecraft:diamond",
+        "count": 8
+      },
+      {
+        "item": "minecraft:black_dye",
+        "count": 2
+      },
+      {
+        "item": "minecraft:iron_ingot",
+        "count": 2
+      },
+      {
+        "item": "minecraft:phantom_membrane",
+        "count": 2
+      }
+    ]
+  },
+  "model": "mfx:models/obj/parts/lg_corvus.obj",
+  "texture": "mfx:textures/vehicle/part/lg_corvus.png"
+}

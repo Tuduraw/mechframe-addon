@@ -192,6 +192,34 @@ def icons():
         d.line([2, k, 13, k], fill=(100, 106, 114, 255))
     d.rectangle([6, 6, 9, 9], fill=(48, 50, 54, 255))
     save_icon("fabricator_top", top, "block")
+    # command post faces: a hardened red-striped console with a radar dish on top
+    side = Image.new("RGBA", (16, 16), (70, 72, 78, 255))
+    d = ImageDraw.Draw(side)
+    d.rectangle([0, 0, 15, 15], outline=(36, 36, 40, 255))
+    for x in range(-4, 16, 4):
+        d.polygon([(x, 15), (x + 2, 15), (x + 6, 11), (x + 4, 11)], fill=(200, 50, 40, 255))
+    d.rectangle([3, 3, 12, 8], fill=(30, 34, 40, 255), outline=(20, 20, 24, 255))
+    d.line([4, 6, 7, 5], fill=(255, 90, 60, 255))
+    d.line([7, 5, 9, 7], fill=(255, 90, 60, 255))
+    d.point([(10, 4), (11, 4)], fill=(255, 210, 60, 255))
+    save_icon("command_post_side", side, "block")
+    top = Image.new("RGBA", (16, 16), (84, 86, 92, 255))
+    d = ImageDraw.Draw(top)
+    d.rectangle([0, 0, 15, 15], outline=(36, 36, 40, 255))
+    d.ellipse([3, 3, 12, 12], outline=(200, 50, 40, 255))
+    d.ellipse([6, 6, 9, 9], fill=(255, 90, 60, 255))
+    d.line([8, 8, 13, 3], fill=(220, 220, 220, 255))
+    save_icon("command_post_top", top, "block")
+
+    def terminal(d):
+        d.rectangle([3, 1, 12, 14], fill=(70, 74, 80, 255), outline=D)
+        d.rectangle([4, 2, 11, 8], fill=(30, 40, 46, 255))
+        d.line([5, 6, 7, 4], fill=(90, 230, 120, 255))
+        d.line([7, 4, 10, 6], fill=(90, 230, 120, 255))
+        d.point([(5, 10), (7, 10), (9, 10), (5, 12), (7, 12), (9, 12)], fill=Y)
+        d.line([12, 0, 12, 2], fill=W)
+    save_icon("command_terminal", icon(terminal))
+
     # mod icon
     ic = Image.new("RGBA", (128, 128), (30, 34, 40, 255))
     d = ImageDraw.Draw(ic)
@@ -249,6 +277,22 @@ def models():
                 "key": {"I": "minecraft:iron_ingot", "R": "minecraft:redstone_block", "C": "minecraft:crafting_table",
                         "P": "minecraft:piston", "S": "minecraft:smooth_stone"},
                 "pattern": ["IRI", "PCP", "SSS"], "result": {"id": "mechframe:fabricator", "count": 1}})
+    # Defence AI: the outposts' command post (no drop, no recipe) and the command terminal.
+    write_json(os.path.join(ASSETS, "blockstates", "command_post.json"), {"variants": {"": {"model": "mechframe:block/command_post"}}})
+    write_json(os.path.join(ASSETS, "models", "block", "command_post.json"),
+               {"parent": "minecraft:block/cube_bottom_top",
+                "textures": {"side": "mechframe:block/command_post_side", "top": "mechframe:block/command_post_top",
+                             "bottom": "mechframe:block/garage_top"}})
+    write_json(os.path.join(ASSETS, "items", "command_post.json"), {"model": {"type": "minecraft:model", "model": "mechframe:block/command_post"}})
+    write_json(os.path.join(DATA, "loot_table", "blocks", "command_post.json"), {"type": "minecraft:block", "pools": []})
+    write_json(os.path.join(ASSETS, "items", "command_terminal.json"),
+               {"model": {"type": "minecraft:model", "model": "mechframe:item/command_terminal"}})
+    write_json(os.path.join(ASSETS, "models", "item", "command_terminal.json"),
+               {"parent": "minecraft:item/generated", "textures": {"layer0": "mechframe:item/command_terminal"}})
+    write_json(os.path.join(DATA, "mech_recipe", "command_terminal.json"),
+               {"category": "items", "result": {"item": "mechframe:command_terminal"},
+                "ingredients": [{"item": "minecraft:compass", "count": 1}, {"item": "minecraft:redstone", "count": 4},
+                                {"item": "minecraft:iron_ingot", "count": 3}, {"item": "minecraft:glass_pane", "count": 1}]})
     # Frame kits (tiered spawners: pick any frame up to that tier) are fabricated too.
     kits = {1: [("minecraft:iron_block", 4), ("minecraft:redstone", 8)],
             2: [("minecraft:iron_block", 6), ("minecraft:redstone_block", 2), ("minecraft:quartz", 8)],
@@ -259,7 +303,7 @@ def models():
         write_json(os.path.join(DATA, "mech_recipe", f"mech_spawner_t{tier}.json"),
                    {"category": "frames", "order": tier, "result": {"item": f"mechframe:mech_spawner_t{tier}"},
                     "ingredients": [{"item": i, "count": n} for i, n in ing]})
-    write_json(os.path.join(DATA, "tags", "block", "mineable", "pickaxe.json"), {"values": ["mechframe:garage", "mechframe:fabricator"]})
+    write_json(os.path.join(DATA, "tags", "block", "mineable", "pickaxe.json"), {"values": ["mechframe:garage", "mechframe:fabricator", "mechframe:command_post"]})
 
 
 def lang():
@@ -269,6 +313,19 @@ def lang():
         "entity.mechframe.mech": "Mech Frame",
         "block.mechframe.garage": "Mech Garage",
         "block.mechframe.fabricator": "Mech Fabricator",
+        "block.mechframe.command_post": "Mech Command Post",
+        "item.mechframe.command_terminal": "Command Terminal",
+        "entity.mechframe.unit.enemy": "Hostile Unit %s",
+        "entity.mechframe.unit.friendly": "Allied Unit %s",
+        "message.mechframe.faction.enemy": "Enemy",
+        "message.mechframe.faction.friendly": "Friendly",
+        "message.mechframe.post.status": "%s command post: %s/%s units deployed, next deployment in %s",
+        "message.mechframe.post.switched": "Command post switched to: %s",
+        "message.mechframe.command.guard": "%s: base defence - guarding this area",
+        "message.mechframe.command.escort": "%s: wingman - following you",
+        "message.mechframe.command.off": "%s: orders cancelled",
+        "message.mechframe.command.enemy": "Enemy frames do not take your orders",
+        "message.mechframe.command.not_yours": "This frame takes orders from someone else",
         "gui.mechframe.fab.search": "Search...",
         "gui.mechframe.fab.craft": "Fabricate",
         "gui.mechframe.fab.materials": "Materials",
@@ -327,6 +384,19 @@ def lang():
         "entity.mechframe.mech": "メックフレーム",
         "block.mechframe.garage": "メックガレージ",
         "block.mechframe.fabricator": "メック製作台",
+        "block.mechframe.command_post": "機体指令所",
+        "item.mechframe.command_terminal": "指揮端末",
+        "entity.mechframe.unit.enemy": "敵機 %s",
+        "entity.mechframe.unit.friendly": "味方機 %s",
+        "message.mechframe.faction.enemy": "エネミー",
+        "message.mechframe.faction.friendly": "フレンドリー",
+        "message.mechframe.post.status": "%s指令所: 配備 %s/%s機、次の配備まで %s",
+        "message.mechframe.post.switched": "指令所を切り替えました: %s",
+        "message.mechframe.command.guard": "%s: 基地防衛 - この周辺を警備します",
+        "message.mechframe.command.escort": "%s: 僚機 - あなたに随伴します",
+        "message.mechframe.command.off": "%s: 命令を解除しました",
+        "message.mechframe.command.enemy": "敵機には命令できません",
+        "message.mechframe.command.not_yours": "この機体は他のプレイヤーの命令で動いています",
         "gui.mechframe.fab.search": "検索...",
         "gui.mechframe.fab.craft": "製作",
         "gui.mechframe.fab.materials": "材料",

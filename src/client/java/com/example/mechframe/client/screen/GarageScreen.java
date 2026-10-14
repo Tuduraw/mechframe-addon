@@ -96,7 +96,7 @@ public class GarageScreen extends HandledScreen<GarageScreenHandler> {
 		Vec3d center = Vec3d.ofCenter(this.handler.getPos());
 		double r = GarageBlockEntity.RANGE;
 		this.frames.addAll(this.client.world.getEntitiesByClass(MechEntity.class, new Box(center, center).expand(r),
-				m -> m.squaredDistanceTo(center) <= r * r));
+				m -> m.squaredDistanceTo(center) <= r * r && m.getFaction() != com.example.mechframe.ai.Faction.ENEMY));
 		this.frames.sort((a, b) -> Double.compare(a.squaredDistanceTo(center), b.squaredDistanceTo(center)));
 	}
 

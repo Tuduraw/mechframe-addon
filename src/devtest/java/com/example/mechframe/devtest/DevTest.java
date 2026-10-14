@@ -70,6 +70,10 @@ public final class DevTest {
 			case "melee" -> melee();
 			case "fpv" -> fpv();
 			case "keys" -> keys();
+			case "ai" -> ai();
+			case "aiesc" -> aiEscort();
+			case "aires" -> aiRespawn();
+			case "aiblock" -> aiBlock();
 			case "turbo" -> turbo();
 			case "garage" -> garage();
 			default -> basic();
@@ -205,6 +209,167 @@ public final class DevTest {
 		at(400, c -> shot(c, "landed"));
 		at(410, c -> c.options.setPerspective(Perspective.FIRST_PERSON));
 		at(420, c -> shot(c, "first_person"));
+	}
+
+	/** Defence AI: an outpost's enemy unit engages the player, a friendly frame on the command terminal
+	 * guards and then escorts, the enemy unit is destroyed (parts drop) and redeployed with a new frame. */
+	private static void ai() {
+		common();
+		at(5, c -> {
+			com.example.mechframe.ai.MechServerConfig.respawnMinutes = 0.1;
+			com.example.mechframe.ai.MechServerConfig.partDropChance = 1.0;
+			com.example.mechframe.ai.MechServerConfig.targetCreativePlayers = true;
+		});
+		at(20, c -> server(c, "place structure mechframe:outpost 0 -60 18", "tp @a 0 -60 -4 0 10"));
+		at(60, c -> aiLog(c, "t60", true));
+		at(90, c -> c.options.setPerspective(Perspective.THIRD_PERSON_BACK));
+		at(130, c -> { aiLog(c, "t130", false); shot(c, "ai_outpost"); });
+		at(200, c -> aiLog(c, "t200", false));
+		// friendly frame on the command terminal: guard, then wingman; zombies to fight
+		at(210, c -> {
+			spawn(c, "striker", -6, -2, 0f, false);
+			server(c, "summon minecraft:zombie -14 -60 -14", "summon minecraft:zombie -16 -60 -10", "summon minecraft:husk -10 -60 -18");
+		});
+		at(214, c -> c.getServer().execute(() -> {
+			ServerPlayerEntity p = c.getServer().getPlayerManager().getPlayerList().get(0);
+			p.setStackInHand(Hand.MAIN_HAND, new net.minecraft.item.ItemStack(MechItems.COMMAND_TERMINAL));
+			MechEntity m = SPAWNED.get("striker");
+			log.println("terminal 1: " + m.interact(p, Hand.MAIN_HAND) + " mode=" + m.getBrain().mode + " faction=" + m.getFaction());
+		}));
+		at(300, c -> { aiLog(c, "t300", false); shot(c, "ai_friendly"); });
+		at(310, c -> c.getServer().execute(() -> {
+			ServerPlayerEntity p = c.getServer().getPlayerManager().getPlayerList().get(0);
+			MechEntity m = SPAWNED.get("striker");
+			log.println("terminal 2: " + m.interact(p, Hand.MAIN_HAND) + " mode=" + m.getBrain().mode);
+		}));
+		at(320, c -> server(c, "tp @a -40 -60 -40 0 10"));
+		at(420, c -> aiLog(c, "t420 escort", false));
+		// destroy the enemy unit: parts drop, then a new random unit is deployed
+		at(430, c -> c.getServer().execute(() -> {
+			ServerWorld w = c.getServer().getOverworld();
+			for (MechEntity m : w.getEntitiesByClass(MechEntity.class, new net.minecraft.util.math.Box(-200, -100, -200, 200, 100, 200),
+					m -> m.getFaction() == com.example.mechframe.ai.Faction.ENEMY)) {
+				log.println("destroying " + m.getUuid() + " asm=" + m.getAssembly().encode());
+				for (int i = 0; i < 40 && !m.tudursvehiclemod$isDestroyed(); i++) {
+					m.damage(w, w.getDamageSources().generic(), 250f);
+				}
+				int drops = w.getEntitiesByClass(net.minecraft.entity.ItemEntity.class, m.getBoundingBox().expand(6),
+						it -> it.getStack().getItem() instanceof MechPartItem).size();
+				log.println("destroyed=" + m.tudursvehiclemod$isDestroyed() + " part drops=" + drops);
+			}
+		}));
+		at(700, c -> aiLog(c, "t700 after respawn", true));
+	}
+
+	/** Wingman: a frame put on escort follows its owner around (and catches up when left far behind). */
+	private static void aiEscort() {
+		common();
+		at(20, c -> spawn(c, "striker", -6, -2, 0f, false));
+		at(24, c -> c.getServer().execute(() -> {
+			ServerPlayerEntity p = c.getServer().getPlayerManager().getPlayerList().get(0);
+			p.setStackInHand(Hand.MAIN_HAND, new net.minecraft.item.ItemStack(MechItems.COMMAND_TERMINAL));
+			MechEntity m = SPAWNED.get("striker");
+			m.interact(p, Hand.MAIN_HAND);
+			m.interact(p, Hand.MAIN_HAND);
+			log.println("mode=" + m.getBrain().mode + " owner=" + m.getBrain().owner);
+		}));
+		at(40, c -> server(c, "tp @a -30 -60 -30 0 10"));
+		for (int t = 50; t <= 250; t += 20) {
+			int tt = t;
+			at(t, c -> aiLog(c, "esc t" + tt, false));
+		}
+		at(260, c -> server(c, "tp @a 90 -60 90 0 10"));
+		at(300, c -> aiLog(c, "esc after far tp", false));
+		at(320, c -> { c.options.setPerspective(Perspective.THIRD_PERSON_BACK); });
+		at(340, c -> shot(c, "ai_escort"));
+	}
+
+	/** An outpost unit destroyed: parts drop, the post redeploys a new random frame; no block damage. */
+	private static void aiRespawn() {
+		common();
+		at(5, c -> {
+			com.example.mechframe.ai.MechServerConfig.respawnMinutes = 0.1;
+			com.example.mechframe.ai.MechServerConfig.partDropChance = 1.0;
+			com.example.mechframe.ai.MechServerConfig.targetCreativePlayers = true;
+		});
+		at(20, c -> server(c, "place structure mechframe:fort 0 -60 14", "tp @a 0 -60 -4 0 10"));
+		at(60, c -> aiLog(c, "t60", true));
+		at(200, c -> aiLog(c, "t200", false));
+		at(210, c -> c.getServer().execute(() -> {
+			ServerWorld w = c.getServer().getOverworld();
+			for (MechEntity m : w.getEntitiesByClass(MechEntity.class, new net.minecraft.util.math.Box(-200, -100, -200, 200, 100, 200),
+					m -> m.getFaction() == com.example.mechframe.ai.Faction.ENEMY)) {
+				for (int i = 0; i < 40 && !m.tudursvehiclemod$isDestroyed(); i++) {
+					m.damage(w, w.getDamageSources().generic(), 250f);
+				}
+				log.println("destroyed " + m.getUuid().toString().substring(0, 8) + " -> " + m.tudursvehiclemod$isDestroyed());
+			}
+			log.println("part items dropped: " + w.getEntitiesByClass(net.minecraft.entity.ItemEntity.class,
+					new net.minecraft.util.math.Box(-200, -100, -200, 200, 100, 200), it -> it.getStack().getItem() instanceof MechPartItem).size());
+		}));
+		at(260, c -> server(c, "kill @e[type=minecraft:item]"));
+		at(420, c -> aiLog(c, "t420 after respawn", true));
+		at(430, c -> server(c, "tp @a 22 -54 -10 0 10"));
+		at(440, c -> {
+			c.options.setPerspective(Perspective.FIRST_PERSON);
+			c.player.setYaw(0f);
+			c.player.setPitch(15f);
+		});
+		at(450, c -> shot(c, "ai_fort"));
+	}
+
+	/** An enemy unit firing explosive weapons (bazooka, shoulder cannon) at the player: no craters. */
+	private static void aiBlock() {
+		common();
+		at(5, c -> com.example.mechframe.ai.MechServerConfig.targetCreativePlayers = true);
+		at(20, c -> server(c, "place structure mechframe:outpost 0 -60 18", "tp @a 15 -60 6 0 0"));
+		at(50, c -> c.getServer().execute(() -> {
+			ServerWorld w = c.getServer().getOverworld();
+			for (MechEntity m : w.getEntitiesByClass(MechEntity.class, new net.minecraft.util.math.Box(-200, -100, -200, 200, 100, 200),
+					m -> m.getFaction() == com.example.mechframe.ai.Faction.ENEMY)) {
+				m.setAssembly(m.getAssembly().with(MountSlot.R_ARM, Identifier.of("mechframe", "wa_bazooka"), false)
+						.with(MountSlot.L_ARM, null, false).with(MountSlot.R_BACK, Identifier.of("mechframe", "wb_cannon"), false)
+						.with(MountSlot.L_BACK, null, false));
+				m.tudursvehiclemod$fillAllWeaponAmmoAndFuel();
+				m.refreshPositionAndAngles(15.5, -60, 20, 180f, 0f);
+				log.println("armed " + m.getAssembly().encode());
+			}
+		}));
+		at(60, c -> aiLog(c, "t60", true));
+		at(300, c -> aiLog(c, "t300", true));
+	}
+
+	private static int groundBlocks = -1;
+
+	private static void aiLog(MinecraftClient c, String label, boolean countBlocks) {
+		c.getServer().execute(() -> {
+			ServerWorld w = c.getServer().getOverworld();
+			ServerPlayerEntity p = c.getServer().getPlayerManager().getPlayerList().get(0);
+			for (MechEntity m : w.getEntitiesByClass(MechEntity.class, new net.minecraft.util.math.Box(-200, -100, -200, 200, 100, 200), m -> true)) {
+				var b = m.getBrain();
+				log.println(label + " mech " + m.getName().getString() + " faction=" + m.getFaction() + " mode=" + (b == null ? "-" : b.mode)
+						+ " destroyed=" + m.tudursvehiclemod$isDestroyed()
+						+ String.format(Locale.ROOT, " pos=%.1f,%.1f,%.1f", m.getX(), m.getY(), m.getZ())
+						+ " target=" + (m.getLockTarget() == null ? "-" : m.getLockTarget().getName().getString())
+						+ String.format(Locale.ROOT, " in=%.1f/%.1f yaw=%.0f want=%.0f", m.inForward, m.inStrafe, m.getYaw(), b == null ? 0f : b.desiredYaw)
+						+ " ammo=" + ammo(m) + " uuid=" + m.getUuid().toString().substring(0, 8)
+						+ " asm=" + m.getAssembly().encode());
+			}
+			log.println(label + String.format(Locale.ROOT, " player at %.1f,%.1f zombies=%d", p.getX(), p.getZ(),
+					w.getEntitiesByClass(net.minecraft.entity.mob.ZombieEntity.class, new net.minecraft.util.math.Box(-200, -100, -200, 200, 100, 200), z -> z.isAlive()).size()));
+			if (countBlocks) {
+				int n = 0;
+				for (BlockPos q : BlockPos.iterate(-30, -64, -40, 30, -56, 60)) {
+					if (!w.getBlockState(q).isAir()) {
+						n++;
+					}
+				}
+				log.println(label + " solid blocks in arena=" + n + (groundBlocks >= 0 ? " (was " + groundBlocks + ")" : ""));
+				if (groundBlocks < 0) {
+					groundBlocks = n;
+				}
+			}
+		});
 	}
 
 	/** Weapon keys: the base mod's fire / switch keys do nothing in a frame; Swap Right moves the right

@@ -1,0 +1,24 @@
+{
+  "category": "items",
+  "result": {
+    "item": "mechframe:command_terminal"
+  },
+  "ingredients": [
+    {
+      "item": "minecraft:compass",
+      "count": 1
+    },
+    {
+      "item": "minecraft:redstone",
+      "count": 4
+    },
+    {
+      "item": "minecraft:iron_ingot",
+      "count": 3
+    },
+    {
+      "item": "minecraft:glass_pane",
+      "count": 1
+    }
+  ]
+}

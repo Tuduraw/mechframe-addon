@@ -47,6 +47,9 @@ public final class MechItems {
 	public static Item GARAGE_ITEM;
 	public static Block FABRICATOR;
 	public static Item FABRICATOR_ITEM;
+	public static Block COMMAND_POST;
+	public static Item COMMAND_POST_ITEM;
+	public static Item COMMAND_TERMINAL;
 
 	private MechItems() {
 	}
@@ -77,6 +80,16 @@ public final class MechItems {
 		FABRICATOR_ITEM = Registry.register(Registries.ITEM, fabItemKey,
 				new BlockItem(FABRICATOR, new Item.Settings().registryKey(fabItemKey).useBlockPrefixedTranslationKey()));
 
+		RegistryKey<Block> postKey = RegistryKey.of(RegistryKeys.BLOCK, Identifier.of(MechFrame.MOD_ID, "command_post"));
+		COMMAND_POST = Registry.register(Registries.BLOCK, postKey, new com.example.mechframe.ai.CommandPostBlock(AbstractBlock.Settings.create()
+				.registryKey(postKey).mapColor(MapColor.RED).strength(30.0f, 1200.0f).sounds(BlockSoundGroup.METAL).requiresTool()));
+		RegistryKey<Item> postItemKey = RegistryKey.of(RegistryKeys.ITEM, Identifier.of(MechFrame.MOD_ID, "command_post"));
+		COMMAND_POST_ITEM = Registry.register(Registries.ITEM, postItemKey,
+				new BlockItem(COMMAND_POST, new Item.Settings().registryKey(postItemKey).useBlockPrefixedTranslationKey()));
+		RegistryKey<Item> terminalKey = RegistryKey.of(RegistryKeys.ITEM, Identifier.of(MechFrame.MOD_ID, "command_terminal"));
+		COMMAND_TERMINAL = Registry.register(Registries.ITEM, terminalKey,
+				new CommandTerminalItem(new Item.Settings().registryKey(terminalKey).maxCount(1)));
+
 		RegistryKey<ItemGroup> groupKey = RegistryKey.of(RegistryKeys.ITEM_GROUP, Identifier.of(MechFrame.MOD_ID, "mechs"));
 		Registry.register(Registries.ITEM_GROUP, groupKey, FabricItemGroup.builder()
 				.icon(() -> new ItemStack(SPAWNERS[2]))
@@ -85,6 +98,8 @@ public final class MechItems {
 		ItemGroupEvents.modifyEntriesEvent(groupKey).register(entries -> {
 			entries.add(FABRICATOR_ITEM);
 			entries.add(GARAGE_ITEM);
+			entries.add(COMMAND_TERMINAL);
+			entries.add(COMMAND_POST_ITEM);
 			for (Item spawner : SPAWNERS) {
 				entries.add(spawner);
 			}

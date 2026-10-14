@@ -96,6 +96,8 @@ public class MechEntity extends AbstractVehicleEntity implements FreeCameraVehic
 	/** Turbo mode (frames that can't transform): a fast, committed forward flight. */
 	private static final TrackedData<Boolean> TURBO = DataTracker.registerData(MechEntity.class, TrackedDataHandlerRegistry.BOOLEAN);
 	private static final TrackedData<Float> HULL_YAW = DataTracker.registerData(MechEntity.class, TrackedDataHandlerRegistry.FLOAT);
+	/** Faction ordinal of the defence AI (0 = none) - synced so clients can tell allies from foes. */
+	private static final TrackedData<Integer> FACTION = DataTracker.registerData(MechEntity.class, TrackedDataHandlerRegistry.INTEGER);
 
 	public static MechClientHooks clientHooks = MechClientHooks.NONE;
 
@@ -191,6 +193,9 @@ public class MechEntity extends AbstractVehicleEntity implements FreeCameraVehic
 	/** Client-side animation state (client.anim.MechAnimator), owned by the client hooks. */
 	public Object clientAnimation;
 
+	/** The defence AI (server; null: an ordinary frame). See ai.MechBrain. */
+	private com.example.mechframe.ai.MechBrain brain;
+
 	// ------------------------------------------------------------------ caches
 
 	// No field initializers here: getDefinition() (and so getAssembly()) already runs inside the
@@ -219,6 +224,7 @@ public class MechEntity extends AbstractVehicleEntity implements FreeCameraVehic
 		builder.add(CANDIDATE_ID, -1);
 		builder.add(HULL_YAW, Float.NaN);
 		builder.add(TURBO, false);
+		builder.add(FACTION, 0);
 	}
 
 	@Override
@@ -345,10 +351,132 @@ public class MechEntity extends AbstractVehicleEntity implements FreeCameraVehic
 		this.tudursvehiclemod$syncWeaponAmmo();
 	}
 
+	// ==================================================================================== defence AI
+
+	public com.example.mechframe.ai.MechBrain getBrain() {
+		return this.brain;
+	}
+
+	/** Server: hands the frame to the defence AI (null: back to an ordinary frame). */
+	public void setBrain(com.example.mechframe.ai.MechBrain brain) {
+		this.brain = brain;
+		this.dataTracker.set(FACTION, brain == null ? 0 : brain.faction.ordinal());
+		if (brain == null) {
+			this.dataTracker.set(LOCK_ID, -1);
+			this.inForward = 0f;
+			this.inStrafe = 0f;
+			this.inJump = false;
+			this.inBoost = false;
+		}
+	}
+
+	public com.example.mechframe.ai.Faction getFaction() {
+		int i = this.dataTracker.get(FACTION);
+		com.example.mechframe.ai.Faction[] all = com.example.mechframe.ai.Faction.values();
+		return i >= 0 && i < all.length ? all[i] : com.example.mechframe.ai.Faction.NONE;
+	}
+
+	/** Server: the AI drives this tick (it has a brain, nobody pilots it, and it can still move). */
+	public boolean aiDriven() {
+		return this.brain != null && this.getControllingPassenger() == null && !this.tudursvehiclemod$isDestroyed();
+	}
+
+	/** Server: the AI's FCS lock (null: none). */
+	public void aiLock(Entity target) {
+		int id = target == null ? -1 : target.getId();
+		if (this.dataTracker.get(LOCK_ID) != id) {
+			this.dataTracker.set(LOCK_ID, id);
+		}
+	}
+
+	@Override
+	public boolean damage(ServerWorld world, net.minecraft.entity.damage.DamageSource source, float amount) {
+		boolean wasDestroyed = this.tudursvehiclemod$isDestroyed();
+		if (this.brain != null) {
+			Entity attacker = source.getAttacker();
+			if (attacker != null && attacker.getVehicle() != null) {
+				attacker = attacker.getRootVehicle();
+			}
+			this.brain.onAttacked(this, attacker);
+		}
+		boolean result = super.damage(world, source, amount);
+		if (!wasDestroyed && this.tudursvehiclemod$isDestroyed()) {
+			this.onAiUnitDestroyed(world);
+		}
+		return result;
+	}
+
+	/** An enemy unit going down: each of its parts drops on its own roll (MechServerConfig#partDropChance). */
+	private void onAiUnitDestroyed(ServerWorld world) {
+		if (this.brain == null || this.brain.faction != com.example.mechframe.ai.Faction.ENEMY || this.brain.dropsRolled) {
+			return;
+		}
+		this.brain.dropsRolled = true;
+		Assembly assembly = this.getAssembly();
+		double chance = com.example.mechframe.ai.MechServerConfig.partDropChance;
+		for (MountSlot mount : MountSlot.values()) {
+			if (assembly.isLocked(mount)) {
+				continue; // a weapon built into the arms comes with the arms, not on its own
+			}
+			MechPart part = assembly.part(mount);
+			if (part == null || this.getRandom().nextDouble() >= chance) {
+				continue;
+			}
+			net.minecraft.entity.ItemEntity item = new net.minecraft.entity.ItemEntity(world, this.getX(), this.getY() + 1.5, this.getZ(),
+					MechPartItem.stackFor(part));
+			item.setVelocity((this.getRandom().nextDouble() - 0.5) * 0.3, 0.35, (this.getRandom().nextDouble() - 0.5) * 0.3);
+			item.setToDefaultPickupDelay();
+			world.spawnEntity(item);
+		}
+	}
+
+	/** Command terminal on a frame: off -> base defence -> wingman -> off (friendly side only). */
+	private ActionResult command(PlayerEntity player) {
+		if (!(this.getEntityWorld() instanceof ServerWorld world)) {
+			return ActionResult.SUCCESS;
+		}
+		com.example.mechframe.ai.MechBrain b = this.brain;
+		if (b != null && b.faction == com.example.mechframe.ai.Faction.ENEMY) {
+			player.sendMessage(net.minecraft.text.Text.translatable("message.mechframe.command.enemy"), true);
+			return ActionResult.FAIL;
+		}
+		if (this.tudursvehiclemod$isDestroyed()) {
+			return ActionResult.FAIL;
+		}
+		if (b != null && b.owner != null && !b.owner.equals(player.getUuid()) && !player.isCreative()) {
+			player.sendMessage(net.minecraft.text.Text.translatable("message.mechframe.command.not_yours"), true);
+			return ActionResult.FAIL;
+		}
+		String key;
+		if (b == null) {
+			b = new com.example.mechframe.ai.MechBrain(com.example.mechframe.ai.Faction.FRIENDLY,
+					com.example.mechframe.ai.MechBrain.Mode.GUARD, this.getEntityPos(), 32.0);
+			b.owner = player.getUuid();
+			this.setBrain(b);
+			key = "message.mechframe.command.guard";
+		} else if (b.mode == com.example.mechframe.ai.MechBrain.Mode.GUARD && b.post == null) {
+			b.mode = com.example.mechframe.ai.MechBrain.Mode.ESCORT;
+			b.owner = player.getUuid();
+			key = "message.mechframe.command.escort";
+		} else {
+			this.setBrain(null);
+			key = "message.mechframe.command.off";
+		}
+		player.sendMessage(net.minecraft.text.Text.translatable(key, this.getName()), true);
+		return ActionResult.SUCCESS;
+	}
+
 	/** Sneak + right-click packs the frame up into a spawner (the base mod), which only rebuilds the
 	 * stock frame: hand back every part that came from a garage first so it isn't lost. */
 	@Override
 	public ActionResult interact(PlayerEntity player, Hand hand) {
+		if (player.getStackInHand(hand).isOf(com.example.mechframe.item.MechItems.COMMAND_TERMINAL)) {
+			return this.command(player);
+		}
+		if (this.getFaction() == com.example.mechframe.ai.Faction.ENEMY && !player.isCreative()) {
+			// Enemy units cannot be boarded or packed up.
+			return ActionResult.FAIL;
+		}
 		if (player.isSneaking() && !this.getEntityWorld().isClient() && this.getPassengerList().isEmpty() && !this.isRemoved()) {
 			Assembly assembly = this.getAssembly();
 			for (MountSlot mount : MountSlot.values()) {
@@ -450,6 +578,13 @@ public class MechEntity extends AbstractVehicleEntity implements FreeCameraVehic
 			this.en = this.getEntityWorld().isClient() ? this.dataTracker.get(EN) : stats.enCapacity();
 		}
 
+		if (!this.getEntityWorld().isClient() && this.aiDriven() && this.getEntityWorld() instanceof ServerWorld aiWorld) {
+			this.brain.tick(this, aiWorld);
+			if (this.isRemoved()) {
+				return;
+			}
+		}
+
 		super.tick();
 
 		this.tickMelee();
@@ -463,7 +598,7 @@ public class MechEntity extends AbstractVehicleEntity implements FreeCameraVehic
 			clientHooks.tick(this);
 			return;
 		}
-		if (this.getControllingPassenger() == null) {
+		if (this.getControllingPassenger() == null && !this.aiDriven()) {
 			this.inForward = 0f;
 			this.inStrafe = 0f;
 			this.inJump = false;
@@ -594,7 +729,7 @@ public class MechEntity extends AbstractVehicleEntity implements FreeCameraVehic
 	}
 
 	private boolean hasControl() {
-		return this.getControllingPassenger() instanceof PlayerEntity
+		return (this.getControllingPassenger() instanceof PlayerEntity || this.aiDriven())
 				&& !this.tudursvehiclemod$isDestroyed()
 				&& this.getLayout() != null
 				&& !this.tudursvehiclemod$isOutOfFuel();
@@ -625,6 +760,9 @@ public class MechEntity extends AbstractVehicleEntity implements FreeCameraVehic
 		if (this.getControllingPassenger() instanceof PlayerEntity pilot && !this.tudursvehiclemod$isDestroyed()) {
 			float rate = s.turnRate() * (grounded ? 1f : 0.85f);
 			this.setYaw(stepTowardAngle(this.getYaw(), pilot.getYaw(), rate));
+		} else if (this.aiDriven() && !Float.isNaN(this.brain.desiredYaw)) {
+			float rate = s.turnRate() * (grounded ? 1f : 0.85f);
+			this.setYaw(stepTowardAngle(this.getYaw(), this.brain.desiredYaw, rate));
 		}
 
 		float fwd = control ? MathHelper.clamp(this.inForward, -1f, 1f) : 0f;
@@ -1430,6 +1568,9 @@ public class MechEntity extends AbstractVehicleEntity implements FreeCameraVehic
 		if (e == this || e == pilot || this.hasPassenger(e) || !e.isAlive() || e.isRemoved()) {
 			return false;
 		}
+		if (e instanceof MechEntity other && other.getFaction() == com.example.mechframe.ai.Faction.FRIENDLY) {
+			return false; // allies are never soft-locked
+		}
 		if (e instanceof AbstractVehicleEntity vehicle) {
 			return !vehicle.tudursvehiclemod$isDestroyed() && !vehicle.hasPassenger(pilot);
 		}
@@ -1487,7 +1628,7 @@ public class MechEntity extends AbstractVehicleEntity implements FreeCameraVehic
 			return;
 		}
 		Entity pilot = this.getControllingPassenger();
-		boolean valid = pilot != null && lock.isAlive() && !lock.isRemoved()
+		boolean valid = (pilot != null || this.aiDriven()) && lock.isAlive() && !lock.isRemoved()
 				&& !(lock instanceof AbstractVehicleEntity v && v.tudursvehiclemod$isDestroyed())
 				&& lock.squaredDistanceTo(this) < Math.pow(this.getStats().lockRange() * 1.5, 2);
 		if (!valid) {
@@ -1548,7 +1689,9 @@ public class MechEntity extends AbstractVehicleEntity implements FreeCameraVehic
 		if (layout == null || this.isJet()) {
 			return null;
 		}
-		if (!(this.getControllingPassenger() instanceof PlayerEntity) || this.tudursvehiclemod$isDestroyed()) {
+		boolean aiAim = this.getEntityWorld().isClient() ? this.getFaction() != com.example.mechframe.ai.Faction.NONE
+				&& this.getControllingPassenger() == null && this.getLockTarget() != null : this.aiDriven();
+		if ((!(this.getControllingPassenger() instanceof PlayerEntity) && !aiAim) || this.tudursvehiclemod$isDestroyed()) {
 			// Unmanned: arms hang down, back weapons rest level.
 			return new float[]{0f, mount.isArmWeapon() ? 40f : 0f};
 		}
@@ -1934,6 +2077,7 @@ public class MechEntity extends AbstractVehicleEntity implements FreeCameraVehic
 		this.transform = this.prevTransform = this.isJet() ? 1f : 0f;
 		this.lastFormSeen = this.dataTracker.get(FORM);
 		this.en = view.getFloat("MechEn", -1f);
+		this.setBrain(view.getOptionalReadView("MechAI").map(com.example.mechframe.ai.MechBrain::read).orElse(null));
 	}
 
 	@Override
@@ -1942,5 +2086,8 @@ public class MechEntity extends AbstractVehicleEntity implements FreeCameraVehic
 		view.putString("MechAssembly", this.dataTracker.get(ASSEMBLY));
 		view.putInt("MechForm", this.dataTracker.get(FORM));
 		view.putFloat("MechEn", this.en);
+		if (this.brain != null) {
+			this.brain.write(view.get("MechAI"));
+		}
 	}
 }

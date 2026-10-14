@@ -150,3 +150,27 @@ Mech Frame の設計と、実装中に分かったことの記録です。ユー
 - 機体に乗っている間は、前提MODの `key.tudursvehiclemod.fire_weapon` と `weapon_switch` を `KeyBindingSuppressMixin` で「押されていない」扱いにする(`wasPressed` では押した回数も捨て、降りた後に遅れて撃たない)。ほかの乗り物では影響しない。
 - 武器の操作はこのアドオンのキーだけ: 左右のトリガー(左/右クリック)が、その側で選んでいる武器(腕か肩)を撃つ。切り替えは「左/右の武器の切り替え」(Z / C)。選んだ側が空ならもう一方(戦闘機形態で腕が空なら肩、の旧仕様もこれに含まれる)。乗り込むたびに腕の武器に戻す。HUDの「>」とキー名は `MechInput.activeMount` から。
 - 前提MODの選択中武器(`VehicleModClient.getSelectedWeaponIndex`)は使わなくなった。開発テストは `keys`。
+
+## 防衛AI (0.7.0)
+
+- `ai.MechBrain`(サーバーのみ、エンティティのNBT `MechAI` に保存): 操縦者がいないとき、`MechEntity.tick` の `super.tick()` の前に
+  入力(`inForward`/`inStrafe`/`inBoost`/`inJump`、`desiredYaw`、FCSのロック `aiLock`、`tryQuickBoost`、`tryMelee`、
+  `tryFireWeapon(index, null, target)`)を作る。`hasControl()` と胴の旋回、腕の照準(`aimFor`)、ロックの維持(`pruneLock`)は
+  `aiDriven()` でも有効にした。クライアントは同期されたロックIDと陣営(`FACTION`)から腕の照準を描く。
+- `tryFireWeapon` の shooter=null は前提MODのCAS/ドローンと同じ経路で、座席の確認をせず、ミサイルはロックなしで撃てる。
+- 陣営(`ai.Faction`): エネミーはプレイヤー・プレイヤーの乗った乗り物・フレンドリー機、フレンドリーは `Monster`・エネミー機・
+  Enemy Vehicle Addon の敵機(乗っているエンティティのクラス名 `com.example.enemyvehicleaddon.entity.EnemyPilotEntity` で判定、依存なし)。
+- 縄張り: GUARD は home と半径、ESCORT は持ち主の位置と36。4ブロック先が縄張りの外になる入力は、中心へ戻る入力に置き換える。
+  目標は縄張り+12の内側にいて、見通しがあるものだけ。
+- 指令所(`ai.CommandPostBlockEntity`): 20tickごと。スロットごとに機体のUUIDと次の配備時刻(ワールド時間)。撃破を見つけるか、
+  30秒見つからなければ失ったとみなして `respawn_minutes` 後に配備する。見つからなかった機体が後で読み込まれ、すでに別の機体が
+  配備されていたら、その機体は自分で消える(`MechBrain` が100tickごとに `stillOwns` を確認)。
+- 配備する機体は `RandomAssembly`(全パーツから、Tierの範囲で。脚の積載を超えたら肩の武器を外して振り直す)。車両定義は
+  `mechframe:striker`(車両側の設定だけを使う)。名前は「敵機 <コアのメーカー>」(赤)/「味方機 …」(緑)。
+- パーツのドロップ: `MechEntity.damage` で撃破に変わった瞬間に1回だけ(`dropsRolled`)。内蔵武器は腕と一緒なので抽選しない。
+- ブロック破壊なし: `AiProjectileBlockDamageMixin`(弾の爆発の破壊・火を止め、貫通は止める)、`AiWreckExplosionMixin`(撃破時の
+  MOB爆発をNONEで出し直す)。Enemy Vehicle Addon と同じ方法。
+- 構造物: `tools/mechgen/gen_outposts.py` が構造物テンプレート(NBT、DataVersion 4671)と jigsaw 構造物(1ピース、`beard_box`)、
+  `structure_set`(間隔34チャンク)、バイオームタグを書く。指令所の設定はテンプレートのブロックエンティティのデータ。
+- 開発テスト: `ai`(前哨基地の敵機が交戦、味方機の基地防衛→僚機)、`aiesc`(僚機の追従)、`aires`(要塞、撃破・ドロップ・再配備)、
+  `aiblock`(爆発する武器でブロックが壊れない)。ソフトウェア描画の開発クライアントは、機体と弾が多いとメモリ不足で落ちるため分けている。

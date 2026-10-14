@@ -33,14 +33,18 @@ public class MechFrame implements ModInitializer {
 	public static EntityType<MechEntity> MECH;
 	public static BlockEntityType<GarageBlockEntity> GARAGE_ENTITY;
 	public static ExtendedScreenHandlerType<GarageScreenHandler, BlockPos> GARAGE_SCREEN;
+	public static BlockEntityType<com.example.mechframe.ai.CommandPostBlockEntity> COMMAND_POST_ENTITY;
 
 	@Override
 	public void onInitialize() {
 		MECH = ModEntityTypes.registerAddonVehicleType(Identifier.of(MOD_ID, "mech"), MechEntity::new, 1.8f, 5.0f);
+		com.example.mechframe.ai.MechServerConfig.load();
 		MechSounds.init();
 		MechItems.register();
 		GARAGE_ENTITY = Registry.register(Registries.BLOCK_ENTITY_TYPE, Identifier.of(MOD_ID, "garage"),
 				FabricBlockEntityTypeBuilder.create(GarageBlockEntity::new, MechItems.GARAGE).build());
+		COMMAND_POST_ENTITY = Registry.register(Registries.BLOCK_ENTITY_TYPE, Identifier.of(MOD_ID, "command_post"),
+				FabricBlockEntityTypeBuilder.create(com.example.mechframe.ai.CommandPostBlockEntity::new, MechItems.COMMAND_POST).build());
 		GARAGE_SCREEN = Registry.register(Registries.SCREEN_HANDLER, Identifier.of(MOD_ID, "garage"),
 				new ExtendedScreenHandlerType<>((syncId, inventory, pos) -> new GarageScreenHandler(syncId, inventory, pos),
 						BlockPos.PACKET_CODEC));

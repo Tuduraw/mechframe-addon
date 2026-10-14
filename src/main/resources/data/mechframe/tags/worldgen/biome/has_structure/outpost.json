@@ -1,0 +1,16 @@
+{
+  "values": [
+    "minecraft:plains",
+    "minecraft:sunflower_plains",
+    "minecraft:meadow",
+    "minecraft:savanna",
+    "minecraft:savanna_plateau",
+    "minecraft:desert",
+    "minecraft:snowy_plains",
+    "minecraft:taiga",
+    "minecraft:snowy_taiga",
+    "minecraft:badlands",
+    "minecraft:sparse_jungle",
+    "minecraft:windswept_savanna"
+  ]
+}

@@ -33,7 +33,8 @@ public final class AssemblyService {
 			return;
 		}
 		Entity entity = player.getEntityWorld().getEntityById(mechId);
-		if (!(entity instanceof MechEntity mech) || !inRange(mech, garagePos)) {
+		if (!(entity instanceof MechEntity mech) || !inRange(mech, garagePos)
+				|| mech.getFaction() == com.example.mechframe.ai.Faction.ENEMY) {
 			fail(player, "message.mechframe.garage.no_frame");
 			return;
 		}
@@ -101,7 +102,7 @@ public final class AssemblyService {
 	/** Puts every mount back to the frame's stock part, returning garage parts to the garage. */
 	public static void resetToStock(ServerPlayerEntity player, BlockPos garagePos, int mechId) {
 		Entity entity = player.getEntityWorld().getEntityById(mechId);
-		if (!(entity instanceof MechEntity mech)) {
+		if (!(entity instanceof MechEntity mech) || mech.getFaction() == com.example.mechframe.ai.Faction.ENEMY) {
 			return;
 		}
 		Assembly stock = mech.getStockAssembly();

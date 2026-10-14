@@ -1,0 +1,18 @@
+{
+  "structures": [
+    {
+      "structure": "mechframe:outpost",
+      "weight": 3
+    },
+    {
+      "structure": "mechframe:fort",
+      "weight": 1
+    }
+  ],
+  "placement": {
+    "type": "minecraft:random_spread",
+    "spacing": 34,
+    "separation": 12,
+    "salt": 73190526
+  }
+}

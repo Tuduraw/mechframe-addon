@@ -1,6 +1,7 @@
 {
   "values": [
     "mechframe:garage",
-    "mechframe:fabricator"
+    "mechframe:fabricator",
+    "mechframe:command_post"
   ]
 }

@@ -468,6 +468,20 @@ public class MechEntity extends AbstractVehicleEntity implements FreeCameraVehic
 
 	/** Sneak + right-click packs the frame up into a spawner (the base mod), which only rebuilds the
 	 * stock frame: hand back every part that came from a garage first so it isn't lost. */
+	/** The base mod boards the player from interactAt (per-seat hit boxes), which runs before
+	 * interact: a frame given orders with the command terminal - or an enemy unit - must be
+	 * handled here already, or the player would climb in. */
+	@Override
+	public ActionResult interactAt(PlayerEntity player, Vec3d hitPos, Hand hand) {
+		if (player.getStackInHand(hand).isOf(com.example.mechframe.item.MechItems.COMMAND_TERMINAL)) {
+			return this.command(player);
+		}
+		if (this.getFaction() == com.example.mechframe.ai.Faction.ENEMY && !player.isCreative()) {
+			return ActionResult.FAIL;
+		}
+		return super.interactAt(player, hitPos, hand);
+	}
+
 	@Override
 	public ActionResult interact(PlayerEntity player, Hand hand) {
 		if (player.getStackInHand(hand).isOf(com.example.mechframe.item.MechItems.COMMAND_TERMINAL)) {
@@ -917,6 +931,11 @@ public class MechEntity extends AbstractVehicleEntity implements FreeCameraVehic
 		if (this.getControllingPassenger() instanceof PlayerEntity pilot) {
 			this.setYaw(stepTowardAngle(this.getYaw(), pilot.getYaw(), s.turnRate() * TURBO_TURN));
 			wantPitch = MathHelper.clamp(pilot.getPitch(), -40f, 40f);
+		} else if (this.aiDriven()) {
+			if (!Float.isNaN(this.brain.desiredYaw)) {
+				this.setYaw(stepTowardAngle(this.getYaw(), this.brain.desiredYaw, s.turnRate() * TURBO_TURN));
+			}
+			wantPitch = MathHelper.clamp(this.brain.desiredPitch, -40f, 40f);
 		}
 		this.turboPitch = stepTowardAngle(this.turboPitch, wantPitch, 1.6f);
 		float fwd = control ? MathHelper.clamp(this.inForward, -1f, 1f) : 0f;

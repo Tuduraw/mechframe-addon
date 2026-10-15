@@ -9,6 +9,7 @@ import com.example.mechframe.item.MechItems;
 import com.example.mechframe.item.MechPartItem;
 import com.example.mechframe.part.MountSlot;
 import com.example.mechframe.part.PartRegistry;
+import net.minecraft.util.ActionResult;
 import net.minecraft.util.Hand;
 import net.minecraft.util.hit.BlockHitResult;
 import net.minecraft.util.math.BlockPos;
@@ -264,24 +265,52 @@ public final class DevTest {
 	/** Wingman: a frame put on escort follows its owner around (and catches up when left far behind). */
 	private static void aiEscort() {
 		common();
-		at(20, c -> spawn(c, "striker", -6, -2, 0f, false));
-		at(24, c -> c.getServer().execute(() -> {
-			ServerPlayerEntity p = c.getServer().getPlayerManager().getPlayerList().get(0);
-			p.setStackInHand(Hand.MAIN_HAND, new net.minecraft.item.ItemStack(MechItems.COMMAND_TERMINAL));
-			MechEntity m = SPAWNED.get("striker");
-			m.interact(p, Hand.MAIN_HAND);
-			m.interact(p, Hand.MAIN_HAND);
-			log.println("mode=" + m.getBrain().mode + " owner=" + m.getBrain().owner);
-		}));
-		at(40, c -> server(c, "tp @a -30 -60 -30 0 10"));
-		for (int t = 50; t <= 250; t += 20) {
-			int tt = t;
-			at(t, c -> aiLog(c, "esc t" + tt, false));
+		at(10, c -> server(c, "difficulty peaceful", "item replace entity @a weapon.mainhand with mechframe:command_terminal"));
+		at(20, c -> spawn(c, "striker", 0, 8, 180f, false));
+		// two clicks through the real client interaction path: guard, then wingman - without boarding
+		for (int t : new int[]{34, 38}) {
+			at(t, c -> {
+				net.minecraft.entity.Entity e = c.world.getEntityById(SPAWNED.get("striker").getId());
+				var im = c.interactionManager;
+				ActionResult r = im.interactEntityAtLocation(c.player, e, new net.minecraft.util.hit.EntityHitResult(e, e.getEntityPos().add(0, 2, 0)), Hand.MAIN_HAND);
+				if (!r.isAccepted()) {
+					r = im.interactEntity(c.player, e, Hand.MAIN_HAND);
+				}
+				log.println("click -> " + r + " riding=" + c.player.getVehicle());
+			});
 		}
-		at(260, c -> server(c, "tp @a 90 -60 90 0 10"));
-		at(300, c -> aiLog(c, "esc after far tp", false));
-		at(320, c -> { c.options.setPerspective(Perspective.THIRD_PERSON_BACK); });
-		at(340, c -> shot(c, "ai_escort"));
+		at(54, c -> c.getServer().execute(() -> {
+			MechEntity m = SPAWNED.get("striker");
+			log.println("mode=" + (m.getBrain() == null ? "-" : m.getBrain().mode) + " passengers=" + m.getPassengerList().size());
+		}));
+		// standing still and looking around: the wingman stays put
+		at(60, c -> aiLog(c, "look t60", false));
+		for (int t = 62; t < 140; t += 6) {
+			int tt = t;
+			at(t, c -> c.player.setYaw(c.player.getYaw() + (tt % 12 == 2 ? 70f : -110f)));
+		}
+		at(140, c -> aiLog(c, "look t140", false));
+		// running fast in a straight line: turbo to keep up
+		// moderate pace (turbo keeps up), then a sprint far past the simulation distance (catch-up)
+		for (int t = 150; t < 230; t++) {
+			int tt = t;
+			at(t, c -> server(c, String.format(Locale.ROOT, "tp @a %.1f -60 %.1f -90 10", 0.5 + (tt - 149) * 0.9, -3.5)));
+		}
+		for (int t = 240; t < 270; t++) {
+			int tt = t;
+			at(t, c -> server(c, String.format(Locale.ROOT, "tp @a %.1f -60 %.1f -90 10", 72.5 + (tt - 239) * 5.0, -3.5)));
+		}
+		for (int t = 160; t <= 300; t += 14) {
+			int tt = t;
+			at(t, c -> c.getServer().execute(() -> {
+				MechEntity m = SPAWNED.get("striker");
+				ServerPlayerEntity p = c.getServer().getPlayerManager().getPlayerList().get(0);
+				log.println(String.format(Locale.ROOT, "run t%d player=%.1f mech=%.1f,%.1f dist=%.1f turbo=%s fwd=%.1f boost=%s",
+						tt, p.getX(), m.getX(), m.getZ(), m.distanceTo(p), m.isTurbo(), m.inForward, m.inBoost));
+			}));
+		}
+		at(310, c -> c.options.setPerspective(Perspective.THIRD_PERSON_BACK));
+		at(330, c -> shot(c, "ai_escort"));
 	}
 
 	/** An outpost unit destroyed: parts drop, the post redeploys a new random frame; no block damage. */

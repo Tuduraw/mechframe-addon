@@ -52,6 +52,7 @@ public class MechFrame implements ModInitializer {
 		ResourceManagerHelper.get(ResourceType.SERVER_DATA).registerReloadListener(new MechDataLoader());
 		MechNetworking.register();
 		ServerLifecycleEvents.SERVER_STARTED.register(MechNetworking::setServer);
+		net.fabricmc.fabric.api.event.lifecycle.v1.ServerTickEvents.END_SERVER_TICK.register(com.example.mechframe.ai.MechBrain::serverTick);
 		ServerLifecycleEvents.SERVER_STOPPED.register(server -> MechNetworking.setServer(null));
 	}
 }

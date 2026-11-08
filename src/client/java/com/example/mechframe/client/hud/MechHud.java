@@ -9,14 +9,13 @@ import com.example.mechframe.part.MountSlot;
 import com.example.tudursvehiclemod.asset.WeaponStatsLoader;
 import com.example.tudursvehiclemod.client.hud.HudVariableProvider;
 import com.example.tudursvehiclemod.entity.AbstractVehicleEntity;
-import net.minecraft.client.MinecraftClient;
-import net.minecraft.client.render.DrawStyle;
-import net.minecraft.entity.Entity;
-import net.minecraft.entity.LivingEntity;
-import net.minecraft.entity.player.PlayerEntity;
-import net.minecraft.world.debug.gizmo.GizmoDrawing;
-
 import java.util.Map;
+import net.minecraft.client.Minecraft;
+import net.minecraft.gizmos.GizmoStyle;
+import net.minecraft.gizmos.Gizmos;
+import net.minecraft.world.entity.Entity;
+import net.minecraft.world.entity.LivingEntity;
+import net.minecraft.world.entity.player.Player;
 
 /** HUD variables for the frame HUD script (assets/mechframe/hud/mech_hud.txt), all prefixed mf_,
  * and the in-world lock markers (orange = soft lock / FCS candidate, red = hard lock). */
@@ -26,7 +25,7 @@ public final class MechHud implements HudVariableProvider {
 	private static final MountSlot[] MOUNTS = {MountSlot.R_ARM, MountSlot.L_ARM, MountSlot.R_BACK, MountSlot.L_BACK};
 
 	@Override
-	public void provideNumeric(MinecraftClient client, PlayerEntity player, AbstractVehicleEntity vehicle, Map<String, Double> vars) {
+	public void provideNumeric(Minecraft client, Player player, AbstractVehicleEntity vehicle, Map<String, Double> vars) {
 		if (!(vehicle instanceof MechEntity mech)) {
 			return;
 		}
@@ -49,11 +48,11 @@ public final class MechHud implements HudVariableProvider {
 		vars.put("mf_load_rto", (double) (s.legLoad() / Math.max(1f, s.legLoadLimit())));
 		vars.put("mf_overload", s.overloadRatio() > 0f ? 1.0 : 0.0);
 		vars.put("mf_arm_overload", s.armOverloadRatio() > 0f ? 1.0 : 0.0);
-		vars.put("mf_vs", mech.getVelocity().y * 20.0);
+		vars.put("mf_vs", mech.getDeltaMovement().y * 20.0);
 		if (!mech.isJet()) {
 			// The base "speed" is the aircraft-style cruise speed, which the robot form never uses:
 			// show the real ground speed (any direction - strafing and quick boosts count too).
-			double hs = mech.getVelocity().horizontalLength();
+			double hs = mech.getDeltaMovement().horizontalDistance();
 			vars.put("speed", hs);
 			vars.put("speed_kbh", hs * 72.0);
 		}
@@ -110,12 +109,12 @@ public final class MechHud implements HudVariableProvider {
 		if (!isActive(mech, mount)) {
 			return "";
 		}
-		net.minecraft.client.option.KeyBinding key = isRight(mount) ? MechInput.fireRightKey : MechInput.fireLeftKey;
-		return key.isUnbound() ? "" : key.getBoundKeyLocalizedText().getString().toUpperCase(java.util.Locale.ROOT);
+		net.minecraft.client.KeyMapping key = isRight(mount) ? MechInput.fireRightKey : MechInput.fireLeftKey;
+		return key.isUnbound() ? "" : key.getTranslatedKeyMessage().getString().toUpperCase(java.util.Locale.ROOT);
 	}
 
 	@Override
-	public void provideString(MinecraftClient client, PlayerEntity player, AbstractVehicleEntity vehicle, Map<String, String> vars) {
+	public void provideString(Minecraft client, Player player, AbstractVehicleEntity vehicle, Map<String, String> vars) {
 		if (!(vehicle instanceof MechEntity mech)) {
 			return;
 		}
@@ -139,7 +138,7 @@ public final class MechHud implements HudVariableProvider {
 			vars.put("mf_" + MOUNT_KEYS[i] + "_key", triggerName(mech, MOUNTS[i]));
 		}
 		vars.put("mf_mode", mech.isTransforming() ? "TRANSFORM" : mech.isJet() ? "JET" : mech.isTurbo() ? "TURBO"
-				: MechInput.boostToggle && MechInput.boostOn && mech == MechInput.pilotedMech(MinecraftClient.getInstance()) ? "BOOST" : "ROBOT");
+				: MechInput.boostToggle && MechInput.boostOn && mech == MechInput.pilotedMech(Minecraft.getInstance()) ? "BOOST" : "ROBOT");
 		Entity target = mech.getFcsTarget();
 		vars.put("mf_tgt_name", target != null ? target.getName().getString() : "");
 		MechPart core = mech.getAssembly().part(MountSlot.CORE);
@@ -147,20 +146,20 @@ public final class MechHud implements HudVariableProvider {
 	}
 
 	/** Once per client tick: lock markers for the frame the local player pilots. */
-	public static void tickMarkers(MinecraftClient client) {
+	public static void tickMarkers(Minecraft client) {
 		MechEntity mech = MechInput.pilotedMech(client);
-		if (mech == null || client.world == null) {
+		if (mech == null || client.level == null) {
 			return;
 		}
 		Entity lock = mech.getLockTarget();
 		Entity cand = mech.getCandidate();
-		try (var scope = client.newGizmoScope()) {
+		try (var scope = client.collectPerTickGizmos()) {
 			if (lock != null) {
-				GizmoDrawing.box(lock.getBoundingBox().expand(0.4), DrawStyle.stroked(0xFFFF3030, 2.5f));
-				GizmoDrawing.entityLabel(lock, 0, "LOCK", 0xFFFF3030, 1.0f);
+				Gizmos.cuboid(lock.getBoundingBox().inflate(0.4), GizmoStyle.stroke(0xFFFF3030, 2.5f));
+				Gizmos.billboardTextOverMob(lock, 0, "LOCK", 0xFFFF3030, 1.0f);
 			}
 			if (cand != null && cand != lock) {
-				GizmoDrawing.box(cand.getBoundingBox().expand(0.3), DrawStyle.stroked(0xFFFF9A20, 1.5f));
+				Gizmos.cuboid(cand.getBoundingBox().inflate(0.3), GizmoStyle.stroke(0xFFFF9A20, 1.5f));
 			}
 		}
 	}

@@ -2,10 +2,9 @@ package com.example.mechframe.part;
 
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
-import net.minecraft.util.Identifier;
-
 import java.util.EnumMap;
 import java.util.Map;
+import net.minecraft.resources.Identifier;
 
 /** The "mechframe" object of a vehicle JSON: the stock assembly a freshly spawned frame comes with.
  *
@@ -23,7 +22,7 @@ public record MechPreset(Identifier vehicleId, Assembly assembly) {
 			for (Map.Entry<String, JsonElement> e : json.getAsJsonObject("assembly").entrySet()) {
 				MountSlot mount = MountSlot.byId(e.getKey());
 				if (mount != null && e.getValue().isJsonPrimitive() && !e.getValue().getAsString().isEmpty()) {
-					map.put(mount, Identifier.of(e.getValue().getAsString()));
+					map.put(mount, Identifier.parse(e.getValue().getAsString()));
 				}
 			}
 		}

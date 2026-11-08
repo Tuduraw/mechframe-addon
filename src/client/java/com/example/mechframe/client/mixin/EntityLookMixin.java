@@ -2,8 +2,8 @@ package com.example.mechframe.client.mixin;
 
 import com.example.mechframe.client.MechInput;
 import com.example.mechframe.entity.MechEntity;
-import net.minecraft.entity.Entity;
-import net.minecraft.entity.player.PlayerEntity;
+import net.minecraft.world.entity.Entity;
+import net.minecraft.world.entity.player.Player;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
@@ -17,10 +17,10 @@ public abstract class EntityLookMixin {
 
 	private static final float DEGREES_PER_UNIT = 0.08f;
 
-	@Inject(method = "changeLookDirection(DD)V", at = @At("HEAD"))
+	@Inject(method = "turn(DD)V", at = @At("HEAD"))
 	private void mechframe$steerJet(double cursorDeltaX, double cursorDeltaY, CallbackInfo ci) {
 		Entity self = (Entity) (Object) this;
-		if (!(self instanceof PlayerEntity player) || !player.isMainPlayer()) {
+		if (!(self instanceof Player player) || !player.isLocalPlayer()) {
 			return;
 		}
 		if (player.getVehicle() instanceof MechEntity mech && mech.getControllingPassenger() == player

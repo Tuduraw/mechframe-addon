@@ -1,58 +1,58 @@
 package com.example.mechframe.garage;
 
 import com.mojang.serialization.MapCodec;
-import net.minecraft.block.BlockState;
-import net.minecraft.block.BlockWithEntity;
-import net.minecraft.block.entity.BlockEntity;
-import net.minecraft.entity.player.PlayerEntity;
-import net.minecraft.server.network.ServerPlayerEntity;
-import net.minecraft.server.world.ServerWorld;
-import net.minecraft.util.ActionResult;
-import net.minecraft.util.ItemScatterer;
-import net.minecraft.util.hit.BlockHitResult;
-import net.minecraft.util.math.BlockPos;
-import net.minecraft.world.World;
+import net.minecraft.core.BlockPos;
+import net.minecraft.server.level.ServerLevel;
+import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.world.Containers;
+import net.minecraft.world.InteractionResult;
+import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.level.Level;
+import net.minecraft.world.level.block.BaseEntityBlock;
+import net.minecraft.world.level.block.entity.BlockEntity;
+import net.minecraft.world.level.block.state.BlockState;
+import net.minecraft.world.phys.BlockHitResult;
 
 /** The garage: stores crafted parts and refits any frame parked within GarageBlockEntity.RANGE. */
-public class GarageBlock extends BlockWithEntity {
+public class GarageBlock extends BaseEntityBlock {
 
-	public static final MapCodec<GarageBlock> CODEC = createCodec(GarageBlock::new);
+	public static final MapCodec<GarageBlock> CODEC = simpleCodec(GarageBlock::new);
 
-	public GarageBlock(Settings settings) {
+	public GarageBlock(Properties settings) {
 		super(settings);
 	}
 
 	@Override
-	protected MapCodec<? extends BlockWithEntity> getCodec() {
+	protected MapCodec<? extends BaseEntityBlock> codec() {
 		return CODEC;
 	}
 
 	@Override
-	protected net.minecraft.block.BlockRenderType getRenderType(BlockState state) {
-		return net.minecraft.block.BlockRenderType.MODEL;
+	protected net.minecraft.world.level.block.RenderShape getRenderShape(BlockState state) {
+		return net.minecraft.world.level.block.RenderShape.MODEL;
 	}
 
 	@Override
-	public BlockEntity createBlockEntity(BlockPos pos, BlockState state) {
+	public BlockEntity newBlockEntity(BlockPos pos, BlockState state) {
 		return new GarageBlockEntity(pos, state);
 	}
 
 	@Override
-	protected ActionResult onUse(BlockState state, World world, BlockPos pos, PlayerEntity player, BlockHitResult hit) {
-		if (!(world instanceof ServerWorld)) {
-			return ActionResult.SUCCESS;
+	protected InteractionResult useWithoutItem(BlockState state, Level world, BlockPos pos, Player player, BlockHitResult hit) {
+		if (!(world instanceof ServerLevel)) {
+			return InteractionResult.SUCCESS;
 		}
-		if (world.getBlockEntity(pos) instanceof GarageBlockEntity garage && player instanceof ServerPlayerEntity serverPlayer) {
-			serverPlayer.openHandledScreen(garage);
+		if (world.getBlockEntity(pos) instanceof GarageBlockEntity garage && player instanceof ServerPlayer serverPlayer) {
+			serverPlayer.openMenu(garage);
 		}
-		return ActionResult.SUCCESS;
+		return InteractionResult.SUCCESS;
 	}
 
 	@Override
-	protected void onStateReplaced(BlockState state, ServerWorld world, BlockPos pos, boolean moved) {
+	protected void affectNeighborsAfterRemoval(BlockState state, ServerLevel world, BlockPos pos, boolean moved) {
 		if (world.getBlockEntity(pos) instanceof GarageBlockEntity garage) {
-			ItemScatterer.spawn(world, pos, garage);
+			Containers.dropContents(world, pos, garage);
 		}
-		super.onStateReplaced(state, world, pos, moved);
+		super.affectNeighborsAfterRemoval(state, world, pos, moved);
 	}
 }

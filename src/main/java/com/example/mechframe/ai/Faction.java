@@ -2,12 +2,11 @@ package com.example.mechframe.ai;
 
 import com.example.mechframe.entity.MechEntity;
 import com.example.tudursvehiclemod.entity.AbstractVehicleEntity;
-import net.minecraft.entity.Entity;
-import net.minecraft.entity.LivingEntity;
-import net.minecraft.entity.mob.Monster;
-import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.world.Difficulty;
-
+import net.minecraft.world.entity.Entity;
+import net.minecraft.world.entity.LivingEntity;
+import net.minecraft.world.entity.monster.Enemy;
+import net.minecraft.world.entity.player.Player;
 import java.util.Locale;
 
 /** Which side an AI-driven frame is on, and who that side shoots at.
@@ -48,11 +47,11 @@ public enum Faction {
 		}
 		return switch (this) {
 			case ENEMY -> {
-				if (self.getEntityWorld().getDifficulty() == Difficulty.PEACEFUL) {
+				if (self.level().getDifficulty() == Difficulty.PEACEFUL) {
 					yield false;
 				}
-				if (e instanceof PlayerEntity player) {
-					yield targetablePlayer(player) && !player.hasVehicle();
+				if (e instanceof Player player) {
+					yield targetablePlayer(player) && !player.isPassenger();
 				}
 				if (e instanceof MechEntity mech && mech.getFaction() == FRIENDLY) {
 					yield true;
@@ -69,19 +68,19 @@ public enum Faction {
 				if (e instanceof AbstractVehicleEntity vehicle) {
 					yield isEnemyVehicleAddonEnemy(vehicle);
 				}
-				yield e instanceof Monster && e instanceof LivingEntity;
+				yield e instanceof Enemy && e instanceof LivingEntity;
 			}
 			case NONE -> false;
 		};
 	}
 
-	static boolean targetablePlayer(PlayerEntity player) {
+	static boolean targetablePlayer(Player player) {
 		return !player.isSpectator() && (!player.isCreative() || MechServerConfig.targetCreativePlayers);
 	}
 
 	private static boolean hasTargetablePlayer(AbstractVehicleEntity vehicle) {
-		for (Entity p : vehicle.getPassengerList()) {
-			if (p instanceof PlayerEntity player && targetablePlayer(player)) {
+		for (Entity p : vehicle.getPassengers()) {
+			if (p instanceof Player player && targetablePlayer(player)) {
 				return true;
 			}
 		}
@@ -90,7 +89,7 @@ public enum Faction {
 
 	/** An Enemy Vehicle Addon enemy: a vehicle flown / driven by its enemy pilot. */
 	public static boolean isEnemyVehicleAddonEnemy(AbstractVehicleEntity vehicle) {
-		for (Entity p : vehicle.getPassengerList()) {
+		for (Entity p : vehicle.getPassengers()) {
 			if (p.getClass().getName().equals(EVA_PILOT)) {
 				return true;
 			}

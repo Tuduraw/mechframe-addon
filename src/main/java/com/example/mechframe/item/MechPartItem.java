@@ -4,16 +4,15 @@ import com.example.mechframe.part.MechPart;
 import com.example.mechframe.part.MountSlot;
 import com.example.mechframe.part.PartRegistry;
 import com.example.mechframe.part.PartSlot;
-import net.minecraft.component.type.TooltipDisplayComponent;
-import net.minecraft.item.Item;
-import net.minecraft.item.ItemStack;
-import net.minecraft.item.tooltip.TooltipType;
-import net.minecraft.text.Text;
-import net.minecraft.util.Formatting;
-import net.minecraft.util.Identifier;
-
 import java.util.Locale;
 import java.util.function.Consumer;
+import net.minecraft.ChatFormatting;
+import net.minecraft.network.chat.Component;
+import net.minecraft.resources.Identifier;
+import net.minecraft.world.item.Item;
+import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.item.TooltipFlag;
+import net.minecraft.world.item.component.TooltipDisplay;
 
 /** A crafted frame part, kept in a Garage and fitted from there. One item per part KIND (so each kind
  * has its own icon); which part it is lives in the mechframe:part_id component. */
@@ -21,7 +20,7 @@ public class MechPartItem extends Item {
 
 	private final PartSlot slot;
 
-	public MechPartItem(Settings settings, PartSlot slot) {
+	public MechPartItem(Properties settings, PartSlot slot) {
 		super(settings);
 		this.slot = slot;
 	}
@@ -47,26 +46,26 @@ public class MechPartItem extends Item {
 	}
 
 	@Override
-	public Text getName(ItemStack stack) {
+	public Component getName(ItemStack stack) {
 		MechPart part = part(stack);
 		if (part != null) {
-			return Text.literal(part.displayName());
+			return Component.literal(part.displayName());
 		}
 		return super.getName(stack);
 	}
 
 	@Override
-	public void appendTooltip(ItemStack stack, TooltipContext context, TooltipDisplayComponent displayComponent,
-			Consumer<Text> tooltip, TooltipType type) {
+	public void appendHoverText(ItemStack stack, TooltipContext context, TooltipDisplay displayComponent,
+			Consumer<Component> tooltip, TooltipFlag type) {
 		MechPart part = part(stack);
 		if (part == null) {
 			Identifier id = partId(stack);
-			tooltip.accept(Text.translatable("tooltip.mechframe.unknown_part", id == null ? "-" : id.toString()).formatted(Formatting.RED));
+			tooltip.accept(Component.translatable("tooltip.mechframe.unknown_part", id == null ? "-" : id.toString()).withStyle(ChatFormatting.RED));
 			return;
 		}
-		tooltip.accept(Text.translatable("tooltip.mechframe.slot." + part.slot().id()).formatted(Formatting.GOLD));
+		tooltip.accept(Component.translatable("tooltip.mechframe.slot." + part.slot().id()).withStyle(ChatFormatting.GOLD));
 		if (!part.maker().isEmpty()) {
-			tooltip.accept(Text.literal(part.maker()).formatted(Formatting.DARK_GRAY));
+			tooltip.accept(Component.literal(part.maker()).withStyle(ChatFormatting.DARK_GRAY));
 		}
 		tooltip.accept(line("weight", String.format(Locale.ROOT, "%.1f t", part.weight())));
 		tooltip.accept(line("armor", String.format(Locale.ROOT, "%.0f", part.armor())));
@@ -74,7 +73,7 @@ public class MechPartItem extends Item {
 			case HEAD -> tooltip.accept(line("lock", String.format(Locale.ROOT, "%.0f m / %.0f°", part.head().lockRange(), part.head().lockCone())));
 			case CORE -> {
 				tooltip.accept(line("en", String.format(Locale.ROOT, "%.0f (+%.0f/t)", part.core().enCapacity(), part.core().enRecharge())));
-				part.core().jet().ifPresent(jet -> tooltip.accept(Text.translatable("tooltip.mechframe.transformable").formatted(Formatting.AQUA)));
+				part.core().jet().ifPresent(jet -> tooltip.accept(Component.translatable("tooltip.mechframe.transformable").withStyle(ChatFormatting.AQUA)));
 			}
 			case ARMS -> {
 				tooltip.accept(line("arm_load", String.format(Locale.ROOT, "%.1f t", part.arms().loadLimit())));
@@ -84,11 +83,11 @@ public class MechPartItem extends Item {
 						MechPart wp = PartRegistry.getOrNull(w);
 						names.add(wp != null ? wp.displayName() : w.toString());
 					}
-					tooltip.accept(Text.translatable("tooltip.mechframe.integrated", String.join(", ", names)).formatted(Formatting.GOLD));
+					tooltip.accept(Component.translatable("tooltip.mechframe.integrated", String.join(", ", names)).withStyle(ChatFormatting.GOLD));
 				}
 			}
 			case LEGS -> {
-				tooltip.accept(Text.translatable("tooltip.mechframe.legtype." + part.legs().type().name().toLowerCase(Locale.ROOT)).formatted(Formatting.GRAY));
+				tooltip.accept(Component.translatable("tooltip.mechframe.legtype." + part.legs().type().name().toLowerCase(Locale.ROOT)).withStyle(ChatFormatting.GRAY));
 				tooltip.accept(line("leg_load", String.format(Locale.ROOT, "%.1f t", part.legs().loadLimit())));
 				tooltip.accept(line("speed", String.format(Locale.ROOT, "%.0f km/h", part.legs().walkSpeed() * 72f)));
 			}
@@ -98,21 +97,21 @@ public class MechPartItem extends Item {
 			}
 			case WEAPON -> {
 				MountSlot.WeaponMount mount = part.weapon().mount();
-				tooltip.accept(Text.translatable("tooltip.mechframe.mount." + mount.name().toLowerCase(Locale.ROOT)).formatted(Formatting.GRAY));
+				tooltip.accept(Component.translatable("tooltip.mechframe.mount." + mount.name().toLowerCase(Locale.ROOT)).withStyle(ChatFormatting.GRAY));
 				if (part.weapon().isMelee()) {
 					MechPart.MeleeSpec m = part.weapon().melee();
 					if (m.thrust()) {
-						tooltip.accept(Text.translatable("tooltip.mechframe.melee_thrust").formatted(Formatting.GRAY));
+						tooltip.accept(Component.translatable("tooltip.mechframe.melee_thrust").withStyle(ChatFormatting.GRAY));
 					}
-					tooltip.accept(Text.translatable("tooltip.mechframe.melee", String.format(Locale.ROOT, "%.0f", m.damage()),
-							String.format(Locale.ROOT, "%.1f", m.reach())).formatted(Formatting.GRAY));
+					tooltip.accept(Component.translatable("tooltip.mechframe.melee", String.format(Locale.ROOT, "%.0f", m.damage()),
+							String.format(Locale.ROOT, "%.1f", m.reach())).withStyle(ChatFormatting.GRAY));
 				}
 			}
 		}
-		part.transformSet().ifPresent(set -> tooltip.accept(Text.translatable("tooltip.mechframe.transform_set", set).formatted(Formatting.AQUA)));
+		part.transformSet().ifPresent(set -> tooltip.accept(Component.translatable("tooltip.mechframe.transform_set", set).withStyle(ChatFormatting.AQUA)));
 	}
 
-	private static Text line(String key, String value) {
-		return Text.translatable("tooltip.mechframe." + key).append(": " + value).formatted(Formatting.GRAY);
+	private static Component line(String key, String value) {
+		return Component.translatable("tooltip.mechframe." + key).append(": " + value).withStyle(ChatFormatting.GRAY);
 	}
 }

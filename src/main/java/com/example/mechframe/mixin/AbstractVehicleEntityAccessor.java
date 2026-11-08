@@ -1,7 +1,7 @@
 package com.example.mechframe.mixin;
 
 import com.example.tudursvehiclemod.entity.AbstractVehicleEntity;
-import net.minecraft.entity.data.TrackedData;
+import net.minecraft.network.syncher.EntityDataAccessor;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.gen.Accessor;
 
@@ -13,13 +13,13 @@ import org.spongepowered.asm.mixin.gen.Accessor;
 public interface AbstractVehicleEntityAccessor {
 
 	@Accessor("HEALTH")
-	static TrackedData<Float> mechframe$healthKey() {
+	static EntityDataAccessor<Float> mechframe$healthKey() {
 		throw new AssertionError();
 	}
 
 	/** The synced fuel key: turbo mode burns fuel faster than the base mod's throttle-based use. */
 	@Accessor("FUEL")
-	static TrackedData<Float> mechframe$fuelKey() {
+	static EntityDataAccessor<Float> mechframe$fuelKey() {
 		throw new AssertionError();
 	}
 

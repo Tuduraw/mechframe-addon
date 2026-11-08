@@ -1,9 +1,8 @@
 package com.example.mechframe.part;
 
-import net.minecraft.util.Identifier;
-
 import java.util.EnumMap;
 import java.util.Map;
+import net.minecraft.resources.Identifier;
 
 /** Which part sits in each mount of one frame.
  *

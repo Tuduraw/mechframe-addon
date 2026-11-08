@@ -6,13 +6,13 @@ import com.example.mechframe.part.Assembly;
 import com.example.mechframe.part.MechPart;
 import com.example.mechframe.part.MountSlot;
 import com.example.mechframe.part.PartRegistry;
-import net.minecraft.entity.Entity;
-import net.minecraft.item.ItemStack;
-import net.minecraft.server.network.ServerPlayerEntity;
-import net.minecraft.text.Text;
-import net.minecraft.util.Identifier;
-import net.minecraft.util.math.BlockPos;
-import net.minecraft.util.math.Vec3d;
+import net.minecraft.core.BlockPos;
+import net.minecraft.network.chat.Component;
+import net.minecraft.resources.Identifier;
+import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.world.entity.Entity;
+import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.phys.Vec3;
 
 /** Server-side refitting. The rules that keep it from duplicating parts:
  * <ul>
@@ -28,11 +28,11 @@ public final class AssemblyService {
 	}
 
 	/** partId null = empty the mount (only for mounts that may be empty). */
-	public static void apply(ServerPlayerEntity player, BlockPos garagePos, int mechId, MountSlot mount, Identifier partId) {
-		if (!(player.getEntityWorld().getBlockEntity(garagePos) instanceof GarageBlockEntity garage) || !garage.canPlayerUse(player)) {
+	public static void apply(ServerPlayer player, BlockPos garagePos, int mechId, MountSlot mount, Identifier partId) {
+		if (!(player.level().getBlockEntity(garagePos) instanceof GarageBlockEntity garage) || !garage.stillValid(player)) {
 			return;
 		}
-		Entity entity = player.getEntityWorld().getEntityById(mechId);
+		Entity entity = player.level().getEntity(mechId);
 		if (!(entity instanceof MechEntity mech) || !inRange(mech, garagePos)
 				|| mech.getFaction() == com.example.mechframe.ai.Faction.ENEMY) {
 			fail(player, "message.mechframe.garage.no_frame");
@@ -84,7 +84,7 @@ public final class AssemblyService {
 			fail(player, "message.mechframe.garage.unknown_part");
 			return;
 		}
-		ItemStack taken = garageSlot >= 0 ? garage.removeStack(garageSlot, 1) : ItemStack.EMPTY;
+		ItemStack taken = garageSlot >= 0 ? garage.removeItem(garageSlot, 1) : ItemStack.EMPTY;
 		if (installed != null && !current.isStock(mount)) {
 			MechPart old = PartRegistry.getOrNull(installed);
 			if (old != null && !garage.insert(MechPartItem.stackFor(old))) {
@@ -96,12 +96,12 @@ public final class AssemblyService {
 			}
 		}
 		mech.setAssembly(current.with(mount, partId, fromStock));
-		garage.markDirty();
+		garage.setChanged();
 	}
 
 	/** Puts every mount back to the frame's stock part, returning garage parts to the garage. */
-	public static void resetToStock(ServerPlayerEntity player, BlockPos garagePos, int mechId) {
-		Entity entity = player.getEntityWorld().getEntityById(mechId);
+	public static void resetToStock(ServerPlayer player, BlockPos garagePos, int mechId) {
+		Entity entity = player.level().getEntity(mechId);
 		if (!(entity instanceof MechEntity mech) || mech.getFaction() == com.example.mechframe.ai.Faction.ENEMY) {
 			return;
 		}
@@ -112,10 +112,10 @@ public final class AssemblyService {
 	}
 
 	public static boolean inRange(MechEntity mech, BlockPos garagePos) {
-		return mech.squaredDistanceTo(Vec3d.ofCenter(garagePos)) <= GarageBlockEntity.RANGE * GarageBlockEntity.RANGE;
+		return mech.distanceToSqr(Vec3.atCenterOf(garagePos)) <= GarageBlockEntity.RANGE * GarageBlockEntity.RANGE;
 	}
 
-	private static void fail(ServerPlayerEntity player, String key) {
-		player.sendMessage(Text.translatable(key), true);
+	private static void fail(ServerPlayer player, String key) {
+		player.displayClientMessage(Component.translatable(key), true);
 	}
 }

@@ -4,7 +4,7 @@ import com.example.mechframe.ai.MechServerConfig;
 import com.example.mechframe.entity.MechEntity;
 import com.example.tudursvehiclemod.entity.AbstractVehicleEntity;
 import com.example.tudursvehiclemod.entity.projectile.VehicleProjectileEntity;
-import net.minecraft.util.hit.BlockHitResult;
+import net.minecraft.world.phys.BlockHitResult;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Shadow;
 import org.spongepowered.asm.mixin.injection.At;

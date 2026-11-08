@@ -2,8 +2,8 @@ package com.example.mechframe.item;
 
 import com.example.mechframe.MechFrame;
 import com.example.tudursvehiclemod.item.VehicleConverterTarget;
-import net.minecraft.item.Item;
-import net.minecraft.util.Identifier;
+import net.minecraft.resources.Identifier;
+import net.minecraft.world.item.Item;
 
 /** The "Mech Frame" page of the base mod's vehicle converter and the selection screen of the tiered
  * spawners: every vehicle JSON whose entity_type is mechframe:mech. */
@@ -17,7 +17,7 @@ public class MechConverterTarget implements VehicleConverterTarget {
 
 	@Override
 	public Identifier entityTypeId() {
-		return Identifier.of(MechFrame.MOD_ID, "mech");
+		return Identifier.fromNamespaceAndPath(MechFrame.MOD_ID, "mech");
 	}
 
 	@Override
@@ -27,7 +27,7 @@ public class MechConverterTarget implements VehicleConverterTarget {
 
 	@Override
 	public Identifier id() {
-		return Identifier.of(MechFrame.MOD_ID, "mech");
+		return Identifier.fromNamespaceAndPath(MechFrame.MOD_ID, "mech");
 	}
 
 	@Override

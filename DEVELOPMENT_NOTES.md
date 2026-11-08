@@ -184,3 +184,20 @@ Mech Frame の設計と、実装中に分かったことの記録です。ユー
   離れるとターボ(16ブロック以内で解除、ピッチは高低差と障害物で決める)。変形機は戦闘機のAIがないためブーストのみ。
 - 追いつき: 64ブロック以上離れた僚機は、サーバーのtickで(1秒ごと)持ち主の近くへ移動する(`MechBrain.serverTick`)。持ち主が
   シミュレーション距離の外まで走り去ると機体のチャンクがtickされずAIが動かないため、エンティティのtickではなくサーバー側で行う。
+
+## Mojang マッピングへの移行と Forge 1.20.1 版
+
+- 前提MODが Mojang マッピング版(`tudursvehiclemod-mojmap`、`1.1.1-fabric-1.21.11`)に移ったのに合わせ、このプロジェクトも
+  Yarn から Mojang マッピングに移しました。Loom の `migrateClientMappings` で main・client・devtest のソースを変換し、
+  Mixin の対象の文字列(メソッド名と記述子)も Mojang 名にしています。
+- 移行は必須ではありません。前提MOD の jar は中間名で配布されるので、Yarn のままのアドオンも新しい前提MOD で
+  そのまま動きます(Yarn 版のこのプロジェクトを新しい前提MOD に対してビルドし、確認済み)。
+  移行が必要なのは、Forge 版の自動生成(Mojang 名のソースが入力)と、Yarn が提供されない 1.21.11 より後の版への対応のためです。
+- 変換の前後で jar のバイトコード(中間名)を比べ、違いは `MechRenderer` だけでした。前提MOD は描画のメソッドを
+  Yarn 名の本体と Mojang 名の転送メソッドの両方で持つため(前提MOD の `MOJMAP.md`)、Mojang 名
+  (`extractRenderState` / `submit`)で上書きするように直しています。
+- Forge 1.20.1 版は別プロジェクト(`mechframe-forge`)で、このプロジェクトから `tools/port/port.py` で生成します。
+  1.21.11 にしか無い API(ツールチップ、マウス入力、ギズモ、`Level#explode` の戻り値など)は、パッチと
+  このアドオン独自の互換クラスで直しています。詳しくは `mechframe-forge/PORTING.md`。
+  Fabric 版を直したら、Forge 版は `port.py generate` で作り直し、パッチが当たらなくなった箇所だけ手で直します。
+

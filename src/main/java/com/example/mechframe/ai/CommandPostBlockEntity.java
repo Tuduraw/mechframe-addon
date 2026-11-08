@@ -5,24 +5,23 @@ import com.example.mechframe.entity.MechEntity;
 import com.example.mechframe.part.Assembly;
 import com.example.mechframe.part.MechPart;
 import com.example.mechframe.part.MountSlot;
-import net.minecraft.block.BlockState;
-import net.minecraft.block.entity.BlockEntity;
-import net.minecraft.entity.Entity;
-import net.minecraft.entity.SpawnReason;
-import net.minecraft.server.world.ServerWorld;
-import net.minecraft.storage.ReadView;
-import net.minecraft.storage.WriteView;
-import net.minecraft.text.Text;
-import net.minecraft.util.Formatting;
-import net.minecraft.util.Identifier;
-import net.minecraft.util.math.BlockPos;
-import net.minecraft.util.math.Box;
-import net.minecraft.util.math.MathHelper;
-import net.minecraft.util.math.Vec3d;
+import net.minecraft.ChatFormatting;
+import net.minecraft.core.BlockPos;
+import net.minecraft.network.chat.Component;
+import net.minecraft.resources.Identifier;
+import net.minecraft.server.level.ServerLevel;
+import net.minecraft.util.Mth;
 import net.minecraft.world.Difficulty;
-import net.minecraft.world.Heightmap;
-import net.minecraft.world.World;
-
+import net.minecraft.world.entity.Entity;
+import net.minecraft.world.entity.EntitySpawnReason;
+import net.minecraft.world.level.Level;
+import net.minecraft.world.level.block.entity.BlockEntity;
+import net.minecraft.world.level.block.state.BlockState;
+import net.minecraft.world.level.levelgen.Heightmap;
+import net.minecraft.world.level.storage.ValueInput;
+import net.minecraft.world.level.storage.ValueOutput;
+import net.minecraft.world.phys.AABB;
+import net.minecraft.world.phys.Vec3;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
@@ -41,7 +40,7 @@ import java.util.UUID;
 public class CommandPostBlockEntity extends BlockEntity {
 
 	/** Default preset id the units are created from (only its vehicle-level settings are used). */
-	private static final Identifier UNIT_DEFINITION = Identifier.of(MechFrame.MOD_ID, "striker");
+	private static final Identifier UNIT_DEFINITION = Identifier.fromNamespaceAndPath(MechFrame.MOD_ID, "striker");
 	/** A unit that cannot be found for this long (ticks, while the post is loaded) is taken for lost. */
 	private static final int MISSING_LIMIT = 600;
 
@@ -62,7 +61,7 @@ public class CommandPostBlockEntity extends BlockEntity {
 	}
 
 	private void ensureSlots() {
-		int n = MathHelper.clamp(this.count, 1, 8);
+		int n = Mth.clamp(this.count, 1, 8);
 		while (this.units.size() < n) {
 			this.units.add(null);
 			this.respawnAt.add(0L);
@@ -75,19 +74,19 @@ public class CommandPostBlockEntity extends BlockEntity {
 		}
 	}
 
-	public static void tick(World world, BlockPos pos, BlockState state, CommandPostBlockEntity post) {
-		if (!(world instanceof ServerWorld server) || world.getTime() % 20 != Math.floorMod(pos.asLong(), 20)) {
+	public static void tick(Level world, BlockPos pos, BlockState state, CommandPostBlockEntity post) {
+		if (!(world instanceof ServerLevel server) || world.getGameTime() % 20 != Math.floorMod(pos.asLong(), 20)) {
 			return;
 		}
 		post.serverTick(server);
 	}
 
-	private void serverTick(ServerWorld world) {
+	private void serverTick(ServerLevel world) {
 		if (this.faction == Faction.ENEMY && world.getDifficulty() == Difficulty.PEACEFUL) {
 			return;
 		}
 		this.ensureSlots();
-		long now = world.getTime();
+		long now = world.getGameTime();
 		boolean dirty = false;
 		for (int i = 0; i < this.units.size(); i++) {
 			UUID id = this.units.get(i);
@@ -115,21 +114,21 @@ public class CommandPostBlockEntity extends BlockEntity {
 			if (at >= 0 && now >= at) {
 				MechEntity unit = this.deploy(world, i);
 				if (unit != null) {
-					this.units.set(i, unit.getUuid());
+					this.units.set(i, unit.getUUID());
 					this.respawnAt.set(i, -1L);
 					dirty = true;
 				}
 			}
 		}
 		if (dirty) {
-			this.markDirty();
+			this.setChanged();
 		}
 	}
 
 	/** Whether the post at pos (if loaded) still counts this unit as its slot's unit. True when the
 	 * post is not loaded or gone - only a post that has positively replaced the unit says no. */
-	public static boolean stillOwns(ServerWorld world, BlockPos pos, int slot, UUID unit) {
-		if (!world.isChunkLoaded(pos.getX() >> 4, pos.getZ() >> 4)) {
+	public static boolean stillOwns(ServerLevel world, BlockPos pos, int slot, UUID unit) {
+		if (!world.hasChunk(pos.getX() >> 4, pos.getZ() >> 4)) {
 			return true;
 		}
 		if (!(world.getBlockEntity(pos) instanceof CommandPostBlockEntity post)) {
@@ -142,28 +141,28 @@ public class CommandPostBlockEntity extends BlockEntity {
 		return owned == null || owned.equals(unit);
 	}
 
-	private MechEntity deploy(ServerWorld world, int slot) {
+	private MechEntity deploy(ServerLevel world, int slot) {
 		Assembly assembly = RandomAssembly.roll(world.getRandom(), this.tierMin, this.tierMax);
 		if (assembly == null) {
 			return null;
 		}
-		BlockPos p = this.getPos();
-		Vec3d spot = null;
+		BlockPos p = this.getBlockPos();
+		Vec3 spot = null;
 		for (int attempt = 0; attempt < 12 && spot == null; attempt++) {
 			double a = world.getRandom().nextDouble() * Math.PI * 2.0;
 			double r = 6.0 + world.getRandom().nextDouble() * Math.min(10.0, this.radius * 0.4);
-			int x = MathHelper.floor(p.getX() + 0.5 + Math.cos(a) * r);
-			int z = MathHelper.floor(p.getZ() + 0.5 + Math.sin(a) * r);
-			int y = world.getTopY(Heightmap.Type.MOTION_BLOCKING_NO_LEAVES, x, z);
-			Box box = new Box(x - 1.5, y, z - 1.5, x + 2.5, y + 5.0, z + 2.5);
-			if (world.isSpaceEmpty(box) && !world.getFluidState(new BlockPos(x, y, z).down()).isStill()) {
-				spot = new Vec3d(x + 0.5, y, z + 0.5);
+			int x = Mth.floor(p.getX() + 0.5 + Math.cos(a) * r);
+			int z = Mth.floor(p.getZ() + 0.5 + Math.sin(a) * r);
+			int y = world.getHeight(Heightmap.Types.MOTION_BLOCKING_NO_LEAVES, x, z);
+			AABB box = new AABB(x - 1.5, y, z - 1.5, x + 2.5, y + 5.0, z + 2.5);
+			if (world.noCollision(box) && !world.getFluidState(new BlockPos(x, y, z).below()).isSource()) {
+				spot = new Vec3(x + 0.5, y, z + 0.5);
 			}
 		}
 		if (spot == null) {
 			return null;
 		}
-		MechEntity mech = MechFrame.MECH.create(world, SpawnReason.EVENT);
+		MechEntity mech = MechFrame.MECH.create(world, EntitySpawnReason.EVENT);
 		if (mech == null) {
 			return null;
 		}
@@ -173,29 +172,29 @@ public class CommandPostBlockEntity extends BlockEntity {
 			mech.discard();
 			return null;
 		}
-		mech.refreshPositionAndAngles(spot.x, spot.y, spot.z, world.getRandom().nextFloat() * 360f, 0f);
-		MechBrain brain = new MechBrain(this.faction, MechBrain.Mode.GUARD, Vec3d.ofBottomCenter(p), this.radius);
-		brain.post = p.toImmutable();
+		mech.snapTo(spot.x, spot.y, spot.z, world.getRandom().nextFloat() * 360f, 0f);
+		MechBrain brain = new MechBrain(this.faction, MechBrain.Mode.GUARD, Vec3.atBottomCenterOf(p), this.radius);
+		brain.post = p.immutable();
 		brain.postSlot = slot;
 		brain.skill = this.skill;
 		mech.setBrain(brain);
 		mech.setCustomName(unitName(this.faction, assembly));
 		mech.tudursvehiclemod$fillAllWeaponAmmoAndFuel();
 		mech.tudursvehiclemod$syncWeaponAmmo();
-		world.spawnEntity(mech);
+		world.addFreshEntity(mech);
 		return mech;
 	}
 
 	/** "Hostile Unit: <core maker>" / "Allied Unit: ...", coloured by side. */
-	public static Text unitName(Faction faction, Assembly assembly) {
+	public static Component unitName(Faction faction, Assembly assembly) {
 		MechPart core = assembly.part(MountSlot.CORE);
 		String maker = core != null && !core.maker().isEmpty() ? core.maker() : "";
-		return Text.translatable(faction == Faction.ENEMY ? "entity.mechframe.unit.enemy" : "entity.mechframe.unit.friendly", maker)
-				.formatted(faction == Faction.ENEMY ? Formatting.RED : Formatting.GREEN);
+		return Component.translatable(faction == Faction.ENEMY ? "entity.mechframe.unit.enemy" : "entity.mechframe.unit.friendly", maker)
+				.withStyle(faction == Faction.ENEMY ? ChatFormatting.RED : ChatFormatting.GREEN);
 	}
 
 	/** Status line for a player inspecting the post. */
-	public Text status(World world) {
+	public Component status(Level world) {
 		this.ensureSlots();
 		int alive = 0;
 		long next = Long.MAX_VALUE;
@@ -206,28 +205,28 @@ public class CommandPostBlockEntity extends BlockEntity {
 				next = Math.min(next, this.respawnAt.get(i));
 			}
 		}
-		long secs = next == Long.MAX_VALUE ? -1 : Math.max(0, (next - world.getTime()) / 20);
-		return Text.translatable("message.mechframe.post.status", Text.translatable("message.mechframe.faction." + this.faction.id()),
+		long secs = next == Long.MAX_VALUE ? -1 : Math.max(0, (next - world.getGameTime()) / 20);
+		return Component.translatable("message.mechframe.post.status", Component.translatable("message.mechframe.faction." + this.faction.id()),
 				alive, this.units.size(), secs < 0 ? "-" : (secs / 60) + ":" + String.format("%02d", secs % 60));
 	}
 
 	@Override
-	protected void readData(ReadView view) {
-		super.readData(view);
-		this.faction = Faction.byId(view.getString("Faction", "enemy"));
+	protected void loadAdditional(ValueInput view) {
+		super.loadAdditional(view);
+		this.faction = Faction.byId(view.getStringOr("Faction", "enemy"));
 		if (this.faction == Faction.NONE) {
 			this.faction = Faction.ENEMY;
 		}
-		this.radius = MathHelper.clamp(view.getInt("Radius", 40), 8, 256);
-		this.tierMin = MathHelper.clamp(view.getInt("TierMin", 1), 1, 5);
-		this.tierMax = MathHelper.clamp(view.getInt("TierMax", 3), this.tierMin, 5);
-		this.count = MathHelper.clamp(view.getInt("Count", 1), 1, 8);
-		this.skill = MathHelper.clamp(view.getFloat("Skill", 0.5f), 0f, 1f);
+		this.radius = Mth.clamp(view.getIntOr("Radius", 40), 8, 256);
+		this.tierMin = Mth.clamp(view.getIntOr("TierMin", 1), 1, 5);
+		this.tierMax = Mth.clamp(view.getIntOr("TierMax", 3), this.tierMin, 5);
+		this.count = Mth.clamp(view.getIntOr("Count", 1), 1, 8);
+		this.skill = Mth.clamp(view.getFloatOr("Skill", 0.5f), 0f, 1f);
 		this.units.clear();
 		this.respawnAt.clear();
 		this.missing.clear();
-		String[] u = view.getString("Units", "").split(",", -1);
-		String[] r = view.getString("RespawnAt", "").split(",", -1);
+		String[] u = view.getStringOr("Units", "").split(",", -1);
+		String[] r = view.getStringOr("RespawnAt", "").split(",", -1);
 		for (int i = 0; i < this.count; i++) {
 			UUID id = null;
 			if (i < u.length && !u[i].isEmpty()) {
@@ -252,8 +251,8 @@ public class CommandPostBlockEntity extends BlockEntity {
 	}
 
 	@Override
-	protected void writeData(WriteView view) {
-		super.writeData(view);
+	protected void saveAdditional(ValueOutput view) {
+		super.saveAdditional(view);
 		this.ensureSlots();
 		view.putString("Faction", this.faction.id());
 		view.putInt("Radius", this.radius);

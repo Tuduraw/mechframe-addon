@@ -6,12 +6,12 @@ import com.example.mechframe.net.MechNetworking;
 import com.example.mechframe.part.MountSlot;
 import com.example.tudursvehiclemod.asset.WeaponDefinition;
 import com.example.tudursvehiclemod.network.FireWeaponPayload;
+import com.mojang.blaze3d.platform.InputConstants;
 import net.fabricmc.fabric.api.client.keybinding.v1.KeyBindingHelper;
 import net.fabricmc.fabric.api.client.networking.v1.ClientPlayNetworking;
-import net.minecraft.client.MinecraftClient;
-import net.minecraft.client.option.KeyBinding;
-import net.minecraft.client.util.InputUtil;
-import net.minecraft.util.Identifier;
+import net.minecraft.client.KeyMapping;
+import net.minecraft.client.Minecraft;
+import net.minecraft.resources.Identifier;
 import org.lwjgl.glfw.GLFW;
 
 import java.util.List;
@@ -26,13 +26,13 @@ import java.util.List;
  * mod's designation key (B). */
 public final class MechInput {
 
-	public static KeyBinding boostKey;
-	public static KeyBinding quickBoostKey;
-	public static KeyBinding transformKey;
-	public static KeyBinding fireLeftKey;
-	public static KeyBinding fireRightKey;
-	public static KeyBinding swapLeftKey;
-	public static KeyBinding swapRightKey;
+	public static KeyMapping boostKey;
+	public static KeyMapping quickBoostKey;
+	public static KeyMapping transformKey;
+	public static KeyMapping fireLeftKey;
+	public static KeyMapping fireRightKey;
+	public static KeyMapping swapLeftKey;
+	public static KeyMapping swapRightKey;
 	/** Per side: true = the trigger fires the back weapon, false = the arm weapon. */
 	public static boolean leftBack;
 	public static boolean rightBack;
@@ -64,21 +64,21 @@ public final class MechInput {
 	}
 
 	public static void register() {
-		KeyBinding.Category category = KeyBinding.Category.create(Identifier.of(MechFrame.MOD_ID, "mech"));
-		boostKey = KeyBindingHelper.registerKeyBinding(new KeyBinding("key.mechframe.boost",
-				InputUtil.Type.KEYSYM, GLFW.GLFW_KEY_LEFT_CONTROL, category));
-		quickBoostKey = KeyBindingHelper.registerKeyBinding(new KeyBinding("key.mechframe.quick_boost",
-				InputUtil.Type.KEYSYM, GLFW.GLFW_KEY_X, category));
-		transformKey = KeyBindingHelper.registerKeyBinding(new KeyBinding("key.mechframe.transform",
-				InputUtil.Type.KEYSYM, GLFW.GLFW_KEY_V, category));
-		fireLeftKey = KeyBindingHelper.registerKeyBinding(new KeyBinding("key.mechframe.fire_left",
-				InputUtil.Type.MOUSE, GLFW.GLFW_MOUSE_BUTTON_LEFT, category));
-		fireRightKey = KeyBindingHelper.registerKeyBinding(new KeyBinding("key.mechframe.fire_right",
-				InputUtil.Type.MOUSE, GLFW.GLFW_MOUSE_BUTTON_RIGHT, category));
-		swapLeftKey = KeyBindingHelper.registerKeyBinding(new KeyBinding("key.mechframe.swap_left",
-				InputUtil.Type.KEYSYM, GLFW.GLFW_KEY_Z, category));
-		swapRightKey = KeyBindingHelper.registerKeyBinding(new KeyBinding("key.mechframe.swap_right",
-				InputUtil.Type.KEYSYM, GLFW.GLFW_KEY_C, category));
+		KeyMapping.Category category = KeyMapping.Category.register(Identifier.fromNamespaceAndPath(MechFrame.MOD_ID, "mech"));
+		boostKey = KeyBindingHelper.registerKeyBinding(new KeyMapping("key.mechframe.boost",
+				InputConstants.Type.KEYSYM, GLFW.GLFW_KEY_LEFT_CONTROL, category));
+		quickBoostKey = KeyBindingHelper.registerKeyBinding(new KeyMapping("key.mechframe.quick_boost",
+				InputConstants.Type.KEYSYM, GLFW.GLFW_KEY_X, category));
+		transformKey = KeyBindingHelper.registerKeyBinding(new KeyMapping("key.mechframe.transform",
+				InputConstants.Type.KEYSYM, GLFW.GLFW_KEY_V, category));
+		fireLeftKey = KeyBindingHelper.registerKeyBinding(new KeyMapping("key.mechframe.fire_left",
+				InputConstants.Type.MOUSE, GLFW.GLFW_MOUSE_BUTTON_LEFT, category));
+		fireRightKey = KeyBindingHelper.registerKeyBinding(new KeyMapping("key.mechframe.fire_right",
+				InputConstants.Type.MOUSE, GLFW.GLFW_MOUSE_BUTTON_RIGHT, category));
+		swapLeftKey = KeyBindingHelper.registerKeyBinding(new KeyMapping("key.mechframe.swap_left",
+				InputConstants.Type.KEYSYM, GLFW.GLFW_KEY_Z, category));
+		swapRightKey = KeyBindingHelper.registerKeyBinding(new KeyMapping("key.mechframe.swap_right",
+				InputConstants.Type.KEYSYM, GLFW.GLFW_KEY_C, category));
 	}
 
 	/** The mount whose weapon a side's trigger uses now: the selected one (arm or back), or the
@@ -103,7 +103,7 @@ public final class MechInput {
 		return weaponIndex(mech, mount) >= 0;
 	}
 
-	public static MechEntity pilotedMech(MinecraftClient client) {
+	public static MechEntity pilotedMech(Minecraft client) {
 		if (client.player == null) {
 			return null;
 		}
@@ -111,7 +111,7 @@ public final class MechInput {
 	}
 
 	/** START of the client tick - before the world ticks the frame, so this tick's physics sees it. */
-	public static void tick(MinecraftClient client) {
+	public static void tick(Minecraft client) {
 		tick++;
 		MechEntity mech = pilotedMech(client);
 		suppressBaseWeaponKeys = mech != null;
@@ -123,21 +123,21 @@ public final class MechInput {
 		} else if (mech == null) {
 			selectionMechId = -1;
 		}
-		if (mech == null || client.currentScreen != null) {
-			while (quickBoostKey.wasPressed()) {
+		if (mech == null || client.screen != null) {
+			while (quickBoostKey.consumeClick()) {
 			}
-			while (transformKey.wasPressed()) {
+			while (transformKey.consumeClick()) {
 			}
-			while (swapLeftKey.wasPressed()) {
+			while (swapLeftKey.consumeClick()) {
 			}
-			while (swapRightKey.wasPressed()) {
+			while (swapRightKey.consumeClick()) {
 			}
 			flightYaw = 0f;
 			flightPitch = 0f;
 			if (mech == null) {
 				boostOn = false;
 			}
-			while (mech == null && boostKey.wasPressed()) {
+			while (mech == null && boostKey.consumeClick()) {
 			}
 			if (mech != null) {
 				mech.inForward = 0f;
@@ -149,12 +149,12 @@ public final class MechInput {
 			return;
 		}
 		var o = client.options;
-		float forward = (o.forwardKey.isPressed() ? 1f : 0f) - (o.backKey.isPressed() ? 1f : 0f);
-		float strafe = (o.leftKey.isPressed() ? 1f : 0f) - (o.rightKey.isPressed() ? 1f : 0f);
-		boolean jump = o.jumpKey.isPressed();
+		float forward = (o.keyUp.isDown() ? 1f : 0f) - (o.keyDown.isDown() ? 1f : 0f);
+		float strafe = (o.keyLeft.isDown() ? 1f : 0f) - (o.keyRight.isDown() ? 1f : 0f);
+		boolean jump = o.keyJump.isDown();
 		boolean boost;
 		if (boostToggle) {
-			while (boostKey.wasPressed()) {
+			while (boostKey.consumeClick()) {
 				boostOn = !boostOn;
 			}
 			if (mech.isJet() || mech.isTurbo()) {
@@ -162,9 +162,9 @@ public final class MechInput {
 			}
 			boost = boostOn;
 		} else {
-			while (boostKey.wasPressed()) {
+			while (boostKey.consumeClick()) {
 			}
-			boost = boostKey.isPressed();
+			boost = boostKey.isDown();
 		}
 		mech.inForward = forward;
 		mech.inStrafe = strafe;
@@ -177,14 +177,14 @@ public final class MechInput {
 		boolean qb = false;
 		float qbX = strafe;
 		float qbZ = forward;
-		while (quickBoostKey.wasPressed()) {
+		while (quickBoostKey.consumeClick()) {
 			qb = true;
 		}
 		if (doubleTapQuickBoost) {
-			KeyBinding[] keys = {o.forwardKey, o.backKey, o.leftKey, o.rightKey};
+			KeyMapping[] keys = {o.keyUp, o.keyDown, o.keyLeft, o.keyRight};
 			float[][] dirs = {{0, 1}, {0, -1}, {1, 0}, {-1, 0}};
 			for (int i = 0; i < 4; i++) {
-				boolean down = keys[i].isPressed();
+				boolean down = keys[i].isDown();
 				if (down && !wasDown[i]) {
 					if (tick - lastTap[i] <= DOUBLE_TAP_TICKS) {
 						qb = true;
@@ -201,7 +201,7 @@ public final class MechInput {
 		if (qb && mech.tryQuickBoost(qbX, qbZ)) {
 			ClientPlayNetworking.send(new MechNetworking.ActionPayload(MechNetworking.ActionPayload.QUICK_BOOST, qbX, qbZ));
 		}
-		while (transformKey.wasPressed()) {
+		while (transformKey.consumeClick()) {
 			ClientPlayNetworking.send(new MechNetworking.ActionPayload(MechNetworking.ActionPayload.TRANSFORM, 0f, 0f));
 		}
 
@@ -217,10 +217,10 @@ public final class MechInput {
 		flightPitch = 0f;
 
 		// Weapon selection and triggers (vanilla attack is cancelled while piloting).
-		while (swapLeftKey.wasPressed()) {
+		while (swapLeftKey.consumeClick()) {
 			leftBack = !leftBack;
 		}
-		while (swapRightKey.wasPressed()) {
+		while (swapRightKey.consumeClick()) {
 			rightBack = !rightBack;
 		}
 		trigger(mech, fireLeftKey, false);
@@ -229,9 +229,9 @@ public final class MechInput {
 
 	/** One side's trigger: fires that side's active weapon (activeMount) - a melee weapon swings
 	 * once per press, a gun fires while held. */
-	private static void trigger(MechEntity mech, KeyBinding key, boolean right) {
-		boolean pressed = key.wasPressed();
-		while (key.wasPressed()) {
+	private static void trigger(MechEntity mech, KeyMapping key, boolean right) {
+		boolean pressed = key.consumeClick();
+		while (key.consumeClick()) {
 		}
 		MountSlot mount = activeMount(mech, right);
 		if (mount == null) {
@@ -245,7 +245,7 @@ public final class MechInput {
 			}
 			return;
 		}
-		if (!key.isPressed()) {
+		if (!key.isDown()) {
 			return;
 		}
 		int index = weaponIndex(mech, mount);

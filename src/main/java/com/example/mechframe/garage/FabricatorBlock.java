@@ -1,15 +1,14 @@
 package com.example.mechframe.garage;
 
 import com.mojang.serialization.MapCodec;
-import net.minecraft.block.Block;
-import net.minecraft.block.BlockState;
-import net.minecraft.entity.player.PlayerEntity;
-import net.minecraft.util.ActionResult;
-import net.minecraft.util.hit.BlockHitResult;
-import net.minecraft.util.math.BlockPos;
-import net.minecraft.world.World;
-
 import java.util.function.Consumer;
+import net.minecraft.core.BlockPos;
+import net.minecraft.world.InteractionResult;
+import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.level.Level;
+import net.minecraft.world.level.block.Block;
+import net.minecraft.world.level.block.state.BlockState;
+import net.minecraft.world.phys.BlockHitResult;
 
 /**
  * The Mech Fabricator: every frame part (and frame kit) is made here, from the recipes in
@@ -19,27 +18,27 @@ import java.util.function.Consumer;
  */
 public class FabricatorBlock extends Block {
 
-	public static final MapCodec<FabricatorBlock> CODEC = createCodec(FabricatorBlock::new);
+	public static final MapCodec<FabricatorBlock> CODEC = simpleCodec(FabricatorBlock::new);
 	/** How far (blocks) the player may be from the fabricator while using it. */
 	public static final double RANGE = 8.0;
 	/** Set by the client entry point: opens the screen for the fabricator at that position. */
 	public static Consumer<BlockPos> openScreen = pos -> {
 	};
 
-	public FabricatorBlock(Settings settings) {
+	public FabricatorBlock(Properties settings) {
 		super(settings);
 	}
 
 	@Override
-	protected MapCodec<? extends Block> getCodec() {
+	protected MapCodec<? extends Block> codec() {
 		return CODEC;
 	}
 
 	@Override
-	protected ActionResult onUse(BlockState state, World world, BlockPos pos, PlayerEntity player, BlockHitResult hit) {
-		if (world.isClient()) {
+	protected InteractionResult useWithoutItem(BlockState state, Level world, BlockPos pos, Player player, BlockHitResult hit) {
+		if (world.isClientSide()) {
 			openScreen.accept(pos);
 		}
-		return ActionResult.SUCCESS;
+		return InteractionResult.SUCCESS;
 	}
 }

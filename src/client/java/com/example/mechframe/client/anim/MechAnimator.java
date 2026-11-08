@@ -4,17 +4,17 @@ import com.example.mechframe.entity.MechEntity;
 import com.example.mechframe.part.MechLayout;
 import com.example.mechframe.part.MechPart;
 import com.example.mechframe.part.MountSlot;
-import net.minecraft.util.hit.BlockHitResult;
-import net.minecraft.util.hit.HitResult;
-import net.minecraft.util.math.MathHelper;
-import net.minecraft.util.math.Vec3d;
-import net.minecraft.world.RaycastContext;
-import net.minecraft.world.World;
 import org.joml.Quaternionf;
 import org.joml.Vector3f;
 
 import java.util.ArrayList;
 import java.util.List;
+import net.minecraft.util.Mth;
+import net.minecraft.world.level.ClipContext;
+import net.minecraft.world.level.Level;
+import net.minecraft.world.phys.BlockHitResult;
+import net.minecraft.world.phys.HitResult;
+import net.minecraft.world.phys.Vec3;
 
 /** Per-frame client animation state of one frame, advanced once per client tick.
  *
@@ -51,7 +51,7 @@ public final class MechAnimator {
 	 * Clamps a foot position (world) into its leg's lane: along the body, between the midpoints to the
 	 * neighbouring legs on the same side (less a margin), so that no two legs on a side can cross.
 	 */
-	private Vec3d keepInLane(Vec3d w, Vec3d pos, Quaternionf yawQ, MechPart.LegSpec spec, int i) {
+	private Vec3 keepInLane(Vec3 w, Vec3 pos, Quaternionf yawQ, MechPart.LegSpec spec, int i) {
 		List<MechPart.LegChain> chains = spec.chains();
 		Vector3f me = chains.get(i).ankle();
 		float lo = -Float.MAX_VALUE, hi = Float.MAX_VALUE;
@@ -71,7 +71,7 @@ public final class MechAnimator {
 			return w;
 		}
 		Vector3f l = toLocal(pos, yawQ, w);
-		float z = MathHelper.clamp(l.z, lo, hi);
+		float z = Mth.clamp(l.z, lo, hi);
 		if (z == l.z) {
 			return w;
 		}
@@ -86,10 +86,10 @@ public final class MechAnimator {
 	static final float MULTI_SPREAD = 0.15f;
 
 	public static final class Foot {
-		public Vec3d planted = Vec3d.ZERO;
-		public Vec3d stepFrom = Vec3d.ZERO;
-		public Vec3d pos = Vec3d.ZERO;
-		public Vec3d prevPos = Vec3d.ZERO;
+		public Vec3 planted = Vec3.ZERO;
+		public Vec3 stepFrom = Vec3.ZERO;
+		public Vec3 pos = Vec3.ZERO;
+		public Vec3 prevPos = Vec3.ZERO;
 		public float progress;
 		public float duration = 6f;
 		public boolean stepping;
@@ -120,7 +120,7 @@ public final class MechAnimator {
 	public float headPitch;
 	public float prevHeadYaw;
 	public float prevHeadPitch;
-	private Vec3d lastPos;
+	private Vec3 lastPos;
 	private Quaternionf lastYawQ = new Quaternionf();
 	public float speed;
 	/** Gait clock: one cycle per stride; each gait group steps when the clock passes its offset. */
@@ -144,7 +144,7 @@ public final class MechAnimator {
 	/** Body-relative lead of the feet's targets ahead of their rest spots, eased toward the travel. */
 	private final Vector3f leadLocal = new Vector3f();
 	/** Footfalls this tick (world positions), for dust and sound. */
-	public final List<Vec3d> footfalls = new ArrayList<>();
+	public final List<Vec3> footfalls = new ArrayList<>();
 
 	public static MechAnimator of(MechEntity mech) {
 		if (mech.clientAnimation instanceof MechAnimator existing) {
@@ -175,15 +175,15 @@ public final class MechAnimator {
 		this.landingGive = reverseJoint ? 1.7f : 1f;
 		this.landingLimit = reverseJoint ? 0.6f : 0.5f;
 		String key = layout.assembly.parts().toString();
-		Vec3d pos = mech.getEntityPos();
-		float yaw = mech.getYaw();
-		boolean reset = !key.equals(this.layoutKey) || this.lastPos == null || this.lastPos.squaredDistanceTo(pos) > 400;
-		Vec3d vel = this.lastPos == null ? Vec3d.ZERO : pos.subtract(this.lastPos);
-		if (vel.lengthSquared() > 100) {
-			vel = Vec3d.ZERO;
+		Vec3 pos = mech.position();
+		float yaw = mech.getYRot();
+		boolean reset = !key.equals(this.layoutKey) || this.lastPos == null || this.lastPos.distanceToSqr(pos) > 400;
+		Vec3 vel = this.lastPos == null ? Vec3.ZERO : pos.subtract(this.lastPos);
+		if (vel.lengthSqr() > 100) {
+			vel = Vec3.ZERO;
 		}
 		this.lastPos = pos;
-		this.speed = (float) vel.horizontalLength();
+		this.speed = (float) vel.horizontalDistance();
 		// Many-legged frames: the legs' base turns after the upper body at the pace the legs can step
 		// (each foot stays within its share of the circle), the upper body turning on it like a turret.
 		boolean spider = spec.chains().size() > 2 && spec.type() != MechPart.LegType.TANK;
@@ -199,7 +199,7 @@ public final class MechAnimator {
 		Quaternionf yawQ = new Quaternionf().rotationY((float) Math.toRadians(-legYaw));
 		this.lastYawQ = yawQ;
 		// Turning rate of the legs (degrees per tick): turning in place also drives the gait.
-		float yawRate = Float.isNaN(this.lastYaw) || reset ? 0f : MathHelper.wrapDegrees(legYaw - this.lastYaw);
+		float yawRate = Float.isNaN(this.lastYaw) || reset ? 0f : Mth.wrapDegrees(legYaw - this.lastYaw);
 		this.lastYaw = legYaw;
 
 		if (reset) {
@@ -252,11 +252,11 @@ public final class MechAnimator {
 		}
 		this.prevMode = this.mode;
 		double vy = vel.y;
-		World world = mech.getEntityWorld();
+		Level world = mech.level();
 		float stepLength = spec.stepLength();
 		// Stride per gait cycle: long walking forward, short side-steps (the legs open and close
 		// rather than both reaching toward the travel direction).
-		Vector3f localVel = toLocal(Vec3d.ZERO, yawQ, new Vec3d(vel.x, 0, vel.z));
+		Vector3f localVel = toLocal(Vec3.ZERO, yawQ, new Vec3(vel.x, 0, vel.z));
 		// Inertia of the legs: the part of the velocity that is newer than the slow average (a quick boost,
 		// the kick of a boost) drives a damped spring - the legs are left behind for a moment, then catch up.
 		if (this.velSlow == null) {
@@ -288,7 +288,7 @@ public final class MechAnimator {
 		float hipH = legH - 0.14f;
 		float reachFwd = (float) Math.sqrt(Math.max(0.16f, legReach * legReach - hipH * hipH));
 		// Sideways the legs may only open so far (they must not cross).
-		float reachHere = MathHelper.lerp(fwdFrac, Math.min(0.55f, reachFwd), reachFwd);
+		float reachHere = Mth.lerp(fwdFrac, Math.min(0.55f, reachFwd), reachFwd);
 		float swingMin = Math.max(SWING_TICKS, spec.stepTicks() * 1.7f);
 		float cycleTicks = groups * swingMin;
 		// Feet also have to travel when the body turns: their speed round the turn counts as walking.
@@ -323,16 +323,16 @@ public final class MechAnimator {
 		boolean running = spec.chains().size() <= 2 && stanceTicks < cycleTicks - swingMin - 0.01f;
 		// While running, the swinging leg kicks back and reaches forward past its landing spot.
 		float overshoot = running ? Math.min(0.55f, reachFwd * 0.6f) * fwdFrac : 0f;
-		float liftScale = MathHelper.clamp(stride / (stepLength * 1.3f), 1f, 1.6f);
+		float liftScale = Mth.clamp(stride / (stepLength * 1.3f), 1f, 1.6f);
 		// Feet land ahead of their rest spots (so they sweep around them); the lead is eased so a change
 		// of direction swings the targets over a few ticks instead of at once.
 		Vector3f wantLead = this.speed > 0.015f
-				? new Vector3f(localVel).normalize().mul(leadLen * MathHelper.clamp(this.speed / 0.12f, 0f, 1f))
+				? new Vector3f(localVel).normalize().mul(leadLen * Mth.clamp(this.speed / 0.12f, 0f, 1f))
 				: new Vector3f();
 		this.leadLocal.lerp(wantLead, 0.22f);
 		Vector3f leadDir = this.leadLocal.lengthSquared() > 1.0e-6f ? new Vector3f(this.leadLocal).normalize() : new Vector3f();
 		Vector3f leadW = yawQ.transform(new Vector3f(this.leadLocal));
-		Vec3d lead = new Vec3d(leadW.x, 0, leadW.z);
+		Vec3 lead = new Vec3(leadW.x, 0, leadW.z);
 		float prevPhase = this.gaitPhase;
 		// Many legs: each foot may only swing so far round the body before it would run into its
 		// neighbours - a share of the angular gap to the next leg on each side (small for a spider's
@@ -355,7 +355,7 @@ public final class MechAnimator {
 					if (o == k) {
 						continue;
 					}
-					float d = MathHelper.wrapDegrees(homeAng[o] - homeAng[k]);
+					float d = Mth.wrapDegrees(homeAng[o] - homeAng[k]);
 					if (d > 0f) {
 						gapPos = Math.min(gapPos, d);
 					} else {
@@ -382,7 +382,7 @@ public final class MechAnimator {
 		boolean moving = this.mode == Mode.WALK && gaitSpeed > 0.015f;
 		// Turning: the feet land ahead in the turn too (as far as the body turns in half a stance).
 		float turnLimit = multi ? minRange * 0.7f : 25f;
-		float turnLead = MathHelper.clamp(yawRate * stanceTicks * 0.5f, -turnLimit, turnLimit);
+		float turnLead = Mth.clamp(yawRate * stanceTicks * 0.5f, -turnLimit, turnLimit);
 		Quaternionf turnQ = new Quaternionf().rotationY((float) Math.toRadians(-turnLead));
 		float walkDrop = 0f;
 		float walkDip = 0f;
@@ -405,18 +405,18 @@ public final class MechAnimator {
 			Vector3f home = new Vector3f(chain.ankle());
 			switch (this.mode) {
 				case WALK -> {
-					Vec3d h = toWorld(pos, yawQ, turnQ.transform(new Vector3f(home))).add(lead);
+					Vec3 h = toWorld(pos, yawQ, turnQ.transform(new Vector3f(home))).add(lead);
 					if (multi) {
 						// Keep the target inside this leg's share of the circle round the body.
 						Vector3f tl = toLocal(pos, yawQ, h);
 						if (moving) {
 							float side = Math.abs((float) Math.cos(Math.toRadians(homeAng[i])));
-							float k = 1f + MULTI_SPREAD * (1f - 2f * side) * MathHelper.clamp(gaitSpeed / 0.15f, 0f, 1f);
+							float k = 1f + MULTI_SPREAD * (1f - 2f * side) * Mth.clamp(gaitSpeed / 0.15f, 0f, 1f);
 							tl.x *= k;
 							tl.z = tl.z + (k - 1f) * chain.ankle().z;
 						}
-						float dev = MathHelper.wrapDegrees((float) Math.toDegrees(Math.atan2(tl.x, tl.z)) - homeAng[i]);
-						float lim = MathHelper.clamp(dev, -rangeNeg[i] * 0.85f, rangePos[i] * 0.85f);
+						float dev = Mth.wrapDegrees((float) Math.toDegrees(Math.atan2(tl.x, tl.z)) - homeAng[i]);
+						float lim = Mth.clamp(dev, -rangeNeg[i] * 0.85f, rangePos[i] * 0.85f);
 						if (lim != dev) {
 							new Quaternionf().rotationY((float) Math.toRadians(lim - dev)).transform(tl);
 							h = toWorld(pos, yawQ, tl);
@@ -424,7 +424,7 @@ public final class MechAnimator {
 					}
 					// Never aim a step beyond what the leg can reach from its hip: a target out of range (a
 					// sharp turn, a sudden dash) is approached in several steps, each within reach.
-					Vec3d hipW = toWorld(pos, yawQ, chain.hip());
+					Vec3 hipW = toWorld(pos, yawQ, chain.hip());
 					float legHi = chain.hip().y - chain.ankle().y;
 					Vector3f homeW = yawQ.transform(new Vector3f(chain.ankle()));
 					double hx = h.x - hipW.x, hz = h.z - hipW.z;
@@ -433,10 +433,10 @@ public final class MechAnimator {
 					double rr = chain.reach() * 0.97;
 					double maxD = Math.max(homeD + 0.1, Math.sqrt(Math.max(0.09, rr * rr - (legHi - 0.5) * (legHi - 0.5))));
 					if (hd > maxD) {
-						h = new Vec3d(hipW.x + hx / hd * maxD, h.y, hipW.z + hz / hd * maxD);
+						h = new Vec3(hipW.x + hx / hd * maxD, h.y, hipW.z + hz / hd * maxD);
 					}
 					double gy = groundHeight(world, h.x, h.z, pos.y + spec.stepHeight() + 1.0, pos.y - 4.0, pos.y);
-					Vec3d target = new Vec3d(h.x, gy + chain.ankle().y, h.z);
+					Vec3 target = new Vec3(h.x, gy + chain.ankle().y, h.z);
 					if (multi) {
 						target = this.keepInLane(target, pos, yawQ, spec, i);
 					}
@@ -485,13 +485,13 @@ public final class MechAnimator {
 						// A foot left far behind (a sudden dash or turn) catches up at once, gait or not,
 						// before the leg runs out of reach.
 						// ...or one the leg could no longer reach from the hip (the IK would leave it hanging).
-						Vec3d hipWorld = toWorld(pos, yawQ, chain.hip()).add(0, this.pelvisDy, 0);
+						Vec3 hipWorld = toWorld(pos, yawQ, chain.hip()).add(0, this.pelvisDy, 0);
 						float reach = chain.reach();
 						boolean outOfReach = foot.planted.distanceTo(hipWorld) > reach * (moving ? 0.995f : 0.97f);
 						boolean overstretched = dist > 2f * reachHere + 1.0f;
 						if (multi && !overstretched) {
 							Vector3f pl = toLocal(pos, yawQ, foot.planted);
-							float pdev = MathHelper.wrapDegrees((float) Math.toDegrees(Math.atan2(pl.x, pl.z)) - homeAng[i]);
+							float pdev = Mth.wrapDegrees((float) Math.toDegrees(Math.atan2(pl.x, pl.z)) - homeAng[i]);
 							overstretched = (pdev > rangePos[i] || pdev < -rangeNeg[i]) && this.canStep(chain.group(), spec);
 						}
 						if (overstretched) {
@@ -528,13 +528,13 @@ public final class MechAnimator {
 						Vector3f rel = new Vector3f(foot.relFrom).lerp(relTo, e);
 						float sw = (float) Math.sin(2.0 * Math.PI * foot.progress);
 						rel.fma(-overshoot * sw, leadDir);
-						float lift = spec.stepLift() * liftScale * MathHelper.sin((float) Math.PI * foot.progress) * MathHelper.clamp(this.speed * 4f + 0.35f, 0.35f, 1f);
+						float lift = spec.stepLift() * liftScale * Mth.sin((float) Math.PI * foot.progress) * Mth.clamp(this.speed * 4f + 0.35f, 0.35f, 1f);
 						rel.y += lift;
-						Vec3d p = toWorld(pos, yawQ, rel);
-						Vec3d move = p.subtract(foot.prevPos);
+						Vec3 p = toWorld(pos, yawQ, rel);
+						Vec3 move = p.subtract(foot.prevPos);
 						boolean late = false;
 						if (move.length() > maxFootStep) {
-							p = foot.prevPos.add(move.normalize().multiply(maxFootStep));
+							p = foot.prevPos.add(move.normalize().scale(maxFootStep));
 							late = foot.progress >= 1f;
 							if (late) {
 								foot.relFrom = toLocal(pos, yawQ, p);
@@ -556,9 +556,9 @@ public final class MechAnimator {
 						// Each foot keeps to its own lane front-to-back, so neighbouring legs never cross: a
 						// planted foot that would be dragged past the lane's end slides along with the body
 						// instead (inertia), and the gait re-places it on its beat.
-						Vec3d kept = this.keepInLane(foot.pos, pos, yawQ, spec, i);
+						Vec3 kept = this.keepInLane(foot.pos, pos, yawQ, spec, i);
 						if (kept != foot.pos) {
-							Vec3d d = kept.subtract(foot.pos);
+							Vec3 d = kept.subtract(foot.pos);
 							foot.pos = kept;
 							if (!foot.stepping) {
 								foot.planted = foot.planted.add(d);
@@ -575,7 +575,7 @@ public final class MechAnimator {
 						// The stride's own dip: down by WALK_DIP with the feet spread front and back, back up
 						// to standing height as a foot passes under the hip.
 						Vector3f off = toLocal(pos, yawQ, foot.planted).sub(chain.ankle());
-						float spread = MathHelper.clamp((float) Math.sqrt(off.x * off.x + off.z * off.z) / Math.max(0.3f, leadLen), 0f, 1f);
+						float spread = Mth.clamp((float) Math.sqrt(off.x * off.x + off.z * off.z) / Math.max(0.3f, leadLen), 0f, 1f);
 						walkDip = Math.max(walkDip, spread * spread);
 					}
 					// Terrain under the feet: where they are (or will be) planted, not how high a swinging foot is lifted.
@@ -585,7 +585,7 @@ public final class MechAnimator {
 				case SKATE -> {
 					// Feet slide under the body in a braced stance; height follows the ground.
 					Vector3f skate = new Vector3f(home.x * 1.12f, home.y, home.z - 0.15f);
-					Vec3d h = toWorld(pos, yawQ, skate);
+					Vec3 h = toWorld(pos, yawQ, skate);
 					double gy = groundHeight(world, h.x, h.z, pos.y + 1.5, pos.y - 3.0, pos.y);
 					skate.y = (float) (gy - pos.y) + chain.ankle().y;
 					this.applyDrag(skate, home, chain, true);
@@ -642,22 +642,22 @@ public final class MechAnimator {
 
 		// Pelvis height: terrain, stride bob, skate crouch, landing spring.
 		this.prevPelvisDy = this.pelvisDy;
-		float terrain = groundCount > 0 && spec.type().walks() ? MathHelper.clamp(groundSum / groundCount * 0.7f, -0.9f, 0.35f) : 0f;
+		float terrain = groundCount > 0 && spec.type().walks() ? Mth.clamp(groundSum / groundCount * 0.7f, -0.9f, 0.35f) : 0f;
 		float bob = 0f;
 		if (this.mode == Mode.WALK) {
 			float maxLift = 0f;
 			for (Foot foot : this.feet) {
 				if (foot.stepping) {
-					maxLift = Math.max(maxLift, MathHelper.sin((float) Math.PI * foot.progress));
+					maxLift = Math.max(maxLift, Mth.sin((float) Math.PI * foot.progress));
 				}
 			}
-			bob = -0.03f * maxLift * MathHelper.clamp(this.speed * 3f, 0f, 1f);
+			bob = -0.03f * maxLift * Mth.clamp(this.speed * 3f, 0f, 1f);
 		}
 		float skateCrouch = this.mode == Mode.SKATE ? -0.28f : 0f;
 		// Walking: the pelvis sinks only as far as the planted feet need to stay within reach, so it is back at
 		// its standing height whenever a foot is under the hip.
 		float walkCrouch = this.mode == Mode.WALK
-				? -MathHelper.clamp(Math.max(walkDrop, WALK_DIP * walkDip * MathHelper.clamp(this.speed * 5f, 0f, 1f)), 0f, 0.6f) : 0f;
+				? -Mth.clamp(Math.max(walkDrop, WALK_DIP * walkDip * Mth.clamp(this.speed * 5f, 0f, 1f)), 0f, 0.6f) : 0f;
 		this.crouchVel += (0f - this.crouch) * 0.3f - this.crouchVel * 0.38f;
 		this.crouch += this.crouchVel;
 		// A hard landing compresses the legs, but only as far as the knees can fold.
@@ -667,7 +667,7 @@ public final class MechAnimator {
 		}
 		if (spec.type() == MechPart.LegType.HOVER) {
 			// Hover skirt: rides on its fans - a slow bob, lower while boosting (the fans bite harder).
-			bob = 0.06f * MathHelper.sin(mech.age * 0.13f) + (mech.isBoostingVisual() ? -0.08f : 0f);
+			bob = 0.06f * Mth.sin(mech.tickCount * 0.13f) + (mech.isBoostingVisual() ? -0.08f : 0f);
 			skateCrouch = 0f;
 		}
 		float target = terrain + bob + skateCrouch + walkCrouch + this.crouch;
@@ -681,14 +681,14 @@ public final class MechAnimator {
 			float hull = mech.getHullYaw();
 			if (!Float.isNaN(hull)) {
 				// Tank controls: the hull points where the driver steers it; the turret turns freely.
-				this.lowerYaw = this.prevLowerYaw + MathHelper.wrapDegrees(hull - this.prevLowerYaw);
+				this.lowerYaw = this.prevLowerYaw + Mth.wrapDegrees(hull - this.prevLowerYaw);
 			} else if (this.speed > 0.04f) {
 				float travel = (float) Math.toDegrees(Math.atan2(-vel.x, vel.z));
 				float reverse = travel + 180f;
-				float pick = Math.abs(MathHelper.wrapDegrees(travel - this.lowerYaw)) <= Math.abs(MathHelper.wrapDegrees(reverse - this.lowerYaw)) ? travel : reverse;
+				float pick = Math.abs(Mth.wrapDegrees(travel - this.lowerYaw)) <= Math.abs(Mth.wrapDegrees(reverse - this.lowerYaw)) ? travel : reverse;
 				this.lowerYaw = approachAngle(this.lowerYaw, pick, 9f);
 			}
-			float relative = MathHelper.wrapDegrees(this.lowerYaw - yaw);
+			float relative = Mth.wrapDegrees(this.lowerYaw - yaw);
 			if (Float.isNaN(hull) && Math.abs(relative) > 120f) {
 				this.lowerYaw = yaw + Math.signum(relative) * 120f;
 			}
@@ -704,9 +704,9 @@ public final class MechAnimator {
 			this.prevWheelSpin = this.wheelSpin;
 			this.prevHoverBank = this.hoverBank;
 			this.prevHoverPitch = this.hoverPitch;
-			Vector3f lv = toLocal(Vec3d.ZERO, new Quaternionf().rotationY((float) Math.toRadians(-this.lowerYaw)), new Vec3d(vel.x, 0, vel.z));
-			this.hoverBank += (MathHelper.clamp(-lv.x * 14f, -9f, 9f) - this.hoverBank) * 0.2f;
-			this.hoverPitch += (MathHelper.clamp(lv.z * 8f, -6f, 6f) - this.hoverPitch) * 0.2f;
+			Vector3f lv = toLocal(Vec3.ZERO, new Quaternionf().rotationY((float) Math.toRadians(-this.lowerYaw)), new Vec3(vel.x, 0, vel.z));
+			this.hoverBank += (Mth.clamp(-lv.x * 14f, -9f, 9f) - this.hoverBank) * 0.2f;
+			this.hoverPitch += (Mth.clamp(lv.z * 8f, -6f, 6f) - this.hoverPitch) * 0.2f;
 		} else {
 			this.prevLowerYaw = this.lowerYaw;
 			this.lowerYaw = yaw;
@@ -719,12 +719,12 @@ public final class MechAnimator {
 		float targetYaw = 0f;
 		float targetPitch = 0f;
 		if (mech.getControllingPassenger() != null && !mech.isJet()) {
-			Vec3d aim = mech.getAimPoint(1f);
-			Vec3d eye = mech.getAimOrigin(1f);
-			Vec3d d = aim.subtract(eye);
+			Vec3 aim = mech.getAimPoint(1f);
+			Vec3 eye = mech.getAimOrigin(1f);
+			Vec3 d = aim.subtract(eye);
 			float aimYaw = (float) Math.toDegrees(Math.atan2(-d.x, d.z));
-			targetYaw = MathHelper.clamp(MathHelper.wrapDegrees(aimYaw - yaw), -55f, 55f);
-			targetPitch = MathHelper.clamp((float) -Math.toDegrees(Math.atan2(d.y, d.horizontalLength())), -40f, 40f);
+			targetYaw = Mth.clamp(Mth.wrapDegrees(aimYaw - yaw), -55f, 55f);
+			targetPitch = Mth.clamp((float) -Math.toDegrees(Math.atan2(d.y, d.horizontalDistance())), -40f, 40f);
 		}
 		this.headYaw += (targetYaw - this.headYaw) * 0.35f;
 		this.headPitch += (targetPitch - this.headPitch) * 0.35f;
@@ -744,8 +744,8 @@ public final class MechAnimator {
 		float amount = Math.min(DRAG_MAX, len * DRAG_GAIN);
 		float dx = this.drag.x / len, dz = this.drag.z / len;
 		float side = Math.signum(home.x);
-		float trailing = MathHelper.clamp(-dx * side, 0f, 1f); // this foot is on the side away from the push
-		float leading = MathHelper.clamp(dx * side, 0f, 1f);
+		float trailing = Mth.clamp(-dx * side, 0f, 1f); // this foot is on the side away from the push
+		float leading = Mth.clamp(dx * side, 0f, 1f);
 		// Left behind: against the push, so the far leg reaches out long; the near leg less so, drawn in.
 		float back = amount * (0.35f + 0.65f * trailing - 0.25f * leading);
 		target.x -= dx * back;
@@ -769,7 +769,7 @@ public final class MechAnimator {
 		foot.local.lerp(target, rate);
 	}
 
-	static Vector3f toLocal(Vec3d pos, Quaternionf yawQ, Vec3d world) {
+	static Vector3f toLocal(Vec3 pos, Quaternionf yawQ, Vec3 world) {
 		Vector3f v = new Vector3f((float) (world.x - pos.x), (float) (world.y - pos.y), (float) (world.z - pos.z));
 		return new Quaternionf(yawQ).conjugate().transform(v);
 	}
@@ -794,15 +794,15 @@ public final class MechAnimator {
 		return true;
 	}
 
-	static Vec3d toWorld(Vec3d pos, Quaternionf yawQ, Vector3f local) {
+	static Vec3 toWorld(Vec3 pos, Quaternionf yawQ, Vector3f local) {
 		Vector3f v = yawQ.transform(new Vector3f(local));
 		return pos.add(v.x, v.y, v.z);
 	}
 
-	static double groundHeight(World world, double x, double z, double fromY, double toY, double fallback) {
-		BlockHitResult hit = world.raycast(new RaycastContext(new Vec3d(x, fromY, z), new Vec3d(x, toY, z),
-				RaycastContext.ShapeType.COLLIDER, RaycastContext.FluidHandling.NONE, net.minecraft.block.ShapeContext.absent()));
-		return hit.getType() == HitResult.Type.BLOCK ? hit.getPos().y : fallback;
+	static double groundHeight(Level world, double x, double z, double fromY, double toY, double fallback) {
+		BlockHitResult hit = world.clip(new ClipContext(new Vec3(x, fromY, z), new Vec3(x, toY, z),
+				ClipContext.Block.COLLIDER, ClipContext.Fluid.NONE, net.minecraft.world.phys.shapes.CollisionContext.empty()));
+		return hit.getType() == HitResult.Type.BLOCK ? hit.getLocation().y : fallback;
 	}
 
 	static float ease(float t) {
@@ -810,7 +810,7 @@ public final class MechAnimator {
 	}
 
 	static float approachAngle(float current, float target, float step) {
-		float delta = MathHelper.clamp(MathHelper.wrapDegrees(target - current), -step, step);
+		float delta = Mth.clamp(Mth.wrapDegrees(target - current), -step, step);
 		return current + delta;
 	}
 }

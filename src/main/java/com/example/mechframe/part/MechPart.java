@@ -1,11 +1,11 @@
 package com.example.mechframe.part;
 
-import net.minecraft.util.Identifier;
 import org.joml.Vector3f;
 
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import net.minecraft.resources.Identifier;
 
 /** One assembly part, as loaded from {@code data/<namespace>/mech_parts/<id>.json} (see PartParser).
  *

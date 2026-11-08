@@ -3,30 +3,30 @@ package com.example.mechframe.garage;
 import com.example.mechframe.MechFrame;
 import com.example.mechframe.item.MechPartItem;
 import net.fabricmc.fabric.api.screenhandler.v1.ExtendedScreenHandlerFactory;
-import net.minecraft.block.BlockState;
-import net.minecraft.block.entity.BlockEntity;
-import net.minecraft.entity.player.PlayerEntity;
-import net.minecraft.entity.player.PlayerInventory;
-import net.minecraft.inventory.Inventories;
-import net.minecraft.inventory.Inventory;
-import net.minecraft.item.ItemStack;
-import net.minecraft.screen.ScreenHandler;
-import net.minecraft.server.network.ServerPlayerEntity;
-import net.minecraft.storage.ReadView;
-import net.minecraft.storage.WriteView;
-import net.minecraft.text.Text;
-import net.minecraft.util.Identifier;
-import net.minecraft.util.collection.DefaultedList;
-import net.minecraft.util.math.BlockPos;
+import net.minecraft.core.BlockPos;
+import net.minecraft.core.NonNullList;
+import net.minecraft.network.chat.Component;
+import net.minecraft.resources.Identifier;
+import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.world.Container;
+import net.minecraft.world.ContainerHelper;
+import net.minecraft.world.entity.player.Inventory;
+import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.inventory.AbstractContainerMenu;
+import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.level.block.entity.BlockEntity;
+import net.minecraft.world.level.block.state.BlockState;
+import net.minecraft.world.level.storage.ValueInput;
+import net.minecraft.world.level.storage.ValueOutput;
 
 /** 54 slots of part storage. Only part items go in (any other item is refused by the slots). */
-public class GarageBlockEntity extends BlockEntity implements Inventory, ExtendedScreenHandlerFactory<BlockPos> {
+public class GarageBlockEntity extends BlockEntity implements Container, ExtendedScreenHandlerFactory<BlockPos> {
 
 	public static final int SIZE = 54;
 	/** How far a frame may be parked from the garage to be refitted by it (blocks). */
 	public static final double RANGE = 16.0;
 
-	private final DefaultedList<ItemStack> items = DefaultedList.ofSize(SIZE, ItemStack.EMPTY);
+	private final NonNullList<ItemStack> items = NonNullList.withSize(SIZE, ItemStack.EMPTY);
 
 	public GarageBlockEntity(BlockPos pos, BlockState state) {
 		super(MechFrame.GARAGE_ENTITY, pos, state);
@@ -48,13 +48,13 @@ public class GarageBlockEntity extends BlockEntity implements Inventory, Extende
 		int remaining = stack.getCount();
 		for (int i = 0; i < SIZE && remaining > 0; i++) {
 			ItemStack slot = this.items.get(i);
-			if (!slot.isEmpty() && ItemStack.areItemsAndComponentsEqual(slot, stack)) {
-				remaining -= Math.min(remaining, slot.getMaxCount() - slot.getCount());
+			if (!slot.isEmpty() && ItemStack.isSameItemSameComponents(slot, stack)) {
+				remaining -= Math.min(remaining, slot.getMaxStackSize() - slot.getCount());
 			}
 		}
 		for (int i = 0; i < SIZE && remaining > 0; i++) {
 			if (this.items.get(i).isEmpty()) {
-				remaining -= Math.min(remaining, stack.getMaxCount());
+				remaining -= Math.min(remaining, stack.getMaxStackSize());
 			}
 		}
 		if (remaining > 0) {
@@ -63,25 +63,25 @@ public class GarageBlockEntity extends BlockEntity implements Inventory, Extende
 		remaining = stack.getCount();
 		for (int i = 0; i < SIZE && remaining > 0; i++) {
 			ItemStack slot = this.items.get(i);
-			if (!slot.isEmpty() && ItemStack.areItemsAndComponentsEqual(slot, stack)) {
-				int move = Math.min(remaining, slot.getMaxCount() - slot.getCount());
-				slot.increment(move);
+			if (!slot.isEmpty() && ItemStack.isSameItemSameComponents(slot, stack)) {
+				int move = Math.min(remaining, slot.getMaxStackSize() - slot.getCount());
+				slot.grow(move);
 				remaining -= move;
 			}
 		}
 		for (int i = 0; i < SIZE && remaining > 0; i++) {
 			if (this.items.get(i).isEmpty()) {
-				int move = Math.min(remaining, stack.getMaxCount());
+				int move = Math.min(remaining, stack.getMaxStackSize());
 				this.items.set(i, stack.copyWithCount(move));
 				remaining -= move;
 			}
 		}
-		this.markDirty();
+		this.setChanged();
 		return true;
 	}
 
 	@Override
-	public int size() {
+	public int getContainerSize() {
 		return SIZE;
 	}
 
@@ -91,71 +91,71 @@ public class GarageBlockEntity extends BlockEntity implements Inventory, Extende
 	}
 
 	@Override
-	public ItemStack getStack(int slot) {
+	public ItemStack getItem(int slot) {
 		return this.items.get(slot);
 	}
 
 	@Override
-	public ItemStack removeStack(int slot, int amount) {
-		ItemStack result = Inventories.splitStack(this.items, slot, amount);
+	public ItemStack removeItem(int slot, int amount) {
+		ItemStack result = ContainerHelper.removeItem(this.items, slot, amount);
 		if (!result.isEmpty()) {
-			this.markDirty();
+			this.setChanged();
 		}
 		return result;
 	}
 
 	@Override
-	public ItemStack removeStack(int slot) {
-		return Inventories.removeStack(this.items, slot);
+	public ItemStack removeItemNoUpdate(int slot) {
+		return ContainerHelper.takeItem(this.items, slot);
 	}
 
 	@Override
-	public void setStack(int slot, ItemStack stack) {
+	public void setItem(int slot, ItemStack stack) {
 		this.items.set(slot, stack);
-		this.markDirty();
+		this.setChanged();
 	}
 
 	@Override
-	public boolean isValid(int slot, ItemStack stack) {
+	public boolean canPlaceItem(int slot, ItemStack stack) {
 		return stack.getItem() instanceof MechPartItem;
 	}
 
 	@Override
-	public boolean canPlayerUse(PlayerEntity player) {
-		return this.world != null && this.world.getBlockEntity(this.pos) == this
-				&& player.squaredDistanceTo(this.pos.getX() + 0.5, this.pos.getY() + 0.5, this.pos.getZ() + 0.5) <= 64.0;
+	public boolean stillValid(Player player) {
+		return this.level != null && this.level.getBlockEntity(this.worldPosition) == this
+				&& player.distanceToSqr(this.worldPosition.getX() + 0.5, this.worldPosition.getY() + 0.5, this.worldPosition.getZ() + 0.5) <= 64.0;
 	}
 
 	@Override
-	public void clear() {
+	public void clearContent() {
 		this.items.clear();
 	}
 
 	@Override
-	protected void readData(ReadView view) {
-		super.readData(view);
+	protected void loadAdditional(ValueInput view) {
+		super.loadAdditional(view);
 		this.items.clear();
-		Inventories.readData(view, this.items);
+		ContainerHelper.loadAllItems(view, this.items);
 	}
 
 	@Override
-	protected void writeData(WriteView view) {
-		super.writeData(view);
-		Inventories.writeData(view, this.items, true);
+	protected void saveAdditional(ValueOutput view) {
+		super.saveAdditional(view);
+		ContainerHelper.saveAllItems(view, this.items, true);
 	}
 
 	@Override
-	public Text getDisplayName() {
-		return Text.translatable("block.mechframe.garage");
+	public Component getDisplayName() {
+		return Component.translatable("block.mechframe.garage");
 	}
 
 	@Override
-	public BlockPos getScreenOpeningData(ServerPlayerEntity player) {
-		return this.pos;
+	public BlockPos getScreenOpeningData(ServerPlayer player) {
+		return this.worldPosition;
 	}
 
 	@Override
-	public ScreenHandler createMenu(int syncId, PlayerInventory playerInventory, PlayerEntity player) {
-		return new GarageScreenHandler(syncId, playerInventory, this, this.pos);
+	public AbstractContainerMenu createMenu(int syncId, Inventory playerInventory, Player player) {
+		return new GarageScreenHandler(syncId, playerInventory, this, this.worldPosition);
 	}
 }

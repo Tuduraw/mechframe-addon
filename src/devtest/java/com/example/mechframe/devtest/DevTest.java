@@ -9,22 +9,21 @@ import com.example.mechframe.item.MechItems;
 import com.example.mechframe.item.MechPartItem;
 import com.example.mechframe.part.MountSlot;
 import com.example.mechframe.part.PartRegistry;
-import net.minecraft.util.ActionResult;
-import net.minecraft.util.Hand;
-import net.minecraft.util.hit.BlockHitResult;
-import net.minecraft.util.math.BlockPos;
-import net.minecraft.util.math.Direction;
-import net.minecraft.util.math.Vec3d;
 import net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientTickEvents;
-import net.minecraft.client.MinecraftClient;
-import net.minecraft.client.option.KeyBinding;
-import net.minecraft.client.option.Perspective;
-import net.minecraft.client.util.ScreenshotRecorder;
-import net.minecraft.entity.SpawnReason;
-import net.minecraft.server.network.ServerPlayerEntity;
-import net.minecraft.server.world.ServerWorld;
-import net.minecraft.util.Identifier;
-
+import net.minecraft.client.CameraType;
+import net.minecraft.client.KeyMapping;
+import net.minecraft.client.Minecraft;
+import net.minecraft.client.Screenshot;
+import net.minecraft.core.BlockPos;
+import net.minecraft.core.Direction;
+import net.minecraft.resources.Identifier;
+import net.minecraft.server.level.ServerLevel;
+import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.world.InteractionHand;
+import net.minecraft.world.InteractionResult;
+import net.minecraft.world.entity.EntitySpawnReason;
+import net.minecraft.world.phys.BlockHitResult;
+import net.minecraft.world.phys.Vec3;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.io.PrintWriter;
@@ -38,7 +37,7 @@ import java.util.function.Consumer;
  * keys - logging physics and taking screenshots, then quits. */
 public final class DevTest {
 
-	private record Step(int at, Consumer<MinecraftClient> action) {
+	private record Step(int at, Consumer<Minecraft> action) {
 	}
 
 	private static final List<Step> STEPS = new ArrayList<>();
@@ -82,28 +81,28 @@ public final class DevTest {
 		ClientTickEvents.END_CLIENT_TICK.register(DevTest::tick);
 	}
 
-	private static void at(int t, Consumer<MinecraftClient> action) {
+	private static void at(int t, Consumer<Minecraft> action) {
 		STEPS.add(new Step(t, action));
 	}
 
-	private static void server(MinecraftClient c, String... commands) {
-		var server = c.getServer();
+	private static void server(Minecraft c, String... commands) {
+		var server = c.getSingleplayerServer();
 		server.execute(() -> {
 			for (String cmd : commands) {
-				server.getCommandManager().parseAndExecute(server.getCommandSource(), cmd);
+				server.getCommands().performPrefixedCommand(server.createCommandSourceStack(), cmd);
 			}
 		});
 	}
 
-	private static void spawn(MinecraftClient c, String preset, double dx, double dz, float yaw, boolean ride) {
-		var server = c.getServer();
+	private static void spawn(Minecraft c, String preset, double dx, double dz, float yaw, boolean ride) {
+		var server = c.getSingleplayerServer();
 		server.execute(() -> {
-			ServerPlayerEntity player = server.getPlayerManager().getPlayerList().get(0);
-			ServerWorld world = (ServerWorld) player.getEntityWorld();
-			MechEntity mech = MechFrame.MECH.create(world, SpawnReason.COMMAND);
-			mech.refreshPositionAndAngles(player.getX() + dx, player.getY(), player.getZ() + dz, yaw, 0f);
-			mech.setVehicleDefinitionId(preset.contains(":") ? Identifier.of(preset) : Identifier.of("mechframe", preset));
-			world.spawnEntity(mech);
+			ServerPlayer player = server.getPlayerList().getPlayers().get(0);
+			ServerLevel world = (ServerLevel) player.level();
+			MechEntity mech = MechFrame.MECH.create(world, EntitySpawnReason.COMMAND);
+			mech.snapTo(player.getX() + dx, player.getY(), player.getZ() + dz, yaw, 0f);
+			mech.setVehicleDefinitionId(preset.contains(":") ? Identifier.parse(preset) : Identifier.fromNamespaceAndPath("mechframe", preset));
+			world.addFreshEntity(mech);
 			mech.tudursvehiclemod$fillAllWeaponAmmoAndFuel();
 			SPAWNED.put(preset, mech);
 			if (ride) {
@@ -136,8 +135,8 @@ public final class DevTest {
 					String.format(Locale.ROOT, "summon minecraft:armor_stand %.2f %.2f %.2f {Tags:[\"dtcam\"],NoGravity:1b,Invisible:1b,Marker:1b,Rotation:[%.1ff,%.1ff]}", x, y, z, yaw, pitch));
 		});
 		at(t + 2, c -> {
-			for (net.minecraft.entity.Entity e : c.world.getEntities()) {
-				if (e instanceof net.minecraft.entity.decoration.ArmorStandEntity) {
+			for (net.minecraft.world.entity.Entity e : c.level.entitiesForRendering()) {
+				if (e instanceof net.minecraft.world.entity.decoration.ArmorStand) {
 					c.setCameraEntity(e);
 				}
 			}
@@ -146,24 +145,24 @@ public final class DevTest {
 		at(t + 4, c -> c.setCameraEntity(c.player));
 	}
 
-	private static void shot(MinecraftClient c, String name) {
-		ScreenshotRecorder.saveScreenshot(c.runDirectory, "dt_" + name + ".png", c.getFramebuffer(), 1, text -> {
+	private static void shot(Minecraft c, String name) {
+		Screenshot.grab(c.gameDirectory, "dt_" + name + ".png", c.getMainRenderTarget(), 1, text -> {
 		});
 		log.println("shot " + name + " @" + tick);
 	}
 
-	private static void key(KeyBinding key, boolean down) {
-		key.setPressed(down);
+	private static void key(KeyMapping key, boolean down) {
+		key.setDown(down);
 	}
 
-	private static void tap(KeyBinding key) {
-		KeyBinding.onKeyPressed(key.getDefaultKey());
+	private static void tap(KeyMapping key) {
+		KeyMapping.click(key.getDefaultKey());
 	}
 
 	private static void common() {
 		at(1, c -> server(c, "time set 6000", "weather clear", "gamerule doDaylightCycle false", "gamerule doMobSpawning false",
 				"gamemode creative @a", "kill @e[type=minecraft:slime]", "tp @a 0 -60 0 0 0"));
-		at(Integer.getInteger("mechframe.devtest.end", 520), c -> c.scheduleStop());
+		at(Integer.getInteger("mechframe.devtest.end", 520), c -> c.stop());
 	}
 
 	private static void basic() {
@@ -183,32 +182,32 @@ public final class DevTest {
 			spawn(c, "striker", 0, 3, 0f, true);
 		});
 		at(200, c -> {
-			c.options.setPerspective(Perspective.THIRD_PERSON_BACK);
+			c.options.setCameraType(CameraType.THIRD_PERSON_BACK);
 			ridden = MechInput.pilotedMech(c);
 			log.println("riding " + ridden);
 		});
 		at(225, c -> shot(c, "ride_idle"));
-		at(230, c -> key(c.options.forwardKey, true));
+		at(230, c -> key(c.options.keyUp, true));
 		at(250, c -> shot(c, "walk"));
 		at(260, c -> tap(MechInput.boostKey));
 		at(280, c -> shot(c, "boost"));
 		at(290, c -> {
 			tap(MechInput.boostKey);
-			key(c.options.forwardKey, false);
+			key(c.options.keyUp, false);
 		});
 		at(293, c -> shot(c, "brake"));
 		at(310, c -> {
-			key(c.options.leftKey, true);
+			key(c.options.keyLeft, true);
 			tap(MechInput.quickBoostKey);
 		});
 		at(312, c -> shot(c, "quickboost"));
-		at(320, c -> key(c.options.leftKey, false));
-		at(330, c -> key(c.options.jumpKey, true));
+		at(320, c -> key(c.options.keyLeft, false));
+		at(330, c -> key(c.options.keyJump, true));
 		at(360, c -> shot(c, "hover"));
-		at(370, c -> key(c.options.jumpKey, false));
+		at(370, c -> key(c.options.keyJump, false));
 		at(386, c -> shot(c, "falling"));
 		at(400, c -> shot(c, "landed"));
-		at(410, c -> c.options.setPerspective(Perspective.FIRST_PERSON));
+		at(410, c -> c.options.setCameraType(CameraType.FIRST_PERSON));
 		at(420, c -> shot(c, "first_person"));
 	}
 
@@ -223,7 +222,7 @@ public final class DevTest {
 		});
 		at(20, c -> server(c, "place structure mechframe:outpost 0 -60 18", "tp @a 0 -60 -4 0 10"));
 		at(60, c -> aiLog(c, "t60", true));
-		at(90, c -> c.options.setPerspective(Perspective.THIRD_PERSON_BACK));
+		at(90, c -> c.options.setCameraType(CameraType.THIRD_PERSON_BACK));
 		at(130, c -> { aiLog(c, "t130", false); shot(c, "ai_outpost"); });
 		at(200, c -> aiLog(c, "t200", false));
 		// friendly frame on the command terminal: guard, then wingman; zombies to fight
@@ -231,31 +230,31 @@ public final class DevTest {
 			spawn(c, "striker", -6, -2, 0f, false);
 			server(c, "summon minecraft:zombie -14 -60 -14", "summon minecraft:zombie -16 -60 -10", "summon minecraft:husk -10 -60 -18");
 		});
-		at(214, c -> c.getServer().execute(() -> {
-			ServerPlayerEntity p = c.getServer().getPlayerManager().getPlayerList().get(0);
-			p.setStackInHand(Hand.MAIN_HAND, new net.minecraft.item.ItemStack(MechItems.COMMAND_TERMINAL));
+		at(214, c -> c.getSingleplayerServer().execute(() -> {
+			ServerPlayer p = c.getSingleplayerServer().getPlayerList().getPlayers().get(0);
+			p.setItemInHand(InteractionHand.MAIN_HAND, new net.minecraft.world.item.ItemStack(MechItems.COMMAND_TERMINAL));
 			MechEntity m = SPAWNED.get("striker");
-			log.println("terminal 1: " + m.interact(p, Hand.MAIN_HAND) + " mode=" + m.getBrain().mode + " faction=" + m.getFaction());
+			log.println("terminal 1: " + m.interact(p, InteractionHand.MAIN_HAND) + " mode=" + m.getBrain().mode + " faction=" + m.getFaction());
 		}));
 		at(300, c -> { aiLog(c, "t300", false); shot(c, "ai_friendly"); });
-		at(310, c -> c.getServer().execute(() -> {
-			ServerPlayerEntity p = c.getServer().getPlayerManager().getPlayerList().get(0);
+		at(310, c -> c.getSingleplayerServer().execute(() -> {
+			ServerPlayer p = c.getSingleplayerServer().getPlayerList().getPlayers().get(0);
 			MechEntity m = SPAWNED.get("striker");
-			log.println("terminal 2: " + m.interact(p, Hand.MAIN_HAND) + " mode=" + m.getBrain().mode);
+			log.println("terminal 2: " + m.interact(p, InteractionHand.MAIN_HAND) + " mode=" + m.getBrain().mode);
 		}));
 		at(320, c -> server(c, "tp @a -40 -60 -40 0 10"));
 		at(420, c -> aiLog(c, "t420 escort", false));
 		// destroy the enemy unit: parts drop, then a new random unit is deployed
-		at(430, c -> c.getServer().execute(() -> {
-			ServerWorld w = c.getServer().getOverworld();
-			for (MechEntity m : w.getEntitiesByClass(MechEntity.class, new net.minecraft.util.math.Box(-200, -100, -200, 200, 100, 200),
+		at(430, c -> c.getSingleplayerServer().execute(() -> {
+			ServerLevel w = c.getSingleplayerServer().overworld();
+			for (MechEntity m : w.getEntitiesOfClass(MechEntity.class, new net.minecraft.world.phys.AABB(-200, -100, -200, 200, 100, 200),
 					m -> m.getFaction() == com.example.mechframe.ai.Faction.ENEMY)) {
-				log.println("destroying " + m.getUuid() + " asm=" + m.getAssembly().encode());
+				log.println("destroying " + m.getUUID() + " asm=" + m.getAssembly().encode());
 				for (int i = 0; i < 40 && !m.tudursvehiclemod$isDestroyed(); i++) {
-					m.damage(w, w.getDamageSources().generic(), 250f);
+					m.hurtServer(w, w.damageSources().generic(), 250f);
 				}
-				int drops = w.getEntitiesByClass(net.minecraft.entity.ItemEntity.class, m.getBoundingBox().expand(6),
-						it -> it.getStack().getItem() instanceof MechPartItem).size();
+				int drops = w.getEntitiesOfClass(net.minecraft.world.entity.item.ItemEntity.class, m.getBoundingBox().inflate(6),
+						it -> it.getItem().getItem() instanceof MechPartItem).size();
 				log.println("destroyed=" + m.tudursvehiclemod$isDestroyed() + " part drops=" + drops);
 			}
 		}));
@@ -270,24 +269,24 @@ public final class DevTest {
 		// two clicks through the real client interaction path: guard, then wingman - without boarding
 		for (int t : new int[]{34, 38}) {
 			at(t, c -> {
-				net.minecraft.entity.Entity e = c.world.getEntityById(SPAWNED.get("striker").getId());
-				var im = c.interactionManager;
-				ActionResult r = im.interactEntityAtLocation(c.player, e, new net.minecraft.util.hit.EntityHitResult(e, e.getEntityPos().add(0, 2, 0)), Hand.MAIN_HAND);
-				if (!r.isAccepted()) {
-					r = im.interactEntity(c.player, e, Hand.MAIN_HAND);
+				net.minecraft.world.entity.Entity e = c.level.getEntity(SPAWNED.get("striker").getId());
+				var im = c.gameMode;
+				InteractionResult r = im.interactAt(c.player, e, new net.minecraft.world.phys.EntityHitResult(e, e.position().add(0, 2, 0)), InteractionHand.MAIN_HAND);
+				if (!r.consumesAction()) {
+					r = im.interact(c.player, e, InteractionHand.MAIN_HAND);
 				}
 				log.println("click -> " + r + " riding=" + c.player.getVehicle());
 			});
 		}
-		at(54, c -> c.getServer().execute(() -> {
+		at(54, c -> c.getSingleplayerServer().execute(() -> {
 			MechEntity m = SPAWNED.get("striker");
-			log.println("mode=" + (m.getBrain() == null ? "-" : m.getBrain().mode) + " passengers=" + m.getPassengerList().size());
+			log.println("mode=" + (m.getBrain() == null ? "-" : m.getBrain().mode) + " passengers=" + m.getPassengers().size());
 		}));
 		// standing still and looking around: the wingman stays put
 		at(60, c -> aiLog(c, "look t60", false));
 		for (int t = 62; t < 140; t += 6) {
 			int tt = t;
-			at(t, c -> c.player.setYaw(c.player.getYaw() + (tt % 12 == 2 ? 70f : -110f)));
+			at(t, c -> c.player.setYRot(c.player.getYRot() + (tt % 12 == 2 ? 70f : -110f)));
 		}
 		at(140, c -> aiLog(c, "look t140", false));
 		// running fast in a straight line: turbo to keep up
@@ -302,14 +301,14 @@ public final class DevTest {
 		}
 		for (int t = 160; t <= 300; t += 14) {
 			int tt = t;
-			at(t, c -> c.getServer().execute(() -> {
+			at(t, c -> c.getSingleplayerServer().execute(() -> {
 				MechEntity m = SPAWNED.get("striker");
-				ServerPlayerEntity p = c.getServer().getPlayerManager().getPlayerList().get(0);
+				ServerPlayer p = c.getSingleplayerServer().getPlayerList().getPlayers().get(0);
 				log.println(String.format(Locale.ROOT, "run t%d player=%.1f mech=%.1f,%.1f dist=%.1f turbo=%s fwd=%.1f boost=%s",
 						tt, p.getX(), m.getX(), m.getZ(), m.distanceTo(p), m.isTurbo(), m.inForward, m.inBoost));
 			}));
 		}
-		at(310, c -> c.options.setPerspective(Perspective.THIRD_PERSON_BACK));
+		at(310, c -> c.options.setCameraType(CameraType.THIRD_PERSON_BACK));
 		at(330, c -> shot(c, "ai_escort"));
 	}
 
@@ -324,25 +323,25 @@ public final class DevTest {
 		at(20, c -> server(c, "place structure mechframe:fort 0 -60 14", "tp @a 0 -60 -4 0 10"));
 		at(60, c -> aiLog(c, "t60", true));
 		at(200, c -> aiLog(c, "t200", false));
-		at(210, c -> c.getServer().execute(() -> {
-			ServerWorld w = c.getServer().getOverworld();
-			for (MechEntity m : w.getEntitiesByClass(MechEntity.class, new net.minecraft.util.math.Box(-200, -100, -200, 200, 100, 200),
+		at(210, c -> c.getSingleplayerServer().execute(() -> {
+			ServerLevel w = c.getSingleplayerServer().overworld();
+			for (MechEntity m : w.getEntitiesOfClass(MechEntity.class, new net.minecraft.world.phys.AABB(-200, -100, -200, 200, 100, 200),
 					m -> m.getFaction() == com.example.mechframe.ai.Faction.ENEMY)) {
 				for (int i = 0; i < 40 && !m.tudursvehiclemod$isDestroyed(); i++) {
-					m.damage(w, w.getDamageSources().generic(), 250f);
+					m.hurtServer(w, w.damageSources().generic(), 250f);
 				}
-				log.println("destroyed " + m.getUuid().toString().substring(0, 8) + " -> " + m.tudursvehiclemod$isDestroyed());
+				log.println("destroyed " + m.getUUID().toString().substring(0, 8) + " -> " + m.tudursvehiclemod$isDestroyed());
 			}
-			log.println("part items dropped: " + w.getEntitiesByClass(net.minecraft.entity.ItemEntity.class,
-					new net.minecraft.util.math.Box(-200, -100, -200, 200, 100, 200), it -> it.getStack().getItem() instanceof MechPartItem).size());
+			log.println("part items dropped: " + w.getEntitiesOfClass(net.minecraft.world.entity.item.ItemEntity.class,
+					new net.minecraft.world.phys.AABB(-200, -100, -200, 200, 100, 200), it -> it.getItem().getItem() instanceof MechPartItem).size());
 		}));
 		at(260, c -> server(c, "kill @e[type=minecraft:item]"));
 		at(420, c -> aiLog(c, "t420 after respawn", true));
 		at(430, c -> server(c, "tp @a 22 -54 -10 0 10"));
 		at(440, c -> {
-			c.options.setPerspective(Perspective.FIRST_PERSON);
-			c.player.setYaw(0f);
-			c.player.setPitch(15f);
+			c.options.setCameraType(CameraType.FIRST_PERSON);
+			c.player.setYRot(0f);
+			c.player.setXRot(15f);
 		});
 		at(450, c -> shot(c, "ai_fort"));
 	}
@@ -352,15 +351,15 @@ public final class DevTest {
 		common();
 		at(5, c -> com.example.mechframe.ai.MechServerConfig.targetCreativePlayers = true);
 		at(20, c -> server(c, "place structure mechframe:outpost 0 -60 18", "tp @a 15 -60 6 0 0"));
-		at(50, c -> c.getServer().execute(() -> {
-			ServerWorld w = c.getServer().getOverworld();
-			for (MechEntity m : w.getEntitiesByClass(MechEntity.class, new net.minecraft.util.math.Box(-200, -100, -200, 200, 100, 200),
+		at(50, c -> c.getSingleplayerServer().execute(() -> {
+			ServerLevel w = c.getSingleplayerServer().overworld();
+			for (MechEntity m : w.getEntitiesOfClass(MechEntity.class, new net.minecraft.world.phys.AABB(-200, -100, -200, 200, 100, 200),
 					m -> m.getFaction() == com.example.mechframe.ai.Faction.ENEMY)) {
-				m.setAssembly(m.getAssembly().with(MountSlot.R_ARM, Identifier.of("mechframe", "wa_bazooka"), false)
-						.with(MountSlot.L_ARM, null, false).with(MountSlot.R_BACK, Identifier.of("mechframe", "wb_cannon"), false)
+				m.setAssembly(m.getAssembly().with(MountSlot.R_ARM, Identifier.fromNamespaceAndPath("mechframe", "wa_bazooka"), false)
+						.with(MountSlot.L_ARM, null, false).with(MountSlot.R_BACK, Identifier.fromNamespaceAndPath("mechframe", "wb_cannon"), false)
 						.with(MountSlot.L_BACK, null, false));
 				m.tudursvehiclemod$fillAllWeaponAmmoAndFuel();
-				m.refreshPositionAndAngles(15.5, -60, 20, 180f, 0f);
+				m.snapTo(15.5, -60, 20, 180f, 0f);
 				log.println("armed " + m.getAssembly().encode());
 			}
 		}));
@@ -370,25 +369,25 @@ public final class DevTest {
 
 	private static int groundBlocks = -1;
 
-	private static void aiLog(MinecraftClient c, String label, boolean countBlocks) {
-		c.getServer().execute(() -> {
-			ServerWorld w = c.getServer().getOverworld();
-			ServerPlayerEntity p = c.getServer().getPlayerManager().getPlayerList().get(0);
-			for (MechEntity m : w.getEntitiesByClass(MechEntity.class, new net.minecraft.util.math.Box(-200, -100, -200, 200, 100, 200), m -> true)) {
+	private static void aiLog(Minecraft c, String label, boolean countBlocks) {
+		c.getSingleplayerServer().execute(() -> {
+			ServerLevel w = c.getSingleplayerServer().overworld();
+			ServerPlayer p = c.getSingleplayerServer().getPlayerList().getPlayers().get(0);
+			for (MechEntity m : w.getEntitiesOfClass(MechEntity.class, new net.minecraft.world.phys.AABB(-200, -100, -200, 200, 100, 200), m -> true)) {
 				var b = m.getBrain();
 				log.println(label + " mech " + m.getName().getString() + " faction=" + m.getFaction() + " mode=" + (b == null ? "-" : b.mode)
 						+ " destroyed=" + m.tudursvehiclemod$isDestroyed()
 						+ String.format(Locale.ROOT, " pos=%.1f,%.1f,%.1f", m.getX(), m.getY(), m.getZ())
 						+ " target=" + (m.getLockTarget() == null ? "-" : m.getLockTarget().getName().getString())
-						+ String.format(Locale.ROOT, " in=%.1f/%.1f yaw=%.0f want=%.0f", m.inForward, m.inStrafe, m.getYaw(), b == null ? 0f : b.desiredYaw)
-						+ " ammo=" + ammo(m) + " uuid=" + m.getUuid().toString().substring(0, 8)
+						+ String.format(Locale.ROOT, " in=%.1f/%.1f yaw=%.0f want=%.0f", m.inForward, m.inStrafe, m.getYRot(), b == null ? 0f : b.desiredYaw)
+						+ " ammo=" + ammo(m) + " uuid=" + m.getUUID().toString().substring(0, 8)
 						+ " asm=" + m.getAssembly().encode());
 			}
 			log.println(label + String.format(Locale.ROOT, " player at %.1f,%.1f zombies=%d", p.getX(), p.getZ(),
-					w.getEntitiesByClass(net.minecraft.entity.mob.ZombieEntity.class, new net.minecraft.util.math.Box(-200, -100, -200, 200, 100, 200), z -> z.isAlive()).size()));
+					w.getEntitiesOfClass(net.minecraft.world.entity.monster.zombie.Zombie.class, new net.minecraft.world.phys.AABB(-200, -100, -200, 200, 100, 200), z -> z.isAlive()).size()));
 			if (countBlocks) {
 				int n = 0;
-				for (BlockPos q : BlockPos.iterate(-30, -64, -40, 30, -56, 60)) {
+				for (BlockPos q : BlockPos.betweenClosed(-30, -64, -40, 30, -56, 60)) {
 					if (!w.getBlockState(q).isAir()) {
 						n++;
 					}
@@ -406,14 +405,14 @@ public final class DevTest {
 	private static void keys() {
 		common();
 		at(20, c -> spawn(c, "mfx:lynx", 0, 3, 0f, true));
-		at(30, c -> c.options.setPerspective(Perspective.THIRD_PERSON_BACK));
+		at(30, c -> c.options.setCameraType(CameraType.THIRD_PERSON_BACK));
 		at(40, c -> log.println("ammo start " + ammo(MechInput.pilotedMech(c))));
 		at(42, c -> {
-			key(KeyBinding.byId("key.tudursvehiclemod.fire_weapon"), true);
-			tap(KeyBinding.byId("key.tudursvehiclemod.weapon_switch"));
+			key(KeyMapping.get("key.tudursvehiclemod.fire_weapon"), true);
+			tap(KeyMapping.get("key.tudursvehiclemod.weapon_switch"));
 		});
 		at(60, c -> {
-			key(KeyBinding.byId("key.tudursvehiclemod.fire_weapon"), false);
+			key(KeyMapping.get("key.tudursvehiclemod.fire_weapon"), false);
 			log.println("ammo after base fire " + ammo(MechInput.pilotedMech(c)) + " suppressed=" + MechInput.suppressBaseWeaponKeys);
 		});
 		at(65, c -> tap(MechInput.swapRightKey));
@@ -437,9 +436,9 @@ public final class DevTest {
 	private static void fpv() {
 		common();
 		at(20, c -> spawn(c, "mfx:wisp", 0, 3, 0f, true));
-		at(30, c -> c.options.setPerspective(Perspective.FIRST_PERSON));
+		at(30, c -> c.options.setCameraType(CameraType.FIRST_PERSON));
 		at(50, c -> shot(c, "fpv_first"));
-		at(55, c -> c.options.setPerspective(Perspective.THIRD_PERSON_BACK));
+		at(55, c -> c.options.setCameraType(CameraType.THIRD_PERSON_BACK));
 		at(70, c -> shot(c, "fpv_third"));
 	}
 
@@ -447,7 +446,7 @@ public final class DevTest {
 	private static void transformer(String p) {
 		common();
 		at(20, c -> spawn(c, p, 0, 3, 0f, true));
-		at(35, c -> c.options.setPerspective(Perspective.THIRD_PERSON_BACK));
+		at(35, c -> c.options.setCameraType(CameraType.THIRD_PERSON_BACK));
 		String f = p.replace(':', '_');
 		at(45, c -> shot(c, f + "_robot"));
 		// Robot -> jet on the ground.
@@ -462,12 +461,12 @@ public final class DevTest {
 			at(90 + d, c -> shot(c, f + "_back_" + d));
 		}
 		at(125, c -> tap(MechInput.transformKey));
-		at(150, c -> key(c.options.forwardKey, true));
+		at(150, c -> key(c.options.keyUp, true));
 		at(200, c -> MechInput.flightPitch -= 30f);
 		at(240, c -> shot(c, f + "_flying"));
 		// Jet -> robot in the air.
 		at(260, c -> {
-			key(c.options.forwardKey, false);
+			key(c.options.keyUp, false);
 			tap(MechInput.transformKey);
 		});
 		for (int d : new int[]{4, 8, 12, 18, 30}) {
@@ -488,15 +487,15 @@ public final class DevTest {
 			spawn(c, "striker", 0, 6, 0f, false);
 		});
 		at(50, c -> {
-			var server = c.getServer();
+			var server = c.getSingleplayerServer();
 			server.execute(() -> {
-				ServerPlayerEntity player = server.getPlayerManager().getPlayerList().get(0);
-				BlockPos pos = player.getBlockPos().add(3, 0, 0);
+				ServerPlayer player = server.getPlayerList().getPlayers().get(0);
+				BlockPos pos = player.blockPosition().offset(3, 0, 0);
 				garagePos[0] = pos;
-				player.getEntityWorld().setBlockState(pos, MechItems.GARAGE.getDefaultState());
-				GarageBlockEntity garage = (GarageBlockEntity) player.getEntityWorld().getBlockEntity(pos);
+				player.level().setBlockAndUpdate(pos, MechItems.GARAGE.defaultBlockState());
+				GarageBlockEntity garage = (GarageBlockEntity) player.level().getBlockEntity(pos);
 				for (String id : new String[]{"lg_hopper", "wb_cannon", "am_maul", "hd_visor"}) {
-					garage.insert(MechPartItem.stackFor(PartRegistry.getOrNull(Identifier.of("mechframe", id))));
+					garage.insert(MechPartItem.stackFor(PartRegistry.getOrNull(Identifier.fromNamespaceAndPath("mechframe", id))));
 				}
 				log.println("garage placed at " + pos + " stored=" + contents(garage));
 			});
@@ -508,33 +507,33 @@ public final class DevTest {
 		at(68, c -> refit(c, garagePos[0], MountSlot.HEAD, "lg_stride", "head <- legs part (incompatible: must fail)"));
 		at(70, c -> refit(c, garagePos[0], MountSlot.LEGS, "lg_stride", "legs <- stride (stock: free, hopper back to garage)"));
 		at(72, c -> {
-			var server = c.getServer();
+			var server = c.getSingleplayerServer();
 			server.execute(() -> {
-				ServerPlayerEntity player = server.getPlayerManager().getPlayerList().get(0);
+				ServerPlayer player = server.getPlayerList().getPlayers().get(0);
 				AssemblyService.apply(player, garagePos[0], SPAWNED.get("striker").getId(), MountSlot.R_ARM, null);
 				log.println("refit r_arm <- empty: ammo=" + ammo(SPAWNED.get("striker")));
 			});
 		});
 		at(80, c -> {
-			BlockHitResult hit = new BlockHitResult(Vec3d.ofCenter(garagePos[0]), Direction.UP, garagePos[0], false);
-			c.interactionManager.interactBlock(c.player, Hand.MAIN_HAND, hit);
+			BlockHitResult hit = new BlockHitResult(Vec3.atCenterOf(garagePos[0]), Direction.UP, garagePos[0], false);
+			c.gameMode.useItemOn(c.player, InteractionHand.MAIN_HAND, hit);
 		});
 		at(100, c -> {
-			log.println("screen = " + c.currentScreen);
+			log.println("screen = " + c.screen);
 			shot(c, "garage_screen");
 		});
 		at(105, c -> {
-			if (c.currentScreen != null) {
-				c.currentScreen.close();
+			if (c.screen != null) {
+				c.screen.onClose();
 			}
 		});
 		at(110, c -> {
-			var server = c.getServer();
+			var server = c.getSingleplayerServer();
 			server.execute(() -> {
-				ServerPlayerEntity player = server.getPlayerManager().getPlayerList().get(0);
+				ServerPlayer player = server.getPlayerList().getPlayers().get(0);
 				MechEntity mech = SPAWNED.get("striker");
 				AssemblyService.resetToStock(player, garagePos[0], mech.getId());
-				GarageBlockEntity garage = (GarageBlockEntity) player.getEntityWorld().getBlockEntity(garagePos[0]);
+				GarageBlockEntity garage = (GarageBlockEntity) player.level().getBlockEntity(garagePos[0]);
 				log.println("reset: asm=" + mech.getAssembly().encode() + " hp=" + mech.getHealth() + "/" + mech.getMaxHealth()
 						+ " garage=" + contents(garage));
 			});
@@ -545,23 +544,23 @@ public final class DevTest {
 			server(c, "tp @a 0 -60 4 0 0");
 		});
 		at(140, c -> {
-			var server = c.getServer();
+			var server = c.getSingleplayerServer();
 			server.execute(() -> {
-				ServerPlayerEntity player = server.getPlayerManager().getPlayerList().get(0);
+				ServerPlayer player = server.getPlayerList().getPlayers().get(0);
 				player.startRiding(SPAWNED.get("striker"), true, true);
 			});
 		});
-		at(150, c -> c.options.setPerspective(Perspective.THIRD_PERSON_BACK));
+		at(150, c -> c.options.setCameraType(CameraType.THIRD_PERSON_BACK));
 		at(170, c -> {
 			MechEntity m = MechInput.pilotedMech(c);
 			log.println("pre-fire: candidate=" + (m == null ? null : m.getCandidate()) + " target hp=" + SPAWNED.get("bastion").getHealth()
 					+ " ammo=" + ammo(m));
-			key(c.options.attackKey, true);
+			key(c.options.keyAttack, true);
 		});
 		at(185, c -> shot(c, "firing"));
 		for (int t = 172; t < 200; t += 3) {
 			at(t, c -> {
-				var server = c.getServer();
+				var server = c.getSingleplayerServer();
 				server.execute(() -> {
 					MechEntity target = SPAWNED.get("bastion");
 					MechEntity shooter = SPAWNED.get("striker");
@@ -569,31 +568,31 @@ public final class DevTest {
 					var mesh = com.example.tudursvehiclemod.asset.ServerObjModelHitboxes.getMesh(def.model());
 					StringBuilder b = new StringBuilder("  dbg model=" + def.model() + " mesh=" + mesh.map(m ->
 							String.format(Locale.ROOT, "[%.1f..%.1f, %.1f..%.1f, %.1f..%.1f]", m.minX(), m.maxX(), m.minY(), m.maxY(), m.minZ(), m.maxZ())).orElse("NONE"));
-					b.append(String.format(Locale.ROOT, " aim(yaw=%.1f pitch=%.1f)", shooter.getYaw(), shooter.getPitch()));
-					var box = target.getBoundingBox().expand(60);
-					for (var proj : target.getEntityWorld().getEntitiesByClass(net.minecraft.entity.projectile.ProjectileEntity.class, box, e -> true)) {
+					b.append(String.format(Locale.ROOT, " aim(yaw=%.1f pitch=%.1f)", shooter.getYRot(), shooter.getXRot()));
+					var box = target.getBoundingBox().inflate(60);
+					for (var proj : target.level().getEntitiesOfClass(net.minecraft.world.entity.projectile.Projectile.class, box, e -> true)) {
 						b.append(String.format(Locale.ROOT, "\n    proj %s pos=%.1f,%.1f,%.1f v=%.2f,%.2f,%.2f", proj.getClass().getSimpleName(),
-								proj.getX(), proj.getY(), proj.getZ(), proj.getVelocity().x, proj.getVelocity().y, proj.getVelocity().z));
+								proj.getX(), proj.getY(), proj.getZ(), proj.getDeltaMovement().x, proj.getDeltaMovement().y, proj.getDeltaMovement().z));
 					}
 					log.println(b);
 				});
 			});
 		}
 		at(215, c -> {
-			key(c.options.attackKey, false);
+			key(c.options.keyAttack, false);
 			MechEntity m = MechInput.pilotedMech(c);
 			log.println("post-fire: target hp=" + SPAWNED.get("bastion").getHealth() + " ammo=" + ammo(m));
 		});
 		at(240, c -> log.println("settled: target hp=" + SPAWNED.get("bastion").getHealth()));
 	}
 
-	private static void cameraLog(MinecraftClient c) {
-		var cam = c.gameRenderer.getCamera();
+	private static void cameraLog(Minecraft c) {
+		var cam = c.gameRenderer.getMainCamera();
 		MechEntity m = MechInput.pilotedMech(c);
 		log.println(String.format(Locale.ROOT, "  cam pos=%.1f,%.1f,%.1f yaw=%.1f pitch=%.1f | player yaw=%.1f pitch=%.1f | mech %s pitch=%.1f roll=%.1f",
-				cam.getCameraPos().x, cam.getCameraPos().y, cam.getCameraPos().z, cam.getYaw(), cam.getPitch(), c.player.getYaw(), c.player.getPitch(),
+				cam.position().x, cam.position().y, cam.position().z, cam.yRot(), cam.xRot(), c.player.getYRot(), c.player.getXRot(),
 				m == null ? "-" : String.format(Locale.ROOT, "%.1f,%.1f,%.1f tf=%.2f jet=%s", m.getX(), m.getY(), m.getZ(), m.getTransformProgress(1f), m.isJet()),
-				m == null ? 0f : m.getPitch(1f), m == null ? 0f : m.getRoll(1f)));
+				m == null ? 0f : m.getViewXRot(1f), m == null ? 0f : m.getRoll(1f)));
 		if (m != null) {
 			var items = com.example.mechframe.client.anim.MechPoser.pose(m, 1f);
 			int nan = 0;
@@ -608,7 +607,7 @@ public final class DevTest {
 				}
 			}
 			var anim = com.example.mechframe.client.anim.MechAnimator.of(m);
-			log.println("    renderReady=" + c.worldRenderer.isRenderingReady(m.getBlockPos()) + " pose items=" + items.size() + " nan=" + nan + " " + b + " mode=" + anim.mode
+			log.println("    renderReady=" + c.levelRenderer.isSectionCompiledAndVisible(m.blockPosition()) + " pose items=" + items.size() + " nan=" + nan + " " + b + " mode=" + anim.mode
 					+ " body=" + m.tudursvehiclemod$getBodyOrientation(1f) + " frame=" + m.tudursvehiclemod$getBodyFrameOffset(1f));
 		}
 	}
@@ -627,8 +626,8 @@ public final class DevTest {
 
 	private static String contents(GarageBlockEntity garage) {
 		StringBuilder b = new StringBuilder("[");
-		for (int i = 0; i < garage.size(); i++) {
-			var stack = garage.getStack(i);
+		for (int i = 0; i < garage.getContainerSize(); i++) {
+			var stack = garage.getItem(i);
 			if (!stack.isEmpty()) {
 				b.append(MechPartItem.partId(stack).getPath()).append('x').append(stack.getCount()).append(' ');
 			}
@@ -636,13 +635,13 @@ public final class DevTest {
 		return b.append(']').toString();
 	}
 
-	private static void refit(MinecraftClient c, BlockPos pos, MountSlot mount, String part, String what) {
-		var server = c.getServer();
+	private static void refit(Minecraft c, BlockPos pos, MountSlot mount, String part, String what) {
+		var server = c.getSingleplayerServer();
 		server.execute(() -> {
-			ServerPlayerEntity player = server.getPlayerManager().getPlayerList().get(0);
+			ServerPlayer player = server.getPlayerList().getPlayers().get(0);
 			MechEntity mech = SPAWNED.get("striker");
-			AssemblyService.apply(player, pos, mech.getId(), mount, Identifier.of("mechframe", part));
-			GarageBlockEntity garage = (GarageBlockEntity) player.getEntityWorld().getBlockEntity(pos);
+			AssemblyService.apply(player, pos, mech.getId(), mount, Identifier.fromNamespaceAndPath("mechframe", part));
+			GarageBlockEntity garage = (GarageBlockEntity) player.level().getBlockEntity(pos);
 			log.println("refit " + what + ": asm=" + mech.getAssembly().encode() + " hp=" + mech.getHealth() + "/" + mech.getMaxHealth()
 					+ " w=" + mech.getStats().totalWeight() + " ammo=" + ammo(mech) + " garage=" + contents(garage));
 		});
@@ -656,7 +655,7 @@ public final class DevTest {
 			String p = presets[i];
 			at(base, c -> {
 				// Remove (not kill: a destroyed frame leaves a burning wreck that would hurt the next one).
-				var server = c.getServer();
+				var server = c.getSingleplayerServer();
 				server.execute(() -> {
 					for (MechEntity m : SPAWNED.values()) {
 						m.discard();
@@ -666,15 +665,15 @@ public final class DevTest {
 			});
 			at(base + 5, c -> spawn(c, p, 0, 3, 0f, true));
 			at(base + 15, c -> {
-				c.options.setPerspective(Perspective.THIRD_PERSON_BACK);
-				key(c.options.forwardKey, true);
-				key(c.options.leftKey, true);
+				c.options.setCameraType(CameraType.THIRD_PERSON_BACK);
+				key(c.options.keyUp, true);
+				key(c.options.keyLeft, true);
 			});
 			at(base + 40, c -> shot(c, p + "_walk1"));
 			at(base + 44, c -> shot(c, p + "_walk2"));
 			at(base + 60, c -> {
-				key(c.options.forwardKey, false);
-				key(c.options.leftKey, false);
+				key(c.options.keyUp, false);
+				key(c.options.keyLeft, false);
 			});
 			at(base + 80, c -> shot(c, p + "_stand"));
 		}
@@ -685,30 +684,30 @@ public final class DevTest {
 	private static void gait() {
 		common();
 		at(20, c -> spawn(c, "striker", 0, 3, 0f, true));
-		at(35, c -> c.options.setPerspective(Perspective.THIRD_PERSON_BACK));
-		at(40, c -> key(c.options.leftKey, true));
+		at(35, c -> c.options.setCameraType(CameraType.THIRD_PERSON_BACK));
+		at(40, c -> key(c.options.keyLeft, true));
 		for (int d : new int[]{20, 23, 26, 29}) {
 			at(40 + d, c -> shot(c, "strafe_" + d));
 		}
 
 		at(80, c -> {
-			key(c.options.leftKey, false);
-			key(c.options.rightKey, true);
+			key(c.options.keyLeft, false);
+			key(c.options.keyRight, true);
 		});
 		for (int d : new int[]{1, 2, 3, 5, 8}) {
 			at(80 + d, c -> shot(c, "reverse_" + d));
 		}
 		at(110, c -> {
-			key(c.options.rightKey, false);
-			key(c.options.forwardKey, true);
+			key(c.options.keyRight, false);
+			key(c.options.keyUp, true);
 		});
 
 		for (int t : new int[]{113, 118, 123}) {
 			sideShot(t, "striker_side_" + t, 0.0);
 		}
-		at(128, c -> key(c.options.forwardKey, false));
+		at(128, c -> key(c.options.keyUp, false));
 		at(130, c -> {
-			var server = c.getServer();
+			var server = c.getSingleplayerServer();
 			server.execute(() -> {
 				for (MechEntity m : SPAWNED.values()) {
 					m.discard();
@@ -717,7 +716,7 @@ public final class DevTest {
 			});
 		});
 		at(135, c -> spawn(c, "hopper", 0, 3, 0f, true));
-		at(150, c -> key(c.options.forwardKey, true));
+		at(150, c -> key(c.options.keyUp, true));
 		for (int d : new int[]{30, 32, 34, 36, 38}) {
 			at(150 + d, c -> shot(c, "hopper_walk_" + d));
 		}
@@ -725,10 +724,10 @@ public final class DevTest {
 		for (int t : new int[]{195, 200, 205, 210}) {
 			sideShot(t, "hopper_side_" + t, 0.0);
 		}
-		at(230, c -> key(c.options.forwardKey, false));
+		at(230, c -> key(c.options.keyUp, false));
 		// Reverse-joint jump: legs stretched on the way up, folded on landing.
-		at(240, c -> key(c.options.jumpKey, true));
-		at(242, c -> key(c.options.jumpKey, false));
+		at(240, c -> key(c.options.keyJump, true));
+		at(242, c -> key(c.options.keyJump, false));
 		sideShot(245, "hopper_jump_up", 0.0);
 		for (int t = 262; t <= 282; t += 4) {
 			sideShot(t, "hopper_land_" + t, 0.0);
@@ -743,7 +742,7 @@ public final class DevTest {
 
 	private static final boolean[] wasStepping = new boolean[8];
 
-	private static void stepLog(MinecraftClient c) {
+	private static void stepLog(Minecraft c) {
 		MechEntity m = MechInput.pilotedMech(c);
 		if (m == null || !(m.clientAnimation instanceof com.example.mechframe.client.anim.MechAnimator anim)) {
 			return;
@@ -759,11 +758,11 @@ public final class DevTest {
 		if (b.length() > 0) {
 			log.println(String.format(Locale.ROOT, "step t=%d mode=%s speed=%.3f%s", tick, anim.mode, anim.speed, b));
 		}
-		log.println(String.format(Locale.ROOT, "pelvis t=%d dy=%.3f yaw=%.1f", tick, anim.pelvisDy, m.getYaw()));
+		log.println(String.format(Locale.ROOT, "pelvis t=%d dy=%.3f yaw=%.1f", tick, anim.pelvisDy, m.getYRot()));
 		if (anim.feet.size() > 2) {
 			double minD = 1e9;
 			StringBuilder ang = new StringBuilder();
-			double yr = Math.toRadians(m.getYaw());
+			double yr = Math.toRadians(m.getYRot());
 			for (int i = 0; i < anim.feet.size(); i++) {
 				var a = anim.feet.get(i).pos;
 				double dx = a.x - m.getX(), dz = a.z - m.getZ();
@@ -788,7 +787,7 @@ public final class DevTest {
 			int base = 20 + i * 120;
 			String p = presets[i];
 			at(base, c -> {
-				var server = c.getServer();
+				var server = c.getSingleplayerServer();
 				server.execute(() -> {
 					for (MechEntity m : SPAWNED.values()) {
 						m.discard();
@@ -797,17 +796,17 @@ public final class DevTest {
 				});
 			});
 			at(base + 5, c -> spawn(c, p, 0, 3, 0f, true));
-			at(base + 15, c -> c.options.setPerspective(Perspective.THIRD_PERSON_BACK));
-			at(base + 25, c -> c.player.setYaw(c.player.getYaw() + 150f));
+			at(base + 15, c -> c.options.setCameraType(CameraType.THIRD_PERSON_BACK));
+			at(base + 25, c -> c.player.setYRot(c.player.getYRot() + 150f));
 			for (int d : new int[]{27, 33, 39, 45}) {
 				topShot(base + d, p + "_turn_" + d);
 			}
-			at(base + 60, c -> key(c.options.forwardKey, true));
-			at(base + 70, c -> c.player.setYaw(c.player.getYaw() - 120f));
+			at(base + 60, c -> key(c.options.keyUp, true));
+			at(base + 70, c -> c.player.setYRot(c.player.getYRot() - 120f));
 			for (int d : new int[]{73, 78}) {
 				at(base + d, c -> shot(c, p + "_walkturn_" + d));
 			}
-			at(base + 95, c -> key(c.options.forwardKey, false));
+			at(base + 95, c -> key(c.options.keyUp, false));
 			at(base + 110, c -> shot(c, p + "_settled"));
 			for (int t = base + 20; t < base + 115; t++) {
 				at(t, DevTest::stepLog);
@@ -848,23 +847,23 @@ public final class DevTest {
 					"clear @a", "give @a minecraft:iron_ingot 64", "give @a minecraft:feather 8", "give @a minecraft:gold_ingot 10",
 					"give @a minecraft:glass 4");
 		});
-		at(215, c -> c.setScreen(new com.example.mechframe.client.screen.FabricatorScreen(new net.minecraft.util.math.BlockPos(0, -60, -28))));
+		at(215, c -> c.setScreen(new com.example.mechframe.client.screen.FabricatorScreen(new net.minecraft.core.BlockPos(0, -60, -28))));
 		at(225, c -> shot(c, "fab_screen"));
 		at(227, c -> {
-			if (c.currentScreen instanceof com.example.mechframe.client.screen.FabricatorScreen fs) {
-				fs.selectForTest(net.minecraft.util.Identifier.of("mfx", "hd_pin"));
+			if (c.screen instanceof com.example.mechframe.client.screen.FabricatorScreen fs) {
+				fs.selectForTest(net.minecraft.resources.Identifier.fromNamespaceAndPath("mfx", "hd_pin"));
 			}
 		});
 		at(233, c -> shot(c, "fab_selected"));
 		at(235, c -> net.fabricmc.fabric.api.client.networking.v1.ClientPlayNetworking.send(
-				new com.example.mechframe.net.MechNetworking.FabricatePayload(new net.minecraft.util.math.BlockPos(0, -60, -28), "mfx:hd_pin")));
+				new com.example.mechframe.net.MechNetworking.FabricatePayload(new net.minecraft.core.BlockPos(0, -60, -28), "mfx:hd_pin")));
 		at(245, c -> {
 			var inv = c.player.getInventory();
 			StringBuilder b = new StringBuilder();
-			for (int i = 0; i < inv.size(); i++) {
-				var st = inv.getStack(i);
+			for (int i = 0; i < inv.getContainerSize(); i++) {
+				var st = inv.getItem(i);
 				if (!st.isEmpty()) {
-					b.append(st.getName().getString()).append(" x").append(st.getCount()).append("; ");
+					b.append(st.getHoverName().getString()).append(" x").append(st.getCount()).append("; ");
 				}
 			}
 			log.println("inventory after fabricate: " + b);
@@ -877,33 +876,33 @@ public final class DevTest {
 	private static void special() {
 		common();
 		at(20, c -> spawn(c, "mfx:raven", 0, 3, 0f, true));
-		at(24, c -> c.getServer().execute(() -> {
+		at(24, c -> c.getSingleplayerServer().execute(() -> {
 			MechEntity m = SPAWNED.get("mfx:raven");
-			var a = m.getAssembly().with(com.example.mechframe.part.MountSlot.LEGS, Identifier.of("mfx", "lg_halo"), false)
-					.with(com.example.mechframe.part.MountSlot.ARMS, Identifier.of("mfx", "am_arbalest"), false)
-					.with(com.example.mechframe.part.MountSlot.BOOSTER, Identifier.of("mfx", "bs_comet"), false)
-					.with(com.example.mechframe.part.MountSlot.HEAD, Identifier.of("mfx", "hd_armillary"), false);
+			var a = m.getAssembly().with(com.example.mechframe.part.MountSlot.LEGS, Identifier.fromNamespaceAndPath("mfx", "lg_halo"), false)
+					.with(com.example.mechframe.part.MountSlot.ARMS, Identifier.fromNamespaceAndPath("mfx", "am_arbalest"), false)
+					.with(com.example.mechframe.part.MountSlot.BOOSTER, Identifier.fromNamespaceAndPath("mfx", "bs_comet"), false)
+					.with(com.example.mechframe.part.MountSlot.HEAD, Identifier.fromNamespaceAndPath("mfx", "hd_armillary"), false);
 			m.setAssembly(a);
 			m.tudursvehiclemod$fillAllWeaponAmmoAndFuel();
 			log.println("special asm " + a.encode() + " r_arm=" + a.part(com.example.mechframe.part.MountSlot.R_ARM)
 					+ " locked=" + a.isLocked(com.example.mechframe.part.MountSlot.R_ARM));
 		}));
 		at(35, c -> {
-			c.options.setPerspective(Perspective.THIRD_PERSON_BACK);
-			c.player.setPitch(20f);
+			c.options.setCameraType(CameraType.THIRD_PERSON_BACK);
+			c.player.setXRot(20f);
 		});
 		at(45, c -> shot(c, "hover_idle"));
-		at(50, c -> key(c.options.forwardKey, true));
-		at(70, c -> key(c.options.forwardKey, false));
-		at(71, c -> key(c.options.leftKey, true));
+		at(50, c -> key(c.options.keyUp, true));
+		at(70, c -> key(c.options.keyUp, false));
+		at(71, c -> key(c.options.keyLeft, true));
 		at(76, c -> shot(c, "hover_drift"));
-		at(85, c -> key(c.options.leftKey, false));
+		at(85, c -> key(c.options.keyLeft, false));
 		for (int t = 48; t < 110; t += 3) {
 			at(t, c -> {
 				MechEntity m = MechInput.pilotedMech(c);
 				if (m != null) {
 					log.println(String.format(Locale.ROOT, "hover t=%d pos=%.2f,%.2f,%.2f v=%.3f grounded=%s", tick, m.getX(), m.getY(), m.getZ(),
-							m.getVelocity().horizontalLength(), m.isGroundedVisual()));
+							m.getDeltaMovement().horizontalDistance(), m.isGroundedVisual()));
 				}
 			});
 		}
@@ -921,10 +920,10 @@ public final class DevTest {
 			log.println("rail after " + (idx >= 0 ? java.util.Arrays.toString(m.getWeaponAmmoState(idx)) : "-"));
 		});
 		// pile driver on a normal arm set
-		at(130, c -> c.getServer().execute(() -> {
+		at(130, c -> c.getSingleplayerServer().execute(() -> {
 			MechEntity m = SPAWNED.get("mfx:raven");
-			m.setAssembly(m.getAssembly().with(com.example.mechframe.part.MountSlot.ARMS, Identifier.of("mfx", "am_shard"), false)
-					.with(com.example.mechframe.part.MountSlot.L_ARM, Identifier.of("mfx", "wm_piledriver"), false));
+			m.setAssembly(m.getAssembly().with(com.example.mechframe.part.MountSlot.ARMS, Identifier.fromNamespaceAndPath("mfx", "am_shard"), false)
+					.with(com.example.mechframe.part.MountSlot.L_ARM, Identifier.fromNamespaceAndPath("mfx", "wm_piledriver"), false));
 		}));
 		at(140, c -> spawn(c, "mechframe:rampart", 0, 14, 180f, false));
 		at(160, c -> log.println("target hp before " + SPAWNED.get("mechframe:rampart").getHealth()));
@@ -932,7 +931,7 @@ public final class DevTest {
 		for (int d : new int[]{164, 167, 169}) {
 			at(d, c -> shot(c, "pile_" + d));
 		}
-		at(190, c -> c.getServer().execute(() -> log.println("target hp after " + SPAWNED.get("mechframe:rampart").getHealth())));
+		at(190, c -> c.getSingleplayerServer().execute(() -> log.println("target hp after " + SPAWNED.get("mechframe:rampart").getHealth())));
 	}
 
 	/** Melee: a Striker with the laser blade on its left arm dashes at a parked frame and slashes it. */
@@ -942,29 +941,29 @@ public final class DevTest {
 			spawn(c, "striker", 0, 3, 0f, true);
 			spawn(c, "rampart", 0, 12, 180f, false);
 		});
-		at(24, c -> c.getServer().execute(() -> {
+		at(24, c -> c.getSingleplayerServer().execute(() -> {
 			MechEntity m = SPAWNED.get("striker");
-			m.setAssembly(m.getAssembly().with(com.example.mechframe.part.MountSlot.L_ARM, Identifier.of("mechframe", "wa_blade"), false));
+			m.setAssembly(m.getAssembly().with(com.example.mechframe.part.MountSlot.L_ARM, Identifier.fromNamespaceAndPath("mechframe", "wa_blade"), false));
 			log.println("asm " + m.getAssembly().encode());
 		}));
-		at(35, c -> c.options.setPerspective(Perspective.THIRD_PERSON_BACK));
+		at(35, c -> c.options.setCameraType(CameraType.THIRD_PERSON_BACK));
 		at(50, c -> log.println("target hp before " + SPAWNED.get("rampart").getHealth()));
 		at(60, c -> tap(MechInput.fireLeftKey));
 		for (int d : new int[]{62, 64, 66, 67, 69, 73}) {
 			sideShot(d, "melee_" + d, 4.0);
 		}
 		at(66, c -> shot(c, "melee_back_66"));
-		at(90, c -> c.getServer().execute(() -> log.println("target hp after " + SPAWNED.get("rampart").getHealth())));
+		at(90, c -> c.getSingleplayerServer().execute(() -> log.println("target hp after " + SPAWNED.get("rampart").getHealth())));
 		at(95, c -> tap(MechInput.fireLeftKey));
 		at(101, c -> shot(c, "melee_back_101"));
-		at(130, c -> c.getServer().execute(() -> log.println("target hp after2 " + SPAWNED.get("rampart").getHealth())));
+		at(130, c -> c.getSingleplayerServer().execute(() -> log.println("target hp after2 " + SPAWNED.get("rampart").getHealth())));
 		for (int t = 58; t < 110; t++) {
 			at(t, c -> {
 				MechEntity m = MechInput.pilotedMech(c);
 				if (m != null) {
 					MechEntity tg = SPAWNED.get("rampart");
 					log.println(String.format(Locale.ROOT, "melee t=%d z=%.2f v=%.2f arm=%s time=%.1f en=%.0f fcs=%s lock=%s tgz=%.2f", tick, m.getZ(),
-							m.getVelocity().horizontalLength(), m.getMeleeArm(), m.getMeleeTime(0f), m.getEn(), m.getFcsTarget(), m.getLockTarget(),
+							m.getDeltaMovement().horizontalDistance(), m.getMeleeArm(), m.getMeleeTime(0f), m.getEn(), m.getFcsTarget(), m.getLockTarget(),
 							tg != null ? tg.getZ() : 0.0));
 				}
 			});
@@ -980,8 +979,8 @@ public final class DevTest {
 			String p = presets[k];
 			at(base, c -> spawn(c, p, 0, 3, 0f, true));
 			at(base + 15, c -> {
-				c.options.setPerspective(Perspective.THIRD_PERSON_BACK);
-				c.player.setPitch(32f);
+				c.options.setCameraType(CameraType.THIRD_PERSON_BACK);
+				c.player.setXRot(32f);
 			});
 			for (int t = base + 28; t < base + 60; t++) {
 				at(t, c -> {
@@ -992,15 +991,15 @@ public final class DevTest {
 					}
 				});
 			}
-			at(base + 30, c -> key(c.options.leftKey, true));
+			at(base + 30, c -> key(c.options.keyLeft, true));
 			at(base + 31, c -> tap(MechInput.quickBoostKey));
-			at(base + 33, c -> key(c.options.leftKey, false));
+			at(base + 33, c -> key(c.options.keyLeft, false));
 			for (int d : new int[]{33, 36, 40, 46}) {
 				at(base + d, c -> shot(c, p + "_qbl_" + d));
 			}
-			at(base + 70, c -> key(c.options.rightKey, true));
+			at(base + 70, c -> key(c.options.keyRight, true));
 			at(base + 71, c -> tap(MechInput.quickBoostKey));
-			at(base + 73, c -> key(c.options.rightKey, false));
+			at(base + 73, c -> key(c.options.keyRight, false));
 			at(base + 76, c -> shot(c, p + "_qbr_76"));
 		}
 	}
@@ -1009,16 +1008,16 @@ public final class DevTest {
 	private static void hexBoost() {
 		common();
 		at(20, c -> spawn(c, "weaver", 0, 3, 0f, true));
-		at(35, c -> c.options.setPerspective(Perspective.THIRD_PERSON_BACK));
+		at(35, c -> c.options.setCameraType(CameraType.THIRD_PERSON_BACK));
 		at(40, c -> {
-			key(c.options.forwardKey, true);
+			key(c.options.keyUp, true);
 			tap(MechInput.boostKey);
 		});
 		at(70, c -> tap(MechInput.boostKey));
 		for (int t : new int[]{74, 80, 86, 92, 98, 104}) {
 			topShot(t, "hexboost_" + t);
 		}
-		at(110, c -> key(c.options.forwardKey, false));
+		at(110, c -> key(c.options.keyUp, false));
 		for (int t = 60; t < 115; t++) {
 			at(t, DevTest::stepLog);
 		}
@@ -1028,11 +1027,11 @@ public final class DevTest {
 	private static void turbo() {
 		common();
 		at(20, c -> spawn(c, "striker", 0, 3, 0f, true));
-		at(35, c -> c.options.setPerspective(Perspective.THIRD_PERSON_BACK));
+		at(35, c -> c.options.setCameraType(CameraType.THIRD_PERSON_BACK));
 		at(45, c -> tap(MechInput.transformKey));
-		at(50, c -> c.player.setPitch(-15f));
+		at(50, c -> c.player.setXRot(-15f));
 		at(70, c -> shot(c, "turbo_climb"));
-		at(90, c -> c.player.setPitch(5f));
+		at(90, c -> c.player.setXRot(5f));
 		at(110, c -> shot(c, "turbo_cruise"));
 		sideShot(96, "turbo_side_a", 5.0);
 		sideShot(104, "turbo_side_b", 5.0);
@@ -1049,33 +1048,33 @@ public final class DevTest {
 			MechInput.tankControls = true;
 			spawn(c, "rampart", 0, 3, 0f, true);
 		});
-		at(35, c -> c.options.setPerspective(Perspective.THIRD_PERSON_BACK));
+		at(35, c -> c.options.setCameraType(CameraType.THIRD_PERSON_BACK));
 		at(45, c -> shot(c, "tank_start"));
-		at(50, c -> key(c.options.leftKey, true));
+		at(50, c -> key(c.options.keyLeft, true));
 		at(70, c -> {
-			key(c.options.leftKey, false);
+			key(c.options.keyLeft, false);
 			MechEntity m = MechInput.pilotedMech(c);
-			log.println("after turn: hull=" + (m != null ? m.getHullYaw() : 0) + " yaw=" + (m != null ? m.getYaw() : 0));
+			log.println("after turn: hull=" + (m != null ? m.getHullYaw() : 0) + " yaw=" + (m != null ? m.getYRot() : 0));
 		});
 		at(75, c -> shot(c, "tank_turned"));
-		at(80, c -> key(c.options.forwardKey, true));
+		at(80, c -> key(c.options.keyUp, true));
 		at(110, c -> shot(c, "tank_drive"));
 		at(120, c -> {
-			key(c.options.forwardKey, false);
-			c.player.setYaw(c.player.getYaw() + 70f);
+			key(c.options.keyUp, false);
+			c.player.setYRot(c.player.getYRot() + 70f);
 		});
 		at(150, c -> {
 			MechEntity m = MechInput.pilotedMech(c);
-			log.println("turret: hull=" + (m != null ? m.getHullYaw() : 0) + " yaw=" + (m != null ? m.getYaw() : 0));
+			log.println("turret: hull=" + (m != null ? m.getHullYaw() : 0) + " yaw=" + (m != null ? m.getYRot() : 0));
 			shot(c, "tank_turret");
 		});
 	}
 
-	private static void tick(MinecraftClient c) {
-		if (c.world == null || c.player == null || c.getServer() == null) {
+	private static void tick(Minecraft c) {
+		if (c.level == null || c.player == null || c.getSingleplayerServer() == null) {
 			return;
 		}
-		if (tick < 0 && c.currentScreen != null) {
+		if (tick < 0 && c.screen != null) {
 			// Still on "Loading terrain": opening/closing a screen releases every key, so start the clock after it.
 			return;
 		}
@@ -1095,8 +1094,8 @@ public final class DevTest {
 			double dx = mech.getX() - lastX;
 			double dz = mech.getZ() - lastZ;
 			log.println(String.format(Locale.ROOT, "t=%d pos=%.2f,%.2f,%.2f v=%.3f vy=%.3f yaw=%.1f en=%.0f boost=%s hover=%s grounded=%s jet=%s tf=%.2f hp=%.0f",
-					tick, mech.getX(), mech.getY(), mech.getZ(), Math.sqrt(dx * dx + dz * dz) / 2.0, mech.getVelocity().y,
-					mech.getYaw(), mech.getEn(), mech.isBoostingVisual(), mech.isHoveringVisual(), mech.isGroundedVisual(),
+					tick, mech.getX(), mech.getY(), mech.getZ(), Math.sqrt(dx * dx + dz * dz) / 2.0, mech.getDeltaMovement().y,
+					mech.getYRot(), mech.getEn(), mech.isBoostingVisual(), mech.isHoveringVisual(), mech.isGroundedVisual(),
 					mech.isJet(), mech.getTransformProgress(1f), mech.getHealth()));
 			lastX = mech.getX();
 			lastZ = mech.getZ();

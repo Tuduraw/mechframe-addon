@@ -1,9 +1,9 @@
 package com.example.mechframe;
 
-import net.minecraft.registry.Registries;
-import net.minecraft.registry.Registry;
-import net.minecraft.sound.SoundEvent;
-import net.minecraft.util.Identifier;
+import net.minecraft.core.Registry;
+import net.minecraft.core.registries.BuiltInRegistries;
+import net.minecraft.resources.Identifier;
+import net.minecraft.sounds.SoundEvent;
 
 /** Frame sound events (assets/mechframe/sounds.json). Weapon and engine sounds are not here - those
  * are played by the base mod from assets/mechframe/sounds/<name>.ogg directly. */
@@ -20,8 +20,8 @@ public final class MechSounds {
 	}
 
 	private static SoundEvent register(String name) {
-		Identifier id = Identifier.of(MechFrame.MOD_ID, name);
-		return Registry.register(Registries.SOUND_EVENT, id, SoundEvent.of(id));
+		Identifier id = Identifier.fromNamespaceAndPath(MechFrame.MOD_ID, name);
+		return Registry.register(BuiltInRegistries.SOUND_EVENT, id, SoundEvent.createVariableRangeEvent(id));
 	}
 
 	public static void init() {

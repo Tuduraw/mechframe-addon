@@ -12,7 +12,7 @@ import net.fabricmc.api.ClientModInitializer;
 import net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientTickEvents;
 import net.fabricmc.fabric.api.client.networking.v1.ClientPlayNetworking;
 import net.fabricmc.fabric.api.client.rendering.v1.EntityRendererRegistry;
-import net.minecraft.client.gui.screen.ingame.HandledScreens;
+import net.minecraft.client.gui.screens.MenuScreens;
 
 /** Client entry: renderer, keys, camera/feel, HUD variables, garage screen, and the data sync. */
 public class MechFrameClient implements ClientModInitializer {
@@ -20,9 +20,9 @@ public class MechFrameClient implements ClientModInitializer {
 	@Override
 	public void onInitializeClient() {
 		EntityRendererRegistry.register(MechFrame.MECH, MechRenderer::new);
-		HandledScreens.register(MechFrame.GARAGE_SCREEN, GarageScreen::new);
+		MenuScreens.register(MechFrame.GARAGE_SCREEN, GarageScreen::new);
 		com.example.mechframe.garage.FabricatorBlock.openScreen = pos ->
-				net.minecraft.client.MinecraftClient.getInstance().setScreen(new com.example.mechframe.client.screen.FabricatorScreen(pos));
+				net.minecraft.client.Minecraft.getInstance().setScreen(new com.example.mechframe.client.screen.FabricatorScreen(pos));
 		MechClientConfig.load();
 		MechInput.register();
 		MechEntity.clientHooks = new MechEffects();

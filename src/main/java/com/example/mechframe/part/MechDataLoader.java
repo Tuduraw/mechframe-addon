@@ -9,9 +9,9 @@ import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
 import net.fabricmc.fabric.api.resource.SimpleSynchronousResourceReloadListener;
-import net.minecraft.resource.Resource;
-import net.minecraft.resource.ResourceManager;
-import net.minecraft.util.Identifier;
+import net.minecraft.resources.Identifier;
+import net.minecraft.server.packs.resources.Resource;
+import net.minecraft.server.packs.resources.ResourceManager;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -42,31 +42,31 @@ public final class MechDataLoader implements SimpleSynchronousResourceReloadList
 
 	@Override
 	public Identifier getFabricId() {
-		return Identifier.of(MechFrame.MOD_ID, "mech_data");
+		return Identifier.fromNamespaceAndPath(MechFrame.MOD_ID, "mech_data");
 	}
 
 	@Override
-	public void reload(ResourceManager manager) {
+	public void onResourceManagerReload(ResourceManager manager) {
 		Map<Identifier, String> parts = new HashMap<>();
 		Map<Identifier, String> presets = new HashMap<>();
-		for (Map.Entry<Identifier, Resource> entry : manager.findResources(PARTS, id -> id.getPath().endsWith(SUFFIX)).entrySet()) {
+		for (Map.Entry<Identifier, Resource> entry : manager.listResources(PARTS, id -> id.getPath().endsWith(SUFFIX)).entrySet()) {
 			Identifier id = strip(entry.getKey(), PARTS);
-			try (Reader reader = entry.getValue().getReader()) {
+			try (Reader reader = entry.getValue().openAsReader()) {
 				parts.put(id, JsonParser.parseReader(reader).toString());
 			} catch (Exception e) {
 				LOGGER.error("Failed to read mech part {}", entry.getKey(), e);
 			}
 		}
-		for (Map.Entry<Identifier, Resource> entry : manager.findResources(VEHICLES, id -> id.getPath().endsWith(SUFFIX)).entrySet()) {
-			try (Reader reader = entry.getValue().getReader()) {
+		for (Map.Entry<Identifier, Resource> entry : manager.listResources(VEHICLES, id -> id.getPath().endsWith(SUFFIX)).entrySet()) {
+			try (Reader reader = entry.getValue().openAsReader()) {
 				readPreset(strip(entry.getKey(), VEHICLES), JsonParser.parseReader(reader), presets);
 			} catch (Exception e) {
 				LOGGER.error("Failed to read vehicle {}", entry.getKey(), e);
 			}
 		}
 		Map<Identifier, String[]> recipes = new HashMap<>();
-		for (Map.Entry<Identifier, Resource> entry : manager.findResources(RECIPES, id -> id.getPath().endsWith(SUFFIX)).entrySet()) {
-			try (Reader reader = entry.getValue().getReader()) {
+		for (Map.Entry<Identifier, Resource> entry : manager.listResources(RECIPES, id -> id.getPath().endsWith(SUFFIX)).entrySet()) {
+			try (Reader reader = entry.getValue().openAsReader()) {
 				recipes.put(strip(entry.getKey(), RECIPES), new String[]{"", JsonParser.parseReader(reader).toString()});
 			} catch (Exception e) {
 				LOGGER.error("Failed to read mech recipe {}", entry.getKey(), e);
@@ -106,7 +106,7 @@ public final class MechDataLoader implements SimpleSynchronousResourceReloadList
 
 	private static Identifier strip(Identifier fileId, String dir) {
 		String path = fileId.getPath();
-		return Identifier.of(fileId.getNamespace(), path.substring(dir.length() + 1, path.length() - SUFFIX.length()));
+		return Identifier.fromNamespaceAndPath(fileId.getNamespace(), path.substring(dir.length() + 1, path.length() - SUFFIX.length()));
 	}
 
 	private static void loadAddonsFolder(Map<Identifier, String> parts, Map<Identifier, String> presets,
@@ -133,7 +133,7 @@ public final class MechDataLoader implements SimpleSynchronousResourceReloadList
 			for (Path file : (Iterable<Path>) files.filter(p -> p.toString().endsWith(SUFFIX))::iterator) {
 				String rel = dir.relativize(file).toString().replace('\\', '/');
 				try {
-					sink.accept(Identifier.of(ns, rel.substring(0, rel.length() - SUFFIX.length())),
+					sink.accept(Identifier.fromNamespaceAndPath(ns, rel.substring(0, rel.length() - SUFFIX.length())),
 							Files.readString(file, StandardCharsets.UTF_8));
 				} catch (Exception e) {
 					LOGGER.error("Failed to read {}", file, e);

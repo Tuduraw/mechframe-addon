@@ -7,18 +7,17 @@ import com.example.mechframe.part.PartRegistry;
 import com.google.gson.JsonArray;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
-import net.minecraft.item.Item;
-import net.minecraft.item.ItemStack;
-import net.minecraft.item.Items;
-import net.minecraft.registry.Registries;
-import net.minecraft.registry.RegistryKeys;
-import net.minecraft.registry.entry.RegistryEntry;
-import net.minecraft.registry.tag.TagKey;
-import net.minecraft.util.Identifier;
-
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
+import net.minecraft.core.Holder;
+import net.minecraft.core.registries.BuiltInRegistries;
+import net.minecraft.core.registries.Registries;
+import net.minecraft.resources.Identifier;
+import net.minecraft.tags.TagKey;
+import net.minecraft.world.item.Item;
+import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.item.Items;
 
 /**
  * One Mech Fabricator recipe (data/&lt;ns&gt;/mech_recipe/&lt;name&gt;.json, or the "recipe" object of a part JSON).
@@ -51,14 +50,14 @@ public record MechRecipe(Identifier id, String category, int order, Output resul
 					return ItemStack.EMPTY;
 				}
 				ItemStack s = MechPartItem.stackFor(p);
-				s.setCount(Math.max(1, Math.min(this.count, s.getMaxCount())));
+				s.setCount(Math.max(1, Math.min(this.count, s.getMaxStackSize())));
 				return s;
 			}
-			Item it = Registries.ITEM.get(this.item);
+			Item it = BuiltInRegistries.ITEM.getValue(this.item);
 			if (it == Items.AIR) {
 				return ItemStack.EMPTY;
 			}
-			return new ItemStack(it, Math.max(1, Math.min(this.count, it.getMaxCount())));
+			return new ItemStack(it, Math.max(1, Math.min(this.count, it.getDefaultMaxStackSize())));
 		}
 	}
 
@@ -73,9 +72,9 @@ public record MechRecipe(Identifier id, String category, int order, Output resul
 				return stack.getItem() instanceof MechPartItem && this.part.equals(MechPartItem.partId(stack));
 			}
 			if (this.tag != null) {
-				return stack.isIn(TagKey.of(RegistryKeys.ITEM, this.tag));
+				return stack.is(TagKey.create(Registries.ITEM, this.tag));
 			}
-			return Registries.ITEM.getId(stack.getItem()).equals(this.item);
+			return BuiltInRegistries.ITEM.getKey(stack.getItem()).equals(this.item);
 		}
 
 		/** Stacks to show for this ingredient (several for a tag - the screen cycles through them). */
@@ -87,11 +86,11 @@ public record MechRecipe(Identifier id, String category, int order, Output resul
 					out.add(MechPartItem.stackFor(p));
 				}
 			} else if (this.tag != null) {
-				for (RegistryEntry<Item> e : Registries.ITEM.iterateEntries(TagKey.of(RegistryKeys.ITEM, this.tag))) {
+				for (Holder<Item> e : BuiltInRegistries.ITEM.getTagOrEmpty(TagKey.create(Registries.ITEM, this.tag))) {
 					out.add(new ItemStack(e.value()));
 				}
 			} else {
-				Item it = Registries.ITEM.get(this.item);
+				Item it = BuiltInRegistries.ITEM.getValue(this.item);
 				if (it != Items.AIR) {
 					out.add(new ItemStack(it));
 				}
@@ -104,7 +103,7 @@ public record MechRecipe(Identifier id, String category, int order, Output resul
 			if (this.part != null) {
 				return PartRegistry.getOrNull(this.part) != null;
 			}
-			return this.tag != null || Registries.ITEM.containsId(this.item);
+			return this.tag != null || BuiltInRegistries.ITEM.containsKey(this.item);
 		}
 	}
 
@@ -127,9 +126,9 @@ public record MechRecipe(Identifier id, String category, int order, Output resul
 			JsonObject r = json.getAsJsonObject("result");
 			int count = r.has("count") ? r.get("count").getAsInt() : 1;
 			if (r.has("part")) {
-				out = new Output(Identifier.of(r.get("part").getAsString()), null, count);
+				out = new Output(Identifier.parse(r.get("part").getAsString()), null, count);
 			} else {
-				out = new Output(null, Identifier.of(r.get("item").getAsString()), count);
+				out = new Output(null, Identifier.parse(r.get("item").getAsString()), count);
 			}
 		} else if (defaultPart != null) {
 			out = new Output(defaultPart, null, json.has("count") ? json.get("count").getAsInt() : 1);
@@ -142,12 +141,12 @@ public record MechRecipe(Identifier id, String category, int order, Output resul
 			JsonObject o = e.getAsJsonObject();
 			int count = o.has("count") ? Math.max(1, o.get("count").getAsInt()) : 1;
 			if (o.has("part")) {
-				inputs.add(new Input(null, null, Identifier.of(o.get("part").getAsString()), count));
+				inputs.add(new Input(null, null, Identifier.parse(o.get("part").getAsString()), count));
 			} else if (o.has("tag")) {
 				String tag = o.get("tag").getAsString();
-				inputs.add(new Input(null, Identifier.of(tag.startsWith("#") ? tag.substring(1) : tag), null, count));
+				inputs.add(new Input(null, Identifier.parse(tag.startsWith("#") ? tag.substring(1) : tag), null, count));
 			} else {
-				inputs.add(new Input(Identifier.of(o.get("item").getAsString()), null, null, count));
+				inputs.add(new Input(Identifier.parse(o.get("item").getAsString()), null, null, count));
 			}
 		}
 		String category = json.has("category") ? json.get("category").getAsString().toLowerCase(Locale.ROOT) : null;
@@ -164,7 +163,7 @@ public record MechRecipe(Identifier id, String category, int order, Output resul
 			}
 		}
 		if (category == null) {
-			category = out.item() != null && Registries.ITEM.getId(Registries.ITEM.get(out.item())).getPath().startsWith("mech_spawner")
+			category = out.item() != null && BuiltInRegistries.ITEM.getKey(BuiltInRegistries.ITEM.getValue(out.item())).getPath().startsWith("mech_spawner")
 					? "frames" : "items";
 		}
 		return new MechRecipe(id, category, order, out, List.copyOf(inputs));

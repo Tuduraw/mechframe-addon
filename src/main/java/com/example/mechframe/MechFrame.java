@@ -13,13 +13,13 @@ import net.fabricmc.fabric.api.event.lifecycle.v1.ServerLifecycleEvents;
 import net.fabricmc.fabric.api.object.builder.v1.block.entity.FabricBlockEntityTypeBuilder;
 import net.fabricmc.fabric.api.resource.ResourceManagerHelper;
 import net.fabricmc.fabric.api.screenhandler.v1.ExtendedScreenHandlerType;
-import net.minecraft.block.entity.BlockEntityType;
-import net.minecraft.entity.EntityType;
-import net.minecraft.registry.Registries;
-import net.minecraft.registry.Registry;
-import net.minecraft.resource.ResourceType;
-import net.minecraft.util.Identifier;
-import net.minecraft.util.math.BlockPos;
+import net.minecraft.core.BlockPos;
+import net.minecraft.core.Registry;
+import net.minecraft.core.registries.BuiltInRegistries;
+import net.minecraft.resources.Identifier;
+import net.minecraft.server.packs.PackType;
+import net.minecraft.world.entity.EntityType;
+import net.minecraft.world.level.block.entity.BlockEntityType;
 
 /** Mech Frame Addon - assembled, high-speed combat frames for Tudur's Vehicle Mod.
  *
@@ -37,19 +37,19 @@ public class MechFrame implements ModInitializer {
 
 	@Override
 	public void onInitialize() {
-		MECH = ModEntityTypes.registerAddonVehicleType(Identifier.of(MOD_ID, "mech"), MechEntity::new, 1.8f, 5.0f);
+		MECH = ModEntityTypes.registerAddonVehicleType(Identifier.fromNamespaceAndPath(MOD_ID, "mech"), MechEntity::new, 1.8f, 5.0f);
 		com.example.mechframe.ai.MechServerConfig.load();
 		MechSounds.init();
 		MechItems.register();
-		GARAGE_ENTITY = Registry.register(Registries.BLOCK_ENTITY_TYPE, Identifier.of(MOD_ID, "garage"),
+		GARAGE_ENTITY = Registry.register(BuiltInRegistries.BLOCK_ENTITY_TYPE, Identifier.fromNamespaceAndPath(MOD_ID, "garage"),
 				FabricBlockEntityTypeBuilder.create(GarageBlockEntity::new, MechItems.GARAGE).build());
-		COMMAND_POST_ENTITY = Registry.register(Registries.BLOCK_ENTITY_TYPE, Identifier.of(MOD_ID, "command_post"),
+		COMMAND_POST_ENTITY = Registry.register(BuiltInRegistries.BLOCK_ENTITY_TYPE, Identifier.fromNamespaceAndPath(MOD_ID, "command_post"),
 				FabricBlockEntityTypeBuilder.create(com.example.mechframe.ai.CommandPostBlockEntity::new, MechItems.COMMAND_POST).build());
-		GARAGE_SCREEN = Registry.register(Registries.SCREEN_HANDLER, Identifier.of(MOD_ID, "garage"),
+		GARAGE_SCREEN = Registry.register(BuiltInRegistries.MENU, Identifier.fromNamespaceAndPath(MOD_ID, "garage"),
 				new ExtendedScreenHandlerType<>((syncId, inventory, pos) -> new GarageScreenHandler(syncId, inventory, pos),
-						BlockPos.PACKET_CODEC));
+						BlockPos.STREAM_CODEC));
 		VehicleConverterTargets.register(MechItems.TARGET);
-		ResourceManagerHelper.get(ResourceType.SERVER_DATA).registerReloadListener(new MechDataLoader());
+		ResourceManagerHelper.get(PackType.SERVER_DATA).registerReloadListener(new MechDataLoader());
 		MechNetworking.register();
 		ServerLifecycleEvents.SERVER_STARTED.register(MechNetworking::setServer);
 		net.fabricmc.fabric.api.event.lifecycle.v1.ServerTickEvents.END_SERVER_TICK.register(com.example.mechframe.ai.MechBrain::serverTick);

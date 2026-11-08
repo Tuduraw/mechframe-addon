@@ -10,23 +10,22 @@ import com.example.tudursvehiclemod.item.TieredVehicleSpawnerItem;
 import com.mojang.serialization.Codec;
 import net.fabricmc.fabric.api.itemgroup.v1.FabricItemGroup;
 import net.fabricmc.fabric.api.itemgroup.v1.ItemGroupEvents;
-import net.minecraft.block.AbstractBlock;
-import net.minecraft.block.Block;
-import net.minecraft.block.MapColor;
-import net.minecraft.component.ComponentType;
-import net.minecraft.item.BlockItem;
-import net.minecraft.item.Item;
-import net.minecraft.item.ItemGroup;
-import net.minecraft.item.ItemStack;
-import net.minecraft.network.codec.PacketCodecs;
-import net.minecraft.registry.Registries;
-import net.minecraft.registry.Registry;
-import net.minecraft.registry.RegistryKey;
-import net.minecraft.registry.RegistryKeys;
-import net.minecraft.sound.BlockSoundGroup;
-import net.minecraft.text.Text;
-import net.minecraft.util.Identifier;
-
+import net.minecraft.core.Registry;
+import net.minecraft.core.component.DataComponentType;
+import net.minecraft.core.registries.BuiltInRegistries;
+import net.minecraft.core.registries.Registries;
+import net.minecraft.network.chat.Component;
+import net.minecraft.network.codec.ByteBufCodecs;
+import net.minecraft.resources.Identifier;
+import net.minecraft.resources.ResourceKey;
+import net.minecraft.world.item.BlockItem;
+import net.minecraft.world.item.CreativeModeTab;
+import net.minecraft.world.item.Item;
+import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.level.block.Block;
+import net.minecraft.world.level.block.SoundType;
+import net.minecraft.world.level.block.state.BlockBehaviour;
+import net.minecraft.world.level.material.MapColor;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.EnumMap;
@@ -36,9 +35,9 @@ import java.util.Map;
 /** Items, the garage block and the creative tab. */
 public final class MechItems {
 
-	public static final ComponentType<String> PART_ID = Registry.register(Registries.DATA_COMPONENT_TYPE,
-			Identifier.of(MechFrame.MOD_ID, "part_id"),
-			ComponentType.<String>builder().codec(Codec.STRING).packetCodec(PacketCodecs.STRING).build());
+	public static final DataComponentType<String> PART_ID = Registry.register(BuiltInRegistries.DATA_COMPONENT_TYPE,
+			Identifier.fromNamespaceAndPath(MechFrame.MOD_ID, "part_id"),
+			DataComponentType.<String>builder().persistent(Codec.STRING).networkSynchronized(ByteBufCodecs.STRING_UTF8).build());
 
 	public static final Map<PartSlot, Item> PART_ITEMS = new EnumMap<>(PartSlot.class);
 	public static final Item[] SPAWNERS = new Item[5];
@@ -56,58 +55,58 @@ public final class MechItems {
 
 	public static void register() {
 		for (PartSlot slot : PartSlot.values()) {
-			RegistryKey<Item> key = RegistryKey.of(RegistryKeys.ITEM, Identifier.of(MechFrame.MOD_ID, "part_" + slot.id()));
-			PART_ITEMS.put(slot, Registry.register(Registries.ITEM, key,
-					new MechPartItem(new Item.Settings().registryKey(key).maxCount(16), slot)));
+			ResourceKey<Item> key = ResourceKey.create(Registries.ITEM, Identifier.fromNamespaceAndPath(MechFrame.MOD_ID, "part_" + slot.id()));
+			PART_ITEMS.put(slot, Registry.register(BuiltInRegistries.ITEM, key,
+					new MechPartItem(new Item.Properties().setId(key).stacksTo(16), slot)));
 		}
 		for (int tier = 1; tier <= 5; tier++) {
-			RegistryKey<Item> key = RegistryKey.of(RegistryKeys.ITEM, Identifier.of(MechFrame.MOD_ID, "mech_spawner_t" + tier));
-			SPAWNERS[tier - 1] = Registry.register(Registries.ITEM, key,
-					new TieredVehicleSpawnerItem(new Item.Settings().registryKey(key).maxCount(1), TARGET, tier));
+			ResourceKey<Item> key = ResourceKey.create(Registries.ITEM, Identifier.fromNamespaceAndPath(MechFrame.MOD_ID, "mech_spawner_t" + tier));
+			SPAWNERS[tier - 1] = Registry.register(BuiltInRegistries.ITEM, key,
+					new TieredVehicleSpawnerItem(new Item.Properties().setId(key).stacksTo(1), TARGET, tier));
 		}
 
-		RegistryKey<Block> garageKey = RegistryKey.of(RegistryKeys.BLOCK, Identifier.of(MechFrame.MOD_ID, "garage"));
-		GARAGE = Registry.register(Registries.BLOCK, garageKey, new GarageBlock(AbstractBlock.Settings.create()
-				.registryKey(garageKey).mapColor(MapColor.IRON_GRAY).strength(4.0f).sounds(BlockSoundGroup.METAL).requiresTool()));
-		RegistryKey<Item> garageItemKey = RegistryKey.of(RegistryKeys.ITEM, Identifier.of(MechFrame.MOD_ID, "garage"));
-		GARAGE_ITEM = Registry.register(Registries.ITEM, garageItemKey,
-				new BlockItem(GARAGE, new Item.Settings().registryKey(garageItemKey).useBlockPrefixedTranslationKey()));
+		ResourceKey<Block> garageKey = ResourceKey.create(Registries.BLOCK, Identifier.fromNamespaceAndPath(MechFrame.MOD_ID, "garage"));
+		GARAGE = Registry.register(BuiltInRegistries.BLOCK, garageKey, new GarageBlock(BlockBehaviour.Properties.of()
+				.setId(garageKey).mapColor(MapColor.METAL).strength(4.0f).sound(SoundType.METAL).requiresCorrectToolForDrops()));
+		ResourceKey<Item> garageItemKey = ResourceKey.create(Registries.ITEM, Identifier.fromNamespaceAndPath(MechFrame.MOD_ID, "garage"));
+		GARAGE_ITEM = Registry.register(BuiltInRegistries.ITEM, garageItemKey,
+				new BlockItem(GARAGE, new Item.Properties().setId(garageItemKey).useBlockDescriptionPrefix()));
 
-		RegistryKey<Block> fabKey = RegistryKey.of(RegistryKeys.BLOCK, Identifier.of(MechFrame.MOD_ID, "fabricator"));
-		FABRICATOR = Registry.register(Registries.BLOCK, fabKey, new FabricatorBlock(AbstractBlock.Settings.create()
-				.registryKey(fabKey).mapColor(MapColor.IRON_GRAY).strength(4.0f).sounds(BlockSoundGroup.METAL).requiresTool()));
-		RegistryKey<Item> fabItemKey = RegistryKey.of(RegistryKeys.ITEM, Identifier.of(MechFrame.MOD_ID, "fabricator"));
-		FABRICATOR_ITEM = Registry.register(Registries.ITEM, fabItemKey,
-				new BlockItem(FABRICATOR, new Item.Settings().registryKey(fabItemKey).useBlockPrefixedTranslationKey()));
+		ResourceKey<Block> fabKey = ResourceKey.create(Registries.BLOCK, Identifier.fromNamespaceAndPath(MechFrame.MOD_ID, "fabricator"));
+		FABRICATOR = Registry.register(BuiltInRegistries.BLOCK, fabKey, new FabricatorBlock(BlockBehaviour.Properties.of()
+				.setId(fabKey).mapColor(MapColor.METAL).strength(4.0f).sound(SoundType.METAL).requiresCorrectToolForDrops()));
+		ResourceKey<Item> fabItemKey = ResourceKey.create(Registries.ITEM, Identifier.fromNamespaceAndPath(MechFrame.MOD_ID, "fabricator"));
+		FABRICATOR_ITEM = Registry.register(BuiltInRegistries.ITEM, fabItemKey,
+				new BlockItem(FABRICATOR, new Item.Properties().setId(fabItemKey).useBlockDescriptionPrefix()));
 
-		RegistryKey<Block> postKey = RegistryKey.of(RegistryKeys.BLOCK, Identifier.of(MechFrame.MOD_ID, "command_post"));
-		COMMAND_POST = Registry.register(Registries.BLOCK, postKey, new com.example.mechframe.ai.CommandPostBlock(AbstractBlock.Settings.create()
-				.registryKey(postKey).mapColor(MapColor.RED).strength(30.0f, 1200.0f).sounds(BlockSoundGroup.METAL).requiresTool()));
-		RegistryKey<Item> postItemKey = RegistryKey.of(RegistryKeys.ITEM, Identifier.of(MechFrame.MOD_ID, "command_post"));
-		COMMAND_POST_ITEM = Registry.register(Registries.ITEM, postItemKey,
-				new BlockItem(COMMAND_POST, new Item.Settings().registryKey(postItemKey).useBlockPrefixedTranslationKey()));
-		RegistryKey<Item> terminalKey = RegistryKey.of(RegistryKeys.ITEM, Identifier.of(MechFrame.MOD_ID, "command_terminal"));
-		COMMAND_TERMINAL = Registry.register(Registries.ITEM, terminalKey,
-				new CommandTerminalItem(new Item.Settings().registryKey(terminalKey).maxCount(1)));
+		ResourceKey<Block> postKey = ResourceKey.create(Registries.BLOCK, Identifier.fromNamespaceAndPath(MechFrame.MOD_ID, "command_post"));
+		COMMAND_POST = Registry.register(BuiltInRegistries.BLOCK, postKey, new com.example.mechframe.ai.CommandPostBlock(BlockBehaviour.Properties.of()
+				.setId(postKey).mapColor(MapColor.COLOR_RED).strength(30.0f, 1200.0f).sound(SoundType.METAL).requiresCorrectToolForDrops()));
+		ResourceKey<Item> postItemKey = ResourceKey.create(Registries.ITEM, Identifier.fromNamespaceAndPath(MechFrame.MOD_ID, "command_post"));
+		COMMAND_POST_ITEM = Registry.register(BuiltInRegistries.ITEM, postItemKey,
+				new BlockItem(COMMAND_POST, new Item.Properties().setId(postItemKey).useBlockDescriptionPrefix()));
+		ResourceKey<Item> terminalKey = ResourceKey.create(Registries.ITEM, Identifier.fromNamespaceAndPath(MechFrame.MOD_ID, "command_terminal"));
+		COMMAND_TERMINAL = Registry.register(BuiltInRegistries.ITEM, terminalKey,
+				new CommandTerminalItem(new Item.Properties().setId(terminalKey).stacksTo(1)));
 
-		RegistryKey<ItemGroup> groupKey = RegistryKey.of(RegistryKeys.ITEM_GROUP, Identifier.of(MechFrame.MOD_ID, "mechs"));
-		Registry.register(Registries.ITEM_GROUP, groupKey, FabricItemGroup.builder()
+		ResourceKey<CreativeModeTab> groupKey = ResourceKey.create(Registries.CREATIVE_MODE_TAB, Identifier.fromNamespaceAndPath(MechFrame.MOD_ID, "mechs"));
+		Registry.register(BuiltInRegistries.CREATIVE_MODE_TAB, groupKey, FabricItemGroup.builder()
 				.icon(() -> new ItemStack(SPAWNERS[2]))
-				.displayName(Text.translatable("itemGroup.mechframe.mechs"))
+				.title(Component.translatable("itemGroup.mechframe.mechs"))
 				.build());
 		ItemGroupEvents.modifyEntriesEvent(groupKey).register(entries -> {
-			entries.add(FABRICATOR_ITEM);
-			entries.add(GARAGE_ITEM);
-			entries.add(COMMAND_TERMINAL);
-			entries.add(COMMAND_POST_ITEM);
+			entries.accept(FABRICATOR_ITEM);
+			entries.accept(GARAGE_ITEM);
+			entries.accept(COMMAND_TERMINAL);
+			entries.accept(COMMAND_POST_ITEM);
 			for (Item spawner : SPAWNERS) {
-				entries.add(spawner);
+				entries.accept(spawner);
 			}
 			List<MechPart> parts = new ArrayList<>(PartRegistry.all());
 			parts.sort(Comparator.comparing((MechPart p) -> p.slot().ordinal()).thenComparingInt(MechPart::tier)
 					.thenComparing(MechPart::displayName));
 			for (MechPart part : parts) {
-				entries.add(MechPartItem.stackFor(part));
+				entries.accept(MechPartItem.stackFor(part));
 			}
 		});
 	}

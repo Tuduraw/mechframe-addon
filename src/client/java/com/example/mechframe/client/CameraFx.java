@@ -2,9 +2,9 @@ package com.example.mechframe.client;
 
 import com.example.mechframe.entity.MechEntity;
 import com.example.mechframe.part.MechLayout;
-import net.minecraft.client.MinecraftClient;
-import net.minecraft.util.math.MathHelper;
-import net.minecraft.util.math.Vec3d;
+import net.minecraft.client.Minecraft;
+import net.minecraft.util.Mth;
+import net.minecraft.world.phys.Vec3;
 import org.joml.Quaternionf;
 
 /** Pilot-only camera feel: speed-dependent field of view, punches on quick boosts and landings, and
@@ -31,17 +31,17 @@ public final class CameraFx {
 	}
 
 	/** Once per client tick. */
-	public static void tick(MinecraftClient client) {
+	public static void tick(Minecraft client) {
 		MechEntity mech = MechInput.pilotedMech(client);
 		float target = 0f;
 		if (mech != null && mech.getLayout() != null) {
-			Vec3d v = mech.getVelocity();
+			Vec3 v = mech.getDeltaMovement();
 			float speed = (float) Math.sqrt(v.x * v.x + v.z * v.z);
 			if (mech.isJet()) {
-				target = MathHelper.clamp(speed / 3.5f, 0f, 1f) * 0.06f + (mech.isAfterburnerVisual() ? 0.06f : 0f);
+				target = Mth.clamp(speed / 3.5f, 0f, 1f) * 0.06f + (mech.isAfterburnerVisual() ? 0.06f : 0f);
 			} else {
 				float boost = Math.max(0.1f, mech.getStats().boostSpeed());
-				target = MathHelper.clamp(speed / boost, 0f, 1.3f) * (mech.isBoostingVisual() ? 0.09f : 0.03f);
+				target = Mth.clamp(speed / boost, 0f, 1.3f) * (mech.isBoostingVisual() ? 0.09f : 0.03f);
 			}
 		}
 		speedFov += (target - speedFov) * 0.12f;
@@ -70,8 +70,8 @@ public final class CameraFx {
 	/** Third-person pivot: above the frame's centre, with the vertical part smoothed so step-ups,
 	 * jumps and landings glide instead of snapping. Horizontal stays exact (strafing must not slide
 	 * the crosshair off the aim line). */
-	public static Vec3d pivot(MechEntity mech, MechLayout layout, float tickDelta) {
-		Vec3d pos = mech.getLerpedPos(tickDelta);
+	public static Vec3 pivot(MechEntity mech, MechLayout layout, float tickDelta) {
+		Vec3 pos = mech.getPosition(tickDelta);
 		double targetY = pos.y + layout.cameraPivotY + mech.getStepUpVisualOffset(tickDelta);
 		long now = System.nanoTime();
 		double dt = lastNanos == 0 ? 0.016 : Math.min(0.1, (now - lastNanos) / 1.0e9);
@@ -83,7 +83,7 @@ public final class CameraFx {
 		double k = 1.0 - Math.exp(-dt * 9.0);
 		smoothedPivotY += (targetY - smoothedPivotY) * k;
 		// Smooth small bumps only: in a long fall or hover climb the camera must not trail by blocks.
-		smoothedPivotY = MathHelper.clamp(smoothedPivotY, targetY - 1.0, targetY + 1.0);
-		return new Vec3d(pos.x, smoothedPivotY, pos.z);
+		smoothedPivotY = Mth.clamp(smoothedPivotY, targetY - 1.0, targetY + 1.0);
+		return new Vec3(pos.x, smoothedPivotY, pos.z);
 	}
 }

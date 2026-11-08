@@ -443,7 +443,13 @@ tudursvehiclemod-addons/<パック名>/
 
 ## 開発
 
-- ビルド: 前提MODを`./gradlew publishToMavenLocal`でローカルMavenに公開してから、このプロジェクトで`./gradlew build`。
+- マッピング: このプロジェクトは Mojang の公式マッピング(`loom.officialMojangMappings()`)で書かれています。
+  前提MODも Mojang マッピング版([tudursvehiclemod-mojmap](https://github.com/Tuduraw/tudursvehiclemod-mojmap))を使います。
+  Yarn から Mojang への移行は、ゲーム内の動作には影響しません(jar は中間名に変換されるため)。
+- ビルド: 前提MOD(Mojang マッピング版)を`./gradlew publishToMavenLocal`でローカルMavenに公開してから、このプロジェクトで`./gradlew build`。
+- Forge 1.20.1 版: 別プロジェクト `mechframe-forge` で、このプロジェクトのソースから自動生成してビルドします
+  (前提MODの Forge 版 [tudursvehiclemod-forge](https://github.com/Tuduraw/tudursvehiclemod-forge) の互換レイヤーを使用)。
+  手順と 1.20.1 との差は `mechframe-forge/PORTING.md` にまとめています。
 - モデル・テクスチャ・レシピなどの生成: `tools/mechgen`(meshkit 0.4.0 が必要。形状の関数は`meshkit.mech`)。
   拡張パック「Frontier Frames」は`tools/mechgen/packs/mfx/build_pack.py`で`packs/mechframe_expansion1/`に生成します。
   `python build_all.py`でパーツ、`python gen_resources.py`で機体JSON・武器・言語ファイル・HUD、

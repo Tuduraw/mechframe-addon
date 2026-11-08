@@ -3,7 +3,6 @@ package com.example.mechframe.part;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
-import net.minecraft.util.Identifier;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -15,6 +14,7 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import net.minecraft.resources.Identifier;
 
 /** Every loaded part and every mech preset. Filled by MechDataLoader on the server (and therefore
  * also on the integrated server's client in single player) and by MechDataSyncPayload on a client

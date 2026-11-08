@@ -7,7 +7,6 @@ import com.example.mechframe.part.MechLayout;
 import com.example.mechframe.part.MechPart;
 import com.example.mechframe.part.MountSlot;
 import com.example.mechframe.part.PartRegistry;
-import net.minecraft.util.Identifier;
 import org.joml.Matrix4f;
 import org.joml.Vector3f;
 import org.slf4j.Logger;
@@ -20,6 +19,7 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
+import net.minecraft.resources.Identifier;
 
 /** Builds the hit-detection geometry of an assembled frame and hands it to the base mod.
  *
@@ -47,7 +47,7 @@ public final class HitMeshBuilder {
 		// The parts only - which of them are stock doesn't change the geometry.
 		String key = layout.assembly.parts() + "#" + form.name() + "#" + PartRegistry.generation();
 		String hash = Integer.toHexString(key.hashCode()) + Integer.toHexString(key.length());
-		return Identifier.of(MechFrame.MOD_ID, "models/obj/asm/" + hash + ".obj");
+		return Identifier.fromNamespaceAndPath(MechFrame.MOD_ID, "models/obj/asm/" + hash + ".obj");
 	}
 
 	/** Makes sure the base mod's cache holds this frame's mesh (idempotent, cheap after the first call). */

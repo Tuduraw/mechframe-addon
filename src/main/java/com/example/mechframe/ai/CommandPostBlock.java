@@ -2,63 +2,63 @@ package com.example.mechframe.ai;
 
 import com.example.mechframe.MechFrame;
 import com.mojang.serialization.MapCodec;
-import net.minecraft.block.BlockState;
-import net.minecraft.block.BlockWithEntity;
-import net.minecraft.block.entity.BlockEntity;
-import net.minecraft.block.entity.BlockEntityTicker;
-import net.minecraft.block.entity.BlockEntityType;
-import net.minecraft.entity.player.PlayerEntity;
-import net.minecraft.server.world.ServerWorld;
-import net.minecraft.text.Text;
-import net.minecraft.util.ActionResult;
-import net.minecraft.util.hit.BlockHitResult;
-import net.minecraft.util.math.BlockPos;
-import net.minecraft.world.World;
+import net.minecraft.core.BlockPos;
+import net.minecraft.network.chat.Component;
+import net.minecraft.server.level.ServerLevel;
+import net.minecraft.world.InteractionResult;
+import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.level.Level;
+import net.minecraft.world.level.block.BaseEntityBlock;
+import net.minecraft.world.level.block.entity.BlockEntity;
+import net.minecraft.world.level.block.entity.BlockEntityTicker;
+import net.minecraft.world.level.block.entity.BlockEntityType;
+import net.minecraft.world.level.block.state.BlockState;
+import net.minecraft.world.phys.BlockHitResult;
 
 /** The outposts' command post (see CommandPostBlockEntity). Right-click: status (units out, time to
  * the next deployment). Creative, sneaking: switch the post between enemy and friendly. It drops
  * nothing when broken, so posts cannot be carried off and farmed elsewhere. */
-public class CommandPostBlock extends BlockWithEntity {
+public class CommandPostBlock extends BaseEntityBlock {
 
-	public static final MapCodec<CommandPostBlock> CODEC = createCodec(CommandPostBlock::new);
+	public static final MapCodec<CommandPostBlock> CODEC = simpleCodec(CommandPostBlock::new);
 
-	public CommandPostBlock(Settings settings) {
+	public CommandPostBlock(Properties settings) {
 		super(settings);
 	}
 
 	@Override
-	protected MapCodec<? extends BlockWithEntity> getCodec() {
+	protected MapCodec<? extends BaseEntityBlock> codec() {
 		return CODEC;
 	}
 
 	@Override
-	protected net.minecraft.block.BlockRenderType getRenderType(BlockState state) {
-		return net.minecraft.block.BlockRenderType.MODEL;
+	protected net.minecraft.world.level.block.RenderShape getRenderShape(BlockState state) {
+		return net.minecraft.world.level.block.RenderShape.MODEL;
 	}
 
 	@Override
-	public BlockEntity createBlockEntity(BlockPos pos, BlockState state) {
+	public BlockEntity newBlockEntity(BlockPos pos, BlockState state) {
 		return new CommandPostBlockEntity(pos, state);
 	}
 
 	@Override
-	public <T extends BlockEntity> BlockEntityTicker<T> getTicker(World world, BlockState state, BlockEntityType<T> type) {
-		return world.isClient() ? null : validateTicker(type, MechFrame.COMMAND_POST_ENTITY, CommandPostBlockEntity::tick);
+	public <T extends BlockEntity> BlockEntityTicker<T> getTicker(Level world, BlockState state, BlockEntityType<T> type) {
+		return world.isClientSide() ? null : createTickerHelper(type, MechFrame.COMMAND_POST_ENTITY, CommandPostBlockEntity::tick);
 	}
 
 	@Override
-	protected ActionResult onUse(BlockState state, World world, BlockPos pos, PlayerEntity player, BlockHitResult hit) {
-		if (!(world instanceof ServerWorld) || !(world.getBlockEntity(pos) instanceof CommandPostBlockEntity post)) {
-			return ActionResult.SUCCESS;
+	protected InteractionResult useWithoutItem(BlockState state, Level world, BlockPos pos, Player player, BlockHitResult hit) {
+		if (!(world instanceof ServerLevel) || !(world.getBlockEntity(pos) instanceof CommandPostBlockEntity post)) {
+			return InteractionResult.SUCCESS;
 		}
-		if (player.isCreative() && player.isSneaking()) {
+		if (player.isCreative() && player.isShiftKeyDown()) {
 			post.faction = post.faction == Faction.ENEMY ? Faction.FRIENDLY : Faction.ENEMY;
-			post.markDirty();
-			player.sendMessage(Text.translatable("message.mechframe.post.switched",
-					Text.translatable("message.mechframe.faction." + post.faction.id())), true);
-			return ActionResult.SUCCESS;
+			post.setChanged();
+			player.displayClientMessage(Component.translatable("message.mechframe.post.switched",
+					Component.translatable("message.mechframe.faction." + post.faction.id())), true);
+			return InteractionResult.SUCCESS;
 		}
-		player.sendMessage(post.status(world), true);
-		return ActionResult.SUCCESS;
+		player.displayClientMessage(post.status(world), true);
+		return InteractionResult.SUCCESS;
 	}
 }

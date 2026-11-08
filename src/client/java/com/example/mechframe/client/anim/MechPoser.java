@@ -7,9 +7,6 @@ import com.example.mechframe.part.MountSlot;
 import com.example.tudursvehiclemod.asset.WeaponPart;
 import com.example.tudursvehiclemod.client.render.ObjModel;
 import com.example.tudursvehiclemod.client.render.ObjModelLoader;
-import net.minecraft.util.Identifier;
-import net.minecraft.util.math.MathHelper;
-import net.minecraft.util.math.Vec3d;
 import org.joml.Matrix4f;
 import org.joml.Quaternionf;
 import org.joml.Vector3f;
@@ -18,6 +15,9 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import net.minecraft.resources.Identifier;
+import net.minecraft.util.Mth;
+import net.minecraft.world.phys.Vec3;
 
 /** Turns a frame's layout + animation state into draw calls for one render frame: one entry per
  * (part model, OBJ group) with the matrix that places it in the frame's root space (the space the
@@ -44,7 +44,7 @@ public final class MechPoser {
 			return out;
 		}
 		MechAnimator anim = MechAnimator.of(mech);
-		float transform = layout.canTransform ? MathHelper.clamp(mech.getTransformProgress(td), 0f, 1f) : 0f;
+		float transform = layout.canTransform ? Mth.clamp(mech.getTransformProgress(td), 0f, 1f) : 0f;
 		boolean fullyJet = transform >= 0.999f;
 		boolean robotOnly = transform <= 0.001f || !layout.canTransform;
 
@@ -89,9 +89,9 @@ public final class MechPoser {
 	 * the pilot's view: it is left out only for the viewer riding this frame in first person.
 	 * Other players and third-person views still draw it. */
 	private static boolean hidesHeadFor(MechEntity mech) {
-		net.minecraft.client.MinecraftClient mc = net.minecraft.client.MinecraftClient.getInstance();
-		net.minecraft.entity.Entity cam = mc.getCameraEntity();
-		return cam != null && mc.options.getPerspective().isFirstPerson() && cam.getVehicle() == mech;
+		net.minecraft.client.Minecraft mc = net.minecraft.client.Minecraft.getInstance();
+		net.minecraft.world.entity.Entity cam = mc.getCameraEntity();
+		return cam != null && mc.options.getCameraType().isFirstPerson() && cam.getVehicle() == mech;
 	}
 
 	private record Entry(MountSlot slot, String group, MechPart part) {
@@ -139,7 +139,7 @@ public final class MechPoser {
 			Matrix4f robotM = robotOf(this.robot, entry.slot, entry.group);
 			Matrix4f jetM = jetMatrix(this.layout, entry.slot, entry.group);
 			float delay = jetDelayFor(this.layout, entry.slot, entry.group);
-			float s = MathHelper.clamp((this.transform - delay) / Math.max(0.05f, 1f - delay), 0f, 1f);
+			float s = Mth.clamp((this.transform - delay) / Math.max(0.05f, 1f - delay), 0f, 1f);
 			s = s * s * (3f - 2f * s);
 			Matrix4f result = null;
 			String parentKey = this.parentOf(entry);
@@ -231,23 +231,23 @@ public final class MechPoser {
 		Map<String, Matrix4f> out = new HashMap<>();
 		MechPart legs = layout.assembly.part(MountSlot.LEGS);
 		MechPart.LegSpec spec = legs.legs();
-		float bodyYaw = mech.getYaw(td);
-		float pelvisDy = MathHelper.lerp(td, anim.prevPelvisDy, anim.pelvisDy) + mech.getStepUpVisualOffset(td);
+		float bodyYaw = mech.getViewYRot(td);
+		float pelvisDy = Mth.lerp(td, anim.prevPelvisDy, anim.pelvisDy) + mech.getStepUpVisualOffset(td);
 		Matrix4f pelvis = new Matrix4f().translation(0, pelvisDy, 0);
 
 		// Root space <- world, for planted feet.
 		Quaternionf body = mech.tudursvehiclemod$getBodyOrientation(td);
 		Quaternionf bodyInv = new Quaternionf(body).conjugate();
-		Vec3d origin = mech.getLerpedPos(td).add(mech.tudursvehiclemod$getBodyFrameOffset(td));
+		Vec3 origin = mech.getPosition(td).add(mech.tudursvehiclemod$getBodyFrameOffset(td));
 		Quaternionf yawQ = new Quaternionf().rotationY((float) Math.toRadians(-bodyYaw));
 		Quaternionf leanInv = new Quaternionf(bodyInv).mul(yawQ); // cancels the lean: feet stay level
 
 		if (spec.type() == MechPart.LegType.HOVER) {
 			// Hover skirt: one piece, riding the bob, turned after the body and banked against drift.
-			float lower = MathHelper.lerp(td, anim.prevLowerYaw, anim.lowerYaw);
-			float rel = MathHelper.wrapDegrees(lower - bodyYaw);
-			float bank = MathHelper.lerp(td, anim.prevHoverBank, anim.hoverBank);
-			float pitch = MathHelper.lerp(td, anim.prevHoverPitch, anim.hoverPitch);
+			float lower = Mth.lerp(td, anim.prevLowerYaw, anim.lowerYaw);
+			float rel = Mth.wrapDegrees(lower - bodyYaw);
+			float bank = Mth.lerp(td, anim.prevHoverBank, anim.hoverBank);
+			float pitch = Mth.lerp(td, anim.prevHoverPitch, anim.hoverPitch);
 			Matrix4f hull = new Matrix4f(pelvis).rotateY((float) Math.toRadians(-rel))
 					.translate(0f, 0.6f, 0f).rotateZ((float) Math.toRadians(bank)).rotateX((float) Math.toRadians(pitch)).translate(0f, -0.6f, 0f);
 			out.put("legs:*", hull);
@@ -255,15 +255,15 @@ public final class MechPoser {
 				out.put("legs:" + g, new Matrix4f(hull));
 			}
 		} else if (spec.type() == MechPart.LegType.TANK) {
-			float lower = MathHelper.lerp(td, anim.prevLowerYaw, anim.lowerYaw);
-			float rel = MathHelper.wrapDegrees(lower - bodyYaw);
+			float lower = Mth.lerp(td, anim.prevLowerYaw, anim.lowerYaw);
+			float rel = Mth.wrapDegrees(lower - bodyYaw);
 			Matrix4f hull = new Matrix4f().rotationY((float) Math.toRadians(-rel));
 			out.put("legs:*", hull);
 			for (String g : spec.pelvisGroups()) {
 				out.put("legs:" + g, new Matrix4f(pelvis));
 			}
 			// wheelSpin is the angle of the first (road) wheel; smaller rollers turn faster for the same belt speed.
-			float spin = MathHelper.lerp(td, anim.prevWheelSpin, anim.wheelSpin);
+			float spin = Mth.lerp(td, anim.prevWheelSpin, anim.wheelSpin);
 			float r0 = spec.wheels().isEmpty() ? 1f : spec.wheels().get(0).radius();
 			for (MechPart.Wheel wheel : spec.wheels()) {
 				Vector3f p = wheel.pivot();
@@ -274,8 +274,8 @@ public final class MechPoser {
 			Matrix4f legBase = new Matrix4f(pelvis);
 			if (spec.chains().size() > 2) {
 				// Many legs: their base lags behind the upper body's turn (MechAnimator.LEG_TURN_RATE).
-				float lower = MathHelper.lerp(td, anim.prevLowerYaw, anim.lowerYaw);
-				float rel = MathHelper.wrapDegrees(lower - bodyYaw);
+				float lower = Mth.lerp(td, anim.prevLowerYaw, anim.lowerYaw);
+				float rel = Mth.wrapDegrees(lower - bodyYaw);
 				legBase.rotateY((float) Math.toRadians(-rel));
 			}
 			Matrix4f pelvisLegs = legBase;
@@ -291,7 +291,7 @@ public final class MechPoser {
 					// Transforming: the legs stay at rest on the pelvis whatever the airframe's attitude.
 					target = pelvisLegs.transformPosition(new Vector3f(chain.ankle()));
 				} else {
-					Vec3d world = foot.prevPos.lerp(foot.pos, td);
+					Vec3 world = foot.prevPos.lerp(foot.pos, td);
 					target = bodyInv.transform(new Vector3f(
 							(float) (world.x - origin.x), (float) (world.y - origin.y), (float) (world.z - origin.z)));
 				}
@@ -305,8 +305,8 @@ public final class MechPoser {
 		out.put("core:*", core);
 		MechPart corePart = layout.assembly.part(MountSlot.CORE);
 		Vector3f neck = corePart.point("neck");
-		float headYaw = MathHelper.lerp(td, anim.prevHeadYaw, anim.headYaw);
-		float headPitch = MathHelper.lerp(td, anim.prevHeadPitch, anim.headPitch);
+		float headYaw = Mth.lerp(td, anim.prevHeadYaw, anim.headYaw);
+		float headPitch = Mth.lerp(td, anim.prevHeadPitch, anim.headPitch);
 		out.put("head:*", new Matrix4f(pelvis).mul(MechLayout.level(layout.robot.get(MechLayout.Place.CORE), neck))
 				.rotateY((float) Math.toRadians(-headYaw)).rotateX((float) Math.toRadians(headPitch)));
 		out.put("booster:*", new Matrix4f(core).translate(corePart.point("back")));
@@ -356,14 +356,14 @@ public final class MechPoser {
 			roll = 25f * e;
 		} else if (t < strike + 2.5f) {
 			float e = ease((t - strike) / 2.5f);
-			yaw = MathHelper.lerp(e, 75f, -55f);
-			pitch = MathHelper.lerp(e, -40f, 20f);
-			roll = MathHelper.lerp(e, 25f, -20f);
+			yaw = Mth.lerp(e, 75f, -55f);
+			pitch = Mth.lerp(e, -40f, 20f);
+			roll = Mth.lerp(e, 25f, -20f);
 		} else {
-			float e = ease(MathHelper.clamp((t - strike - 2.5f) / (MechEntity.MELEE_END - strike - 2.5f), 0f, 1f));
-			yaw = MathHelper.lerp(e, -55f, 0f);
-			pitch = MathHelper.lerp(e, 20f, 0f);
-			roll = MathHelper.lerp(e, -20f, 0f);
+			float e = ease(Mth.clamp((t - strike - 2.5f) / (MechEntity.MELEE_END - strike - 2.5f), 0f, 1f));
+			yaw = Mth.lerp(e, -55f, 0f);
+			pitch = Mth.lerp(e, 20f, 0f);
+			roll = Mth.lerp(e, -20f, 0f);
 		}
 		return new Quaternionf().rotateY((float) Math.toRadians(yaw * side)).rotateX((float) Math.toRadians(pitch))
 				.rotateZ((float) Math.toRadians(roll * side));
@@ -380,15 +380,15 @@ public final class MechPoser {
 			yaw = -12f * e;
 		} else if (t < strike + 1.2f) {
 			float e = (t - strike) / 1.2f;
-			back = MathHelper.lerp(e, -0.55f, 0.6f);
-			yaw = MathHelper.lerp(e, -12f, 0f);
+			back = Mth.lerp(e, -0.55f, 0.6f);
+			yaw = Mth.lerp(e, -12f, 0f);
 		} else if (t < strike + 2.5f) {
 			float e = ease((t - strike - 1.2f) / 1.3f);
-			back = MathHelper.lerp(e, 0.6f, 0.25f);
+			back = Mth.lerp(e, 0.6f, 0.25f);
 			yaw = 0f;
 		} else {
-			float e = ease(MathHelper.clamp((t - strike - 2.5f) / (MechEntity.MELEE_END - strike - 2.5f), 0f, 1f));
-			back = MathHelper.lerp(e, 0.25f, 0f);
+			float e = ease(Mth.clamp((t - strike - 2.5f) / (MechEntity.MELEE_END - strike - 2.5f), 0f, 1f));
+			back = Mth.lerp(e, 0.25f, 0f);
 			yaw = 0f;
 		}
 		arm.rotate(new Quaternionf().rotateY((float) Math.toRadians(yaw * side))).translate(0f, 0f, back);

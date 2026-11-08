@@ -1,10 +1,6 @@
 package com.example.mechframe.recipe;
 
 import com.google.gson.JsonParser;
-import net.minecraft.entity.player.PlayerEntity;
-import net.minecraft.entity.player.PlayerInventory;
-import net.minecraft.item.ItemStack;
-import net.minecraft.util.Identifier;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -13,6 +9,10 @@ import java.util.Comparator;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import net.minecraft.resources.Identifier;
+import net.minecraft.world.entity.player.Inventory;
+import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.item.ItemStack;
 
 /**
  * Every Mech Fabricator recipe. Raw JSON text per recipe id, filled by MechDataLoader on the server
@@ -51,7 +51,7 @@ public final class MechRecipes {
 			try {
 				String owner = e.getValue()[0];
 				MechRecipe r = MechRecipe.parse(e.getKey(), JsonParser.parseString(e.getValue()[1]).getAsJsonObject(),
-						owner.isEmpty() ? null : Identifier.of(owner));
+						owner.isEmpty() ? null : Identifier.parse(owner));
 				if (r.valid()) {
 					parsed.put(e.getKey(), r);
 				} else {
@@ -65,7 +65,7 @@ public final class MechRecipes {
 		list.sort(Comparator.comparingInt((MechRecipe r) -> MechRecipe.categoryRank(r.category()))
 				.thenComparing(MechRecipe::category)
 				.thenComparingInt(MechRecipe::order)
-				.thenComparing(r -> r.result().stack().getName().getString()));
+				.thenComparing(r -> r.result().stack().getHoverName().getString()));
 		raw = Map.copyOf(json);
 		recipes = Map.copyOf(parsed);
 		sorted = List.copyOf(list);
@@ -75,10 +75,10 @@ public final class MechRecipes {
 	// ---------------------------------------------------------------------------------- inventory
 
 	/** How many items in the player's inventory match the ingredient. */
-	public static int count(PlayerInventory inv, MechRecipe.Input in) {
+	public static int count(Inventory inv, MechRecipe.Input in) {
 		int n = 0;
-		for (int i = 0; i < inv.size(); i++) {
-			ItemStack s = inv.getStack(i);
+		for (int i = 0; i < inv.getContainerSize(); i++) {
+			ItemStack s = inv.getItem(i);
 			if (in.matches(s)) {
 				n += s.getCount();
 			}
@@ -86,18 +86,18 @@ public final class MechRecipes {
 		return n;
 	}
 
-	public static boolean canCraft(PlayerEntity player, MechRecipe recipe) {
+	public static boolean canCraft(Player player, MechRecipe recipe) {
 		if (player.isCreative()) {
 			return true;
 		}
 		// Two ingredients could match the same stack (a tag and an item): count each against what
 		// is left after the earlier ones.
 		Map<Integer, Integer> used = new LinkedHashMap<>();
-		PlayerInventory inv = player.getInventory();
+		Inventory inv = player.getInventory();
 		for (MechRecipe.Input in : recipe.ingredients()) {
 			int need = in.count();
-			for (int i = 0; i < inv.size() && need > 0; i++) {
-				ItemStack s = inv.getStack(i);
+			for (int i = 0; i < inv.getContainerSize() && need > 0; i++) {
+				ItemStack s = inv.getItem(i);
 				if (in.matches(s)) {
 					int free = s.getCount() - used.getOrDefault(i, 0);
 					int take = Math.min(free, need);
@@ -115,7 +115,7 @@ public final class MechRecipes {
 	}
 
 	/** Server: takes the ingredients and hands over the result. False if the player lacks something. */
-	public static boolean craft(PlayerEntity player, MechRecipe recipe) {
+	public static boolean craft(Player player, MechRecipe recipe) {
 		if (!canCraft(player, recipe)) {
 			return false;
 		}
@@ -124,21 +124,21 @@ public final class MechRecipes {
 			return false;
 		}
 		if (!player.isCreative()) {
-			PlayerInventory inv = player.getInventory();
+			Inventory inv = player.getInventory();
 			for (MechRecipe.Input in : recipe.ingredients()) {
 				int need = in.count();
-				for (int i = 0; i < inv.size() && need > 0; i++) {
-					ItemStack s = inv.getStack(i);
+				for (int i = 0; i < inv.getContainerSize() && need > 0; i++) {
+					ItemStack s = inv.getItem(i);
 					if (in.matches(s)) {
 						int take = Math.min(s.getCount(), need);
-						s.decrement(take);
+						s.shrink(take);
 						need -= take;
 					}
 				}
 			}
-			inv.markDirty();
+			inv.setChanged();
 		}
-		player.getInventory().offerOrDrop(result);
+		player.getInventory().placeItemBackInInventory(result);
 		return true;
 	}
 }

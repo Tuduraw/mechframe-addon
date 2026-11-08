@@ -5,23 +5,21 @@ import com.example.mechframe.part.MechPart;
 import com.example.mechframe.part.MechStats;
 import com.example.mechframe.part.MountSlot;
 import com.example.tudursvehiclemod.asset.WeaponDefinition;
-import net.minecraft.entity.Entity;
-import net.minecraft.entity.player.PlayerEntity;
-import net.minecraft.server.network.ServerPlayerEntity;
-import net.minecraft.server.world.ServerWorld;
-import net.minecraft.storage.ReadView;
-import net.minecraft.storage.WriteView;
-import net.minecraft.util.hit.BlockHitResult;
-import net.minecraft.util.hit.HitResult;
-import net.minecraft.util.math.BlockPos;
-import net.minecraft.util.math.Box;
-import net.minecraft.util.math.MathHelper;
-import net.minecraft.util.math.Vec3d;
-import net.minecraft.world.Heightmap;
-import net.minecraft.world.RaycastContext;
-
 import java.util.List;
 import java.util.UUID;
+import net.minecraft.core.BlockPos;
+import net.minecraft.server.level.ServerLevel;
+import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.util.Mth;
+import net.minecraft.world.entity.Entity;
+import net.minecraft.world.level.ClipContext;
+import net.minecraft.world.level.levelgen.Heightmap;
+import net.minecraft.world.level.storage.ValueInput;
+import net.minecraft.world.level.storage.ValueOutput;
+import net.minecraft.world.phys.AABB;
+import net.minecraft.world.phys.BlockHitResult;
+import net.minecraft.world.phys.HitResult;
+import net.minecraft.world.phys.Vec3;
 
 /**
  * The defence AI of one frame (server only). It drives the frame through the same inputs a pilot
@@ -51,7 +49,7 @@ public final class MechBrain {
 
 	public Faction faction;
 	public Mode mode;
-	public Vec3d home;
+	public Vec3 home;
 	public double radius;
 	/** ESCORT: the player followed; GUARD (friendly): who set it up. */
 	public UUID owner;
@@ -69,7 +67,7 @@ public final class MechBrain {
 	private int lastAttackerTick = -1000;
 	private int retarget;
 	private int idleTicks;
-	private Vec3d patrolPoint;
+	private Vec3 patrolPoint;
 	private int patrolWait;
 	private int strafeSign = 1;
 	private int strafeTimer;
@@ -78,19 +76,19 @@ public final class MechBrain {
 	private boolean burstOn = true;
 	private int jumpTicks;
 	private int stuckTicks;
-	private Vec3d lastPos = Vec3d.ZERO;
+	private Vec3 lastPos = Vec3.ZERO;
 	private int postCheck;
 	/** Body yaw the frame turns toward (NaN: keep). Read by MechEntity's movement. */
 	public float desiredYaw = Float.NaN;
 	/** Turbo mode: nose pitch to hold (degrees, negative = up). */
 	public float desiredPitch;
 	// escort: where the owner was last seen heading (changes only when the owner actually moves)
-	private Vec3d ownerAnchor;
+	private Vec3 ownerAnchor;
 	private float ownerHeading = Float.NaN;
 	private boolean escortMoving;
 	private boolean wantTurbo;
 
-	public MechBrain(Faction faction, Mode mode, Vec3d home, double radius) {
+	public MechBrain(Faction faction, Mode mode, Vec3 home, double radius) {
 		this.faction = faction;
 		this.mode = mode;
 		this.home = home;
@@ -105,13 +103,13 @@ public final class MechBrain {
 	public void onAttacked(MechEntity self, Entity attacker) {
 		if (attacker != null && this.faction.isHostileTo(attacker, self)) {
 			this.lastAttacker = attacker;
-			this.lastAttackerTick = self.age;
+			this.lastAttackerTick = self.tickCount;
 		}
 	}
 
 	// ================================================================================== tick
 
-	public void tick(MechEntity self, ServerWorld world) {
+	public void tick(MechEntity self, ServerLevel world) {
 		if (self.getLayout() == null) {
 			return;
 		}
@@ -121,28 +119,28 @@ public final class MechBrain {
 		}
 		if (this.post != null && --this.postCheck <= 0) {
 			this.postCheck = 100;
-			if (!CommandPostBlockEntity.stillOwns(world, this.post, this.postSlot, self.getUuid())) {
+			if (!CommandPostBlockEntity.stillOwns(world, this.post, this.postSlot, self.getUUID())) {
 				// The post has replaced this unit (it was taken for lost while unloaded): stand down.
 				self.discard();
 				return;
 			}
 		}
 
-		Vec3d center;
+		Vec3 center;
 		double leash;
-		ServerPlayerEntity ownerPlayer = null;
+		ServerPlayer ownerPlayer = null;
 		if (this.mode == Mode.ESCORT) {
-			ownerPlayer = this.owner != null ? world.getServer().getPlayerManager().getPlayer(this.owner) : null;
-			if (ownerPlayer != null && ownerPlayer.getEntityWorld() == world && !ownerPlayer.isSpectator()) {
-				center = ownerPlayer.getEntityPos();
+			ownerPlayer = this.owner != null ? world.getServer().getPlayerList().getPlayer(this.owner) : null;
+			if (ownerPlayer != null && ownerPlayer.level() == world && !ownerPlayer.isSpectator()) {
+				center = ownerPlayer.position();
 				leash = 36.0;
 			} else {
 				ownerPlayer = null;
-				center = self.getEntityPos();
+				center = self.position();
 				leash = 24.0;
 			}
 		} else {
-			center = this.home != null ? this.home : self.getEntityPos();
+			center = this.home != null ? this.home : self.position();
 			leash = this.radius;
 		}
 
@@ -163,7 +161,7 @@ public final class MechBrain {
 		this.desiredPitch = 0f;
 		if (this.target != null) {
 			this.idleTicks = 0;
-			Vec3d to = this.target.getEntityPos().subtract(self.getEntityPos());
+			Vec3 to = this.target.position().subtract(self.position());
 			double dist = Math.sqrt(to.x * to.x + to.z * to.z);
 			this.desiredYaw = yawOf(to);
 			boolean meleeOnly = this.hasMelee(self) && !this.hasGuns(self);
@@ -195,19 +193,19 @@ public final class MechBrain {
 			if (this.mode == Mode.ESCORT && ownerPlayer != null) {
 				// The slot follows where the owner GOES, not where they look: the heading is only
 				// updated once the owner has actually moved a couple of blocks.
-				Vec3d ownerPos = ownerPlayer.getEntityPos();
+				Vec3 ownerPos = ownerPlayer.position();
 				if (this.ownerAnchor == null || Float.isNaN(this.ownerHeading)) {
 					this.ownerAnchor = ownerPos;
-					this.ownerHeading = ownerPlayer.getYaw();
+					this.ownerHeading = ownerPlayer.getYRot();
 				} else if (horizontalDistance(ownerPos, this.ownerAnchor) > 2.0) {
 					this.ownerHeading = yawOf(ownerPos.subtract(this.ownerAnchor));
 					this.ownerAnchor = ownerPos;
 				}
-				Vec3d slot = this.escortSlot(ownerPos, this.ownerHeading, self);
-				Vec3d d = slot.subtract(self.getEntityPos());
+				Vec3 slot = this.escortSlot(ownerPos, this.ownerHeading, self);
+				Vec3 d = slot.subtract(self.position());
 				double dist = Math.sqrt(d.x * d.x + d.z * d.z);
 				ESCORTS.add(self);
-				if (horizontalDistance(ownerPos, self.getEntityPos()) > CATCH_UP_DISTANCE) {
+				if (horizontalDistance(ownerPos, self.position()) > CATCH_UP_DISTANCE) {
 					this.teleportTo(self, world, slot);
 					return;
 				}
@@ -226,17 +224,17 @@ public final class MechBrain {
 					this.wantTurbo = canTurbo && (self.isTurbo() ? dist > 16.0 : dist > 36.0);
 					double dy = slot.y - self.getY();
 					this.desiredPitch = self.horizontalCollision ? -30f
-							: MathHelper.clamp((float) -Math.toDegrees(Math.atan2(dy, Math.max(dist, 1.0))), -30f, 25f);
+							: Mth.clamp((float) -Math.toDegrees(Math.atan2(dy, Math.max(dist, 1.0))), -30f, 25f);
 				} else {
 					this.desiredYaw = this.ownerHeading;
 				}
 			} else if (this.mode == Mode.GUARD) {
 				this.patrol(self, world, center, leash);
 				if (this.patrolPoint != null && this.patrolWait <= 0) {
-					Vec3d d = this.patrolPoint.subtract(self.getEntityPos());
+					Vec3 d = this.patrolPoint.subtract(self.position());
 					this.desiredYaw = yawOf(d);
 					fwd = 0.8f;
-					boost = center.distanceTo(self.getEntityPos()) > leash && enFrac > 0.3f;
+					boost = center.distanceTo(self.position()) > leash && enFrac > 0.3f;
 				}
 			}
 			// Enemy units top up between fights (they have no one to resupply them).
@@ -250,13 +248,13 @@ public final class MechBrain {
 		// (A wingman with nothing to fight is already heading for its owner - and may boost to.)
 		boolean keepBoost = this.mode == Mode.ESCORT;
 		if (this.mode == Mode.GUARD || (ownerPlayer != null && this.target != null)) {
-			Vec3d move = localToWorld(self.getYaw(), fwd, str);
-			Vec3d next = self.getEntityPos().add(move.multiply(4.0));
+			Vec3 move = localToWorld(self.getYRot(), fwd, str);
+			Vec3 next = self.position().add(move.scale(4.0));
 			double out = horizontalDistance(next, center) - leash;
-			if (out > 0 && move.lengthSquared() > 1.0e-4) {
-				Vec3d back = center.subtract(self.getEntityPos());
-				back = new Vec3d(back.x, 0, back.z).normalize();
-				float[] local = worldToLocal(self.getYaw(), back);
+			if (out > 0 && move.lengthSqr() > 1.0e-4) {
+				Vec3 back = center.subtract(self.position());
+				back = new Vec3(back.x, 0, back.z).normalize();
+				float[] local = worldToLocal(self.getYRot(), back);
 				fwd = local[0];
 				str = local[1];
 				boost = boost && keepBoost;
@@ -265,8 +263,8 @@ public final class MechBrain {
 
 		// Unstick: jump (or hover) over what blocks the way, give up on a point it cannot reach.
 		boolean moving = Math.abs(fwd) + Math.abs(str) > 0.1f;
-		Vec3d pos = self.getEntityPos();
-		if (moving && pos.squaredDistanceTo(this.lastPos) < 0.0025) {
+		Vec3 pos = self.position();
+		if (moving && pos.distanceToSqr(this.lastPos) < 0.0025) {
 			if (++this.stuckTicks > 30) {
 				this.stuckTicks = 0;
 				this.patrolPoint = null;
@@ -296,25 +294,25 @@ public final class MechBrain {
 
 	// ================================================================================== targets
 
-	private Entity findTarget(MechEntity self, ServerWorld world, Vec3d center, double leash) {
+	private Entity findTarget(MechEntity self, ServerLevel world, Vec3 center, double leash) {
 		MechStats s = self.getStats();
-		double sense = MathHelper.clamp(s.lockRange(), 48.0, 140.0);
-		if (this.lastAttacker != null && self.age - this.lastAttackerTick < 200
+		double sense = Mth.clamp(s.lockRange(), 48.0, 140.0);
+		if (this.lastAttacker != null && self.tickCount - this.lastAttackerTick < 200
 				&& this.faction.isHostileTo(this.lastAttacker, self)
-				&& horizontalDistance(this.lastAttacker.getEntityPos(), center) < leash + 32.0
+				&& horizontalDistance(this.lastAttacker.position(), center) < leash + 32.0
 				&& this.lastAttacker.distanceTo(self) < sense) {
 			return this.lastAttacker;
 		}
-		Vec3d eye = self.getAimOrigin(1f);
+		Vec3 eye = self.getAimOrigin(1f);
 		Entity best = null;
 		double bestDist = Double.MAX_VALUE;
-		List<Entity> list = world.getOtherEntities(self, self.getBoundingBox().expand(sense, sense * 0.5, sense),
+		List<Entity> list = world.getEntities(self, self.getBoundingBox().inflate(sense, sense * 0.5, sense),
 				e -> this.faction.isHostileTo(e, self));
 		for (Entity e : list) {
-			if (horizontalDistance(e.getEntityPos(), center) > leash + 12.0) {
+			if (horizontalDistance(e.position(), center) > leash + 12.0) {
 				continue;
 			}
-			double d = e.squaredDistanceTo(self);
+			double d = e.distanceToSqr(self);
 			if (d >= bestDist || d > sense * sense) {
 				continue;
 			}
@@ -327,10 +325,10 @@ public final class MechBrain {
 		return best;
 	}
 
-	private boolean canSee(ServerWorld world, MechEntity self, Vec3d eye, Entity e) {
-		Vec3d c = e.getBoundingBox().getCenter();
-		BlockHitResult hit = world.raycast(new RaycastContext(eye, c, RaycastContext.ShapeType.COLLIDER,
-				RaycastContext.FluidHandling.NONE, self));
+	private boolean canSee(ServerLevel world, MechEntity self, Vec3 eye, Entity e) {
+		Vec3 c = e.getBoundingBox().getCenter();
+		BlockHitResult hit = world.clip(new ClipContext(eye, c, ClipContext.Block.COLLIDER,
+				ClipContext.Fluid.NONE, self));
 		return hit.getType() != HitResult.Type.BLOCK;
 	}
 
@@ -366,14 +364,14 @@ public final class MechBrain {
 		return -1;
 	}
 
-	private void fire(MechEntity self, ServerWorld world, double dist) {
+	private void fire(MechEntity self, ServerLevel world, double dist) {
 		// Bursts: fire for a while, then hold; a skilled pilot holds less.
 		if (--this.burstTimer <= 0) {
 			this.burstOn = !this.burstOn;
 			this.burstTimer = this.burstOn ? 20 + self.getRandom().nextInt(30)
 					: (int) (6 + self.getRandom().nextInt(20) * (1.2f - this.skill));
 		}
-		float yawErr = Math.abs(MathHelper.wrapDegrees(this.desiredYaw - self.getYaw()));
+		float yawErr = Math.abs(Mth.wrapDegrees(this.desiredYaw - self.getYRot()));
 		boolean visible = this.canSee(world, self, self.getAimOrigin(1f), this.target);
 		for (MountSlot mount : new MountSlot[]{MountSlot.R_ARM, MountSlot.L_ARM, MountSlot.R_BACK, MountSlot.L_BACK}) {
 			MechPart p = self.getAssembly().part(mount);
@@ -381,7 +379,7 @@ public final class MechBrain {
 				continue;
 			}
 			if (p.weapon().isMelee()) {
-				double reachGap = dist - (self.getWidth() + this.target.getWidth()) * 0.5;
+				double reachGap = dist - (self.getBbWidth() + this.target.getBbWidth()) * 0.5;
 				if (reachGap < p.weapon().melee().lungeRange() * 0.8 && yawErr < 40f && self.isMeleeReady()) {
 					self.tryMelee(mount);
 				}
@@ -405,12 +403,12 @@ public final class MechBrain {
 
 	// ================================================================================== movement helpers
 
-	private void patrol(MechEntity self, ServerWorld world, Vec3d center, double leash) {
+	private void patrol(MechEntity self, ServerLevel world, Vec3 center, double leash) {
 		if (this.patrolWait > 0) {
 			this.patrolWait--;
 			return;
 		}
-		if (this.patrolPoint == null || horizontalDistance(this.patrolPoint, self.getEntityPos()) < 3.0) {
+		if (this.patrolPoint == null || horizontalDistance(this.patrolPoint, self.position()) < 3.0) {
 			if (this.patrolPoint != null) {
 				this.patrolWait = 40 + self.getRandom().nextInt(100);
 				this.patrolPoint = null;
@@ -418,18 +416,18 @@ public final class MechBrain {
 			}
 			double a = self.getRandom().nextDouble() * Math.PI * 2.0;
 			double r = Math.sqrt(self.getRandom().nextDouble()) * leash * 0.6;
-			int x = MathHelper.floor(center.x + Math.cos(a) * r);
-			int z = MathHelper.floor(center.z + Math.sin(a) * r);
-			int y = world.getTopY(Heightmap.Type.MOTION_BLOCKING_NO_LEAVES, x, z);
-			this.patrolPoint = new Vec3d(x + 0.5, y, z + 0.5);
+			int x = Mth.floor(center.x + Math.cos(a) * r);
+			int z = Mth.floor(center.z + Math.sin(a) * r);
+			int y = world.getHeight(Heightmap.Types.MOTION_BLOCKING_NO_LEAVES, x, z);
+			this.patrolPoint = new Vec3(x + 0.5, y, z + 0.5);
 		}
 	}
 
 	/** The wingman's place: beside and behind the owner, on the side its UUID picks. */
-	private Vec3d escortSlot(Vec3d ownerPos, float heading, MechEntity self) {
-		float side = (self.getUuid().getLeastSignificantBits() & 1) == 0 ? 1f : -1f;
-		Vec3d local = localToWorld(heading, -0.6f, side);
-		return ownerPos.add(local.multiply(7.0));
+	private Vec3 escortSlot(Vec3 ownerPos, float heading, MechEntity self) {
+		float side = (self.getUUID().getLeastSignificantBits() & 1) == 0 ? 1f : -1f;
+		Vec3 local = localToWorld(heading, -0.6f, side);
+		return ownerPos.add(local.scale(7.0));
 	}
 
 	/** Wingmen seen ticking (weak: a removed or unloaded frame just drops out). */
@@ -441,7 +439,7 @@ public final class MechBrain {
 	 * those whose chunk has stopped ticking because the owner outran the simulation distance (their
 	 * own AI cannot run there). */
 	public static void serverTick(net.minecraft.server.MinecraftServer server) {
-		if (server.getTicks() % 20 != 0 || ESCORTS.isEmpty()) {
+		if (server.getTickCount() % 20 != 0 || ESCORTS.isEmpty()) {
 			return;
 		}
 		for (MechEntity m : List.copyOf(ESCORTS)) {
@@ -450,51 +448,51 @@ public final class MechBrain {
 				ESCORTS.remove(m);
 				continue;
 			}
-			if (m.hasPassengers() || !(m.getEntityWorld() instanceof ServerWorld world)) {
+			if (m.isVehicle() || !(m.level() instanceof ServerLevel world)) {
 				continue;
 			}
-			ServerPlayerEntity owner = server.getPlayerManager().getPlayer(b.owner);
-			if (owner == null || owner.getEntityWorld() != world || owner.isSpectator()) {
+			ServerPlayer owner = server.getPlayerList().getPlayer(b.owner);
+			if (owner == null || owner.level() != world || owner.isSpectator()) {
 				continue;
 			}
-			if (horizontalDistance(owner.getEntityPos(), m.getEntityPos()) > CATCH_UP_DISTANCE) {
-				float heading = Float.isNaN(b.ownerHeading) ? owner.getYaw() : b.ownerHeading;
-				b.teleportTo(m, world, b.escortSlot(owner.getEntityPos(), heading, m));
+			if (horizontalDistance(owner.position(), m.position()) > CATCH_UP_DISTANCE) {
+				float heading = Float.isNaN(b.ownerHeading) ? owner.getYRot() : b.ownerHeading;
+				b.teleportTo(m, world, b.escortSlot(owner.position(), heading, m));
 			}
 		}
 	}
 
-	private void teleportTo(MechEntity self, ServerWorld world, Vec3d p) {
-		int x = MathHelper.floor(p.x);
-		int z = MathHelper.floor(p.z);
-		int y = world.getTopY(Heightmap.Type.MOTION_BLOCKING_NO_LEAVES, x, z);
-		Box box = self.getBoundingBox().offset(x + 0.5 - self.getX(), y - self.getY(), z + 0.5 - self.getZ());
-		if (!world.isSpaceEmpty(self, box) || !world.getFluidState(new BlockPos(x, y - 1, z)).isEmpty()) {
+	private void teleportTo(MechEntity self, ServerLevel world, Vec3 p) {
+		int x = Mth.floor(p.x);
+		int z = Mth.floor(p.z);
+		int y = world.getHeight(Heightmap.Types.MOTION_BLOCKING_NO_LEAVES, x, z);
+		AABB box = self.getBoundingBox().move(x + 0.5 - self.getX(), y - self.getY(), z + 0.5 - self.getZ());
+		if (!world.noCollision(self, box) || !world.getFluidState(new BlockPos(x, y - 1, z)).isEmpty()) {
 			return;
 		}
-		self.refreshPositionAndAngles(x + 0.5, y, z + 0.5, self.getYaw(), 0f);
-		self.setVelocity(Vec3d.ZERO);
+		self.snapTo(x + 0.5, y, z + 0.5, self.getYRot(), 0f);
+		self.setDeltaMovement(Vec3.ZERO);
 	}
 
-	static float yawOf(Vec3d d) {
+	static float yawOf(Vec3 d) {
 		return (float) Math.toDegrees(Math.atan2(-d.x, d.z));
 	}
 
-	static double horizontalDistance(Vec3d a, Vec3d b) {
+	static double horizontalDistance(Vec3 a, Vec3 b) {
 		double dx = a.x - b.x;
 		double dz = a.z - b.z;
 		return Math.sqrt(dx * dx + dz * dz);
 	}
 
 	/** Frame-local (forward, left) input -> world horizontal direction (model +X is left). */
-	static Vec3d localToWorld(float yaw, float fwd, float str) {
+	static Vec3 localToWorld(float yaw, float fwd, float str) {
 		double r = Math.toRadians(yaw);
 		double cos = Math.cos(r);
 		double sin = Math.sin(r);
-		return new Vec3d(str * cos - fwd * sin, 0, str * sin + fwd * cos);
+		return new Vec3(str * cos - fwd * sin, 0, str * sin + fwd * cos);
 	}
 
-	static float[] worldToLocal(float yaw, Vec3d d) {
+	static float[] worldToLocal(float yaw, Vec3 d) {
 		double r = Math.toRadians(yaw);
 		double cos = Math.cos(r);
 		double sin = Math.sin(r);
@@ -505,7 +503,7 @@ public final class MechBrain {
 
 	// ================================================================================== persistence
 
-	public void write(WriteView view) {
+	public void write(ValueOutput view) {
 		view.putString("Faction", this.faction.id());
 		view.putString("Mode", this.mode.name().toLowerCase());
 		if (this.home != null) {
@@ -524,15 +522,15 @@ public final class MechBrain {
 		view.putBoolean("DropsRolled", this.dropsRolled);
 	}
 
-	public static MechBrain read(ReadView view) {
-		Faction f = Faction.byId(view.getString("Faction", "none"));
+	public static MechBrain read(ValueInput view) {
+		Faction f = Faction.byId(view.getStringOr("Faction", "none"));
 		if (f == Faction.NONE) {
 			return null;
 		}
-		double hx = view.getDouble("HomeX", Double.NaN);
-		Vec3d home = Double.isNaN(hx) ? null : new Vec3d(hx, view.getDouble("HomeY", 0), view.getDouble("HomeZ", 0));
-		MechBrain b = new MechBrain(f, Mode.byId(view.getString("Mode", "guard")), home, view.getDouble("Radius", 32.0));
-		String owner = view.getString("Owner", "");
+		double hx = view.getDoubleOr("HomeX", Double.NaN);
+		Vec3 home = Double.isNaN(hx) ? null : new Vec3(hx, view.getDoubleOr("HomeY", 0), view.getDoubleOr("HomeZ", 0));
+		MechBrain b = new MechBrain(f, Mode.byId(view.getStringOr("Mode", "guard")), home, view.getDoubleOr("Radius", 32.0));
+		String owner = view.getStringOr("Owner", "");
 		if (!owner.isEmpty()) {
 			try {
 				b.owner = UUID.fromString(owner);
@@ -540,14 +538,14 @@ public final class MechBrain {
 				b.owner = null;
 			}
 		}
-		view.getOptionalIntArray("Post").ifPresent(a -> {
+		view.getIntArray("Post").ifPresent(a -> {
 			if (a.length >= 4) {
 				b.post = new BlockPos(a[0], a[1], a[2]);
 				b.postSlot = a[3];
 			}
 		});
-		b.skill = view.getFloat("Skill", 0.5f);
-		b.dropsRolled = view.getBoolean("DropsRolled", false);
+		b.skill = view.getFloatOr("Skill", 0.5f);
+		b.dropsRolled = view.getBooleanOr("DropsRolled", false);
 		return b;
 	}
 }

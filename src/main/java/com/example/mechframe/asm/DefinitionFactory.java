@@ -15,7 +15,6 @@ import com.example.tudursvehiclemod.asset.WeaponOffset;
 import com.example.tudursvehiclemod.asset.WeaponPart;
 import com.google.gson.JsonParser;
 import com.mojang.serialization.JsonOps;
-import net.minecraft.util.Identifier;
 import org.joml.Vector3f;
 
 import java.util.ArrayList;
@@ -23,6 +22,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import net.minecraft.resources.Identifier;
 
 /** Synthesizes the base mod's VehicleDefinition for an assembled frame - one per (assembly, form,
  * preset definition), cached, so the base mod's identity-keyed caches (static body mesh, animated
@@ -39,7 +39,7 @@ import java.util.Optional;
  * </ul> */
 public final class DefinitionFactory {
 
-	public static final Identifier ENTITY_TYPE = Identifier.of(MechFrame.MOD_ID, "mech");
+	public static final Identifier ENTITY_TYPE = Identifier.fromNamespaceAndPath(MechFrame.MOD_ID, "mech");
 
 	private record Key(String assembly, MechForm form, int generation) {
 	}

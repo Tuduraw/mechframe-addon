@@ -1,8 +1,7 @@
 package com.example.mechframe.part;
 
-import net.minecraft.util.math.MathHelper;
-
 import java.util.Optional;
+import net.minecraft.util.Mth;
 
 /** Everything about how a frame performs, derived from its assembly. Built once per assembly (see
  * MechLayout.of(), which caches it alongside the geometry) - never per tick.
@@ -89,9 +88,9 @@ public record MechStats(
 
 		float legLoad = total - legs.weight();
 		float overload = Math.max(0f, legLoad - l.loadLimit()) / Math.max(1f, l.loadLimit());
-		float speedMul = MathHelper.clamp(1f - 0.9f * overload, 0.35f, 1f);
+		float speedMul = Mth.clamp(1f - 0.9f * overload, 0.35f, 1f);
 		// Heavier frames feel heavier even within their limit: a gentle curve on quick boost and turning.
-		float massFactor = MathHelper.clamp((total - 45f) / 160f, 0f, 0.3f);
+		float massFactor = Mth.clamp((total - 45f) / 160f, 0f, 0.3f);
 		float armOverload = Math.max(0f, armLoad - a.loadLimit()) / Math.max(1f, a.loadLimit());
 
 		boolean noBooster = booster == null;
@@ -115,18 +114,18 @@ public record MechStats(
 				qbSpeed * speedMul,
 				b.qbCost() * (1f + overload),
 				b.qbCooldown(),
-				l.jump() * MathHelper.clamp(1f - 0.6f * overload, 0.4f, 1f),
+				l.jump() * Mth.clamp(1f - 0.6f * overload, 0.4f, 1f),
 				noBooster ? 0f : b.hoverThrust() * l.hoverMultiplier() * speedMul,
 				b.hoverCost(),
 				b.airBoostCost(),
 				l.turnRate() * (1f - massFactor * 0.6f),
 				l.stepHeight(),
 				l.traction(),
-				a.aimSpeed() * MathHelper.clamp(1f - 0.7f * armOverload, 0.3f, 1f),
+				a.aimSpeed() * Mth.clamp(1f - 0.7f * armOverload, 0.3f, 1f),
 				h.lockRange(),
 				h.lockCone(),
 				c.fuel(),
 				c.jet(),
-				MathHelper.clamp(h.stability() * c.stability(), 0.5f, 2f));
+				Mth.clamp(h.stability() * c.stability(), 0.5f, 2f));
 	}
 }

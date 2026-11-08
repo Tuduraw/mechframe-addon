@@ -2,7 +2,7 @@ package com.example.mechframe.asm;
 
 import com.example.tudursvehiclemod.asset.AddonPaths;
 import net.fabricmc.loader.api.FabricLoader;
-import net.minecraft.util.Identifier;
+import net.minecraft.resources.Identifier;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 

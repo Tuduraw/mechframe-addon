@@ -1,11 +1,5 @@
 package com.example.mechframe.entity;
 
-import net.minecraft.item.ItemStack;
-
-import net.minecraft.util.Hand;
-
-import net.minecraft.util.ActionResult;
-
 import com.example.mechframe.item.MechPartItem;
 
 import java.util.Objects;
@@ -31,32 +25,35 @@ import com.example.tudursvehiclemod.asset.WeaponStats;
 import com.example.tudursvehiclemod.asset.WeaponStatsLoader;
 import com.example.tudursvehiclemod.entity.AbstractVehicleEntity;
 import com.example.tudursvehiclemod.entity.FreeCameraVehicle;
-import net.minecraft.entity.Entity;
-import net.minecraft.entity.EntityType;
-import net.minecraft.entity.LivingEntity;
-import net.minecraft.entity.MovementType;
-import net.minecraft.entity.data.DataTracker;
-import net.minecraft.entity.data.TrackedData;
-import net.minecraft.entity.data.TrackedDataHandlerRegistry;
-import net.minecraft.entity.mob.MobEntity;
-import net.minecraft.entity.mob.Monster;
-import net.minecraft.entity.player.PlayerEntity;
-import net.minecraft.server.network.ServerPlayerEntity;
-import net.minecraft.server.world.ServerWorld;
-import net.minecraft.storage.ReadView;
-import net.minecraft.storage.WriteView;
-import net.minecraft.util.Identifier;
-import net.minecraft.util.hit.BlockHitResult;
-import net.minecraft.util.hit.HitResult;
-import net.minecraft.util.math.Box;
-import net.minecraft.util.math.MathHelper;
-import net.minecraft.util.math.Vec3d;
-import net.minecraft.world.RaycastContext;
-import net.minecraft.world.World;
 import org.joml.Quaternionf;
 import org.joml.Vector3f;
 
 import java.util.Optional;
+import net.minecraft.network.syncher.EntityDataAccessor;
+import net.minecraft.network.syncher.EntityDataSerializers;
+import net.minecraft.network.syncher.SynchedEntityData;
+import net.minecraft.resources.Identifier;
+import net.minecraft.server.level.ServerLevel;
+import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.util.Mth;
+import net.minecraft.world.InteractionHand;
+import net.minecraft.world.InteractionResult;
+import net.minecraft.world.entity.Entity;
+import net.minecraft.world.entity.EntityType;
+import net.minecraft.world.entity.LivingEntity;
+import net.minecraft.world.entity.Mob;
+import net.minecraft.world.entity.MoverType;
+import net.minecraft.world.entity.monster.Enemy;
+import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.level.ClipContext;
+import net.minecraft.world.level.Level;
+import net.minecraft.world.level.storage.ValueInput;
+import net.minecraft.world.level.storage.ValueOutput;
+import net.minecraft.world.phys.AABB;
+import net.minecraft.world.phys.BlockHitResult;
+import net.minecraft.world.phys.HitResult;
+import net.minecraft.world.phys.Vec3;
 
 /** One assembled frame. Extends AbstractVehicleEntity directly (as humanoidrobotaddon does - a car
  * tilts its body to slopes and brakes on the jump key, a frame does neither) and overrides
@@ -84,20 +81,20 @@ public class MechEntity extends AbstractVehicleEntity implements FreeCameraVehic
 
 	// ------------------------------------------------------------------ synced state
 
-	private static final TrackedData<String> ASSEMBLY = DataTracker.registerData(MechEntity.class, TrackedDataHandlerRegistry.STRING);
-	private static final TrackedData<Integer> FORM = DataTracker.registerData(MechEntity.class, TrackedDataHandlerRegistry.INTEGER);
-	private static final TrackedData<Float> EN = DataTracker.registerData(MechEntity.class, TrackedDataHandlerRegistry.FLOAT);
+	private static final EntityDataAccessor<String> ASSEMBLY = SynchedEntityData.defineId(MechEntity.class, EntityDataSerializers.STRING);
+	private static final EntityDataAccessor<Integer> FORM = SynchedEntityData.defineId(MechEntity.class, EntityDataSerializers.INT);
+	private static final EntityDataAccessor<Float> EN = SynchedEntityData.defineId(MechEntity.class, EntityDataSerializers.FLOAT);
 	/** bit0 boosting, bit1 hovering, bit2 afterburner, bit3 braking, bit5 overheat,
 	 * bits 8-11 quick-boost counter, 12-14 quick-boost octant, 16-19 landing counter, 20-23 jump counter. */
-	private static final TrackedData<Integer> ACTION = DataTracker.registerData(MechEntity.class, TrackedDataHandlerRegistry.INTEGER);
-	private static final TrackedData<Integer> LOCK_ID = DataTracker.registerData(MechEntity.class, TrackedDataHandlerRegistry.INTEGER);
-	private static final TrackedData<Integer> CANDIDATE_ID = DataTracker.registerData(MechEntity.class, TrackedDataHandlerRegistry.INTEGER);
+	private static final EntityDataAccessor<Integer> ACTION = SynchedEntityData.defineId(MechEntity.class, EntityDataSerializers.INT);
+	private static final EntityDataAccessor<Integer> LOCK_ID = SynchedEntityData.defineId(MechEntity.class, EntityDataSerializers.INT);
+	private static final EntityDataAccessor<Integer> CANDIDATE_ID = SynchedEntityData.defineId(MechEntity.class, EntityDataSerializers.INT);
 	/** Tank controls: the lower hull's yaw (NaN when the hull just follows the travel direction). */
 	/** Turbo mode (frames that can't transform): a fast, committed forward flight. */
-	private static final TrackedData<Boolean> TURBO = DataTracker.registerData(MechEntity.class, TrackedDataHandlerRegistry.BOOLEAN);
-	private static final TrackedData<Float> HULL_YAW = DataTracker.registerData(MechEntity.class, TrackedDataHandlerRegistry.FLOAT);
+	private static final EntityDataAccessor<Boolean> TURBO = SynchedEntityData.defineId(MechEntity.class, EntityDataSerializers.BOOLEAN);
+	private static final EntityDataAccessor<Float> HULL_YAW = SynchedEntityData.defineId(MechEntity.class, EntityDataSerializers.FLOAT);
 	/** Faction ordinal of the defence AI (0 = none) - synced so clients can tell allies from foes. */
-	private static final TrackedData<Integer> FACTION = DataTracker.registerData(MechEntity.class, TrackedDataHandlerRegistry.INTEGER);
+	private static final EntityDataAccessor<Integer> FACTION = SynchedEntityData.defineId(MechEntity.class, EntityDataSerializers.INT);
 
 	public static MechClientHooks clientHooks = MechClientHooks.NONE;
 
@@ -169,7 +166,7 @@ public class MechEntity extends AbstractVehicleEntity implements FreeCameraVehic
 	/** Melee: ticks since the swing started (-1: none), which arm, the dash direction, the synced count. */
 	private int meleeTick = -1;
 	private MountSlot meleeArm = MountSlot.R_ARM;
-	private Vec3d meleeDir = Vec3d.ZERO;
+	private Vec3 meleeDir = Vec3.ZERO;
 	/** What this swing goes for (picked when it starts), or null: straight ahead. */
 	private Entity meleeVictim;
 	private int meleeCooldown;
@@ -188,7 +185,7 @@ public class MechEntity extends AbstractVehicleEntity implements FreeCameraVehic
 	private float prevLeanRoll;
 	private float leanPitchVel;
 	private float leanRollVel;
-	private Vec3d prevMotion = Vec3d.ZERO;
+	private Vec3 prevMotion = Vec3.ZERO;
 
 	/** Client-side animation state (client.anim.MechAnimator), owned by the client hooks. */
 	public Object clientAnimation;
@@ -205,31 +202,31 @@ public class MechEntity extends AbstractVehicleEntity implements FreeCameraVehic
 	private int cachedGeneration;
 	private MechLayout cachedLayout;
 
-	private Vec3d aimPointCache;
+	private Vec3 aimPointCache;
 	private float aimCacheDelta = Float.NaN;
 	private int aimCacheAge = -1;
 
-	public MechEntity(EntityType<?> type, World world) {
+	public MechEntity(EntityType<?> type, Level world) {
 		super(type, world);
 	}
 
 	@Override
-	protected void initDataTracker(DataTracker.Builder builder) {
-		super.initDataTracker(builder);
-		builder.add(ASSEMBLY, "");
-		builder.add(FORM, 0);
-		builder.add(EN, 0f);
-		builder.add(ACTION, 0);
-		builder.add(LOCK_ID, -1);
-		builder.add(CANDIDATE_ID, -1);
-		builder.add(HULL_YAW, Float.NaN);
-		builder.add(TURBO, false);
-		builder.add(FACTION, 0);
+	protected void defineSynchedData(SynchedEntityData.Builder builder) {
+		super.defineSynchedData(builder);
+		builder.define(ASSEMBLY, "");
+		builder.define(FORM, 0);
+		builder.define(EN, 0f);
+		builder.define(ACTION, 0);
+		builder.define(LOCK_ID, -1);
+		builder.define(CANDIDATE_ID, -1);
+		builder.define(HULL_YAW, Float.NaN);
+		builder.define(TURBO, false);
+		builder.define(FACTION, 0);
 	}
 
 	@Override
 	protected Identifier defaultDefinitionId() {
-		return Identifier.of(MechFrame.MOD_ID, "striker");
+		return Identifier.fromNamespaceAndPath(MechFrame.MOD_ID, "striker");
 	}
 
 	// ==================================================================================== assembly
@@ -237,23 +234,23 @@ public class MechEntity extends AbstractVehicleEntity implements FreeCameraVehic
 	/** The preset's name ("KD) Striker") instead of the generic entity type name, so FCS readouts,
 	 * death messages and the like say which frame it is. */
 	@Override
-	protected net.minecraft.text.Text getDefaultName() {
+	protected net.minecraft.network.chat.Component getTypeName() {
 		Identifier id = this.getVehicleDefinitionId();
 		if (id != null) {
 			try {
-				return net.minecraft.text.Text.literal(this.getDefinition().displayName(id));
+				return net.minecraft.network.chat.Component.literal(this.getDefinition().displayName(id));
 			} catch (RuntimeException ignored) {
 				// Definition not resolvable yet (data still loading): fall back to the type name.
 			}
 		}
-		return super.getDefaultName();
+		return super.getTypeName();
 	}
 
 	public Assembly getAssembly() {
-		if (this.dataTracker == null) {
+		if (this.entityData == null) {
 			return Assembly.EMPTY;
 		}
-		String text = this.dataTracker.get(ASSEMBLY);
+		String text = this.entityData.get(ASSEMBLY);
 		if (this.cachedAssembly == null || !text.equals(this.cachedAssemblyText)) {
 			this.cachedAssemblyText = text;
 			this.cachedAssembly = Assembly.decode(text);
@@ -283,20 +280,20 @@ public class MechEntity extends AbstractVehicleEntity implements FreeCameraVehic
 	/** Server: replaces the assembly, keeping health at the same fraction of the new maximum and
 	 * dropping out of the jet form if the new parts can't take it. */
 	public void setAssembly(Assembly assembly) {
-		float ratio = this.getMaxHealth() > 0f ? MathHelper.clamp(this.getHealth() / this.getMaxHealth(), 0f, 1f) : 1f;
+		float ratio = this.getMaxHealth() > 0f ? Mth.clamp(this.getHealth() / this.getMaxHealth(), 0f, 1f) : 1f;
 		Assembly before = this.getAssembly();
 		VehicleDefinition oldDef = this.getDefinition();
-		this.dataTracker.set(ASSEMBLY, assembly.encode());
+		this.entityData.set(ASSEMBLY, assembly.encode());
 		this.remapWeaponState(oldDef, before, assembly);
 		MechLayout layout = this.getLayout();
 		if (layout == null || !layout.canTransform) {
-			this.dataTracker.set(FORM, 0);
+			this.entityData.set(FORM, 0);
 		}
 		if (!this.tudursvehiclemod$isDestroyed()) {
-			this.dataTracker.set(AbstractVehicleEntityAccessor.mechframe$healthKey(), this.getMaxHealth() * ratio);
+			this.entityData.set(AbstractVehicleEntityAccessor.mechframe$healthKey(), this.getMaxHealth() * ratio);
 		}
 		this.en = Math.min(this.en, this.getStats().enCapacity());
-		this.calculateDimensions();
+		this.refreshDimensions();
 	}
 
 	/** The base mod keeps magazine, reserve, reload, heat and fire mode per weapon INDEX, and only
@@ -360,9 +357,9 @@ public class MechEntity extends AbstractVehicleEntity implements FreeCameraVehic
 	/** Server: hands the frame to the defence AI (null: back to an ordinary frame). */
 	public void setBrain(com.example.mechframe.ai.MechBrain brain) {
 		this.brain = brain;
-		this.dataTracker.set(FACTION, brain == null ? 0 : brain.faction.ordinal());
+		this.entityData.set(FACTION, brain == null ? 0 : brain.faction.ordinal());
 		if (brain == null) {
-			this.dataTracker.set(LOCK_ID, -1);
+			this.entityData.set(LOCK_ID, -1);
 			this.inForward = 0f;
 			this.inStrafe = 0f;
 			this.inJump = false;
@@ -371,7 +368,7 @@ public class MechEntity extends AbstractVehicleEntity implements FreeCameraVehic
 	}
 
 	public com.example.mechframe.ai.Faction getFaction() {
-		int i = this.dataTracker.get(FACTION);
+		int i = this.entityData.get(FACTION);
 		com.example.mechframe.ai.Faction[] all = com.example.mechframe.ai.Faction.values();
 		return i >= 0 && i < all.length ? all[i] : com.example.mechframe.ai.Faction.NONE;
 	}
@@ -384,22 +381,22 @@ public class MechEntity extends AbstractVehicleEntity implements FreeCameraVehic
 	/** Server: the AI's FCS lock (null: none). */
 	public void aiLock(Entity target) {
 		int id = target == null ? -1 : target.getId();
-		if (this.dataTracker.get(LOCK_ID) != id) {
-			this.dataTracker.set(LOCK_ID, id);
+		if (this.entityData.get(LOCK_ID) != id) {
+			this.entityData.set(LOCK_ID, id);
 		}
 	}
 
 	@Override
-	public boolean damage(ServerWorld world, net.minecraft.entity.damage.DamageSource source, float amount) {
+	public boolean hurtServer(ServerLevel world, net.minecraft.world.damagesource.DamageSource source, float amount) {
 		boolean wasDestroyed = this.tudursvehiclemod$isDestroyed();
 		if (this.brain != null) {
-			Entity attacker = source.getAttacker();
+			Entity attacker = source.getEntity();
 			if (attacker != null && attacker.getVehicle() != null) {
 				attacker = attacker.getRootVehicle();
 			}
 			this.brain.onAttacked(this, attacker);
 		}
-		boolean result = super.damage(world, source, amount);
+		boolean result = super.hurtServer(world, source, amount);
 		if (!wasDestroyed && this.tudursvehiclemod$isDestroyed()) {
 			this.onAiUnitDestroyed(world);
 		}
@@ -407,7 +404,7 @@ public class MechEntity extends AbstractVehicleEntity implements FreeCameraVehic
 	}
 
 	/** An enemy unit going down: each of its parts drops on its own roll (MechServerConfig#partDropChance). */
-	private void onAiUnitDestroyed(ServerWorld world) {
+	private void onAiUnitDestroyed(ServerLevel world) {
 		if (this.brain == null || this.brain.faction != com.example.mechframe.ai.Faction.ENEMY || this.brain.dropsRolled) {
 			return;
 		}
@@ -422,48 +419,48 @@ public class MechEntity extends AbstractVehicleEntity implements FreeCameraVehic
 			if (part == null || this.getRandom().nextDouble() >= chance) {
 				continue;
 			}
-			net.minecraft.entity.ItemEntity item = new net.minecraft.entity.ItemEntity(world, this.getX(), this.getY() + 1.5, this.getZ(),
+			net.minecraft.world.entity.item.ItemEntity item = new net.minecraft.world.entity.item.ItemEntity(world, this.getX(), this.getY() + 1.5, this.getZ(),
 					MechPartItem.stackFor(part));
-			item.setVelocity((this.getRandom().nextDouble() - 0.5) * 0.3, 0.35, (this.getRandom().nextDouble() - 0.5) * 0.3);
-			item.setToDefaultPickupDelay();
-			world.spawnEntity(item);
+			item.setDeltaMovement((this.getRandom().nextDouble() - 0.5) * 0.3, 0.35, (this.getRandom().nextDouble() - 0.5) * 0.3);
+			item.setDefaultPickUpDelay();
+			world.addFreshEntity(item);
 		}
 	}
 
 	/** Command terminal on a frame: off -> base defence -> wingman -> off (friendly side only). */
-	private ActionResult command(PlayerEntity player) {
-		if (!(this.getEntityWorld() instanceof ServerWorld world)) {
-			return ActionResult.SUCCESS;
+	private InteractionResult command(Player player) {
+		if (!(this.level() instanceof ServerLevel world)) {
+			return InteractionResult.SUCCESS;
 		}
 		com.example.mechframe.ai.MechBrain b = this.brain;
 		if (b != null && b.faction == com.example.mechframe.ai.Faction.ENEMY) {
-			player.sendMessage(net.minecraft.text.Text.translatable("message.mechframe.command.enemy"), true);
-			return ActionResult.FAIL;
+			player.displayClientMessage(net.minecraft.network.chat.Component.translatable("message.mechframe.command.enemy"), true);
+			return InteractionResult.FAIL;
 		}
 		if (this.tudursvehiclemod$isDestroyed()) {
-			return ActionResult.FAIL;
+			return InteractionResult.FAIL;
 		}
-		if (b != null && b.owner != null && !b.owner.equals(player.getUuid()) && !player.isCreative()) {
-			player.sendMessage(net.minecraft.text.Text.translatable("message.mechframe.command.not_yours"), true);
-			return ActionResult.FAIL;
+		if (b != null && b.owner != null && !b.owner.equals(player.getUUID()) && !player.isCreative()) {
+			player.displayClientMessage(net.minecraft.network.chat.Component.translatable("message.mechframe.command.not_yours"), true);
+			return InteractionResult.FAIL;
 		}
 		String key;
 		if (b == null) {
 			b = new com.example.mechframe.ai.MechBrain(com.example.mechframe.ai.Faction.FRIENDLY,
-					com.example.mechframe.ai.MechBrain.Mode.GUARD, this.getEntityPos(), 32.0);
-			b.owner = player.getUuid();
+					com.example.mechframe.ai.MechBrain.Mode.GUARD, this.position(), 32.0);
+			b.owner = player.getUUID();
 			this.setBrain(b);
 			key = "message.mechframe.command.guard";
 		} else if (b.mode == com.example.mechframe.ai.MechBrain.Mode.GUARD && b.post == null) {
 			b.mode = com.example.mechframe.ai.MechBrain.Mode.ESCORT;
-			b.owner = player.getUuid();
+			b.owner = player.getUUID();
 			key = "message.mechframe.command.escort";
 		} else {
 			this.setBrain(null);
 			key = "message.mechframe.command.off";
 		}
-		player.sendMessage(net.minecraft.text.Text.translatable(key, this.getName()), true);
-		return ActionResult.SUCCESS;
+		player.displayClientMessage(net.minecraft.network.chat.Component.translatable(key, this.getName()), true);
+		return InteractionResult.SUCCESS;
 	}
 
 	/** Sneak + right-click packs the frame up into a spawner (the base mod), which only rebuilds the
@@ -472,34 +469,34 @@ public class MechEntity extends AbstractVehicleEntity implements FreeCameraVehic
 	 * interact: a frame given orders with the command terminal - or an enemy unit - must be
 	 * handled here already, or the player would climb in. */
 	@Override
-	public ActionResult interactAt(PlayerEntity player, Vec3d hitPos, Hand hand) {
-		if (player.getStackInHand(hand).isOf(com.example.mechframe.item.MechItems.COMMAND_TERMINAL)) {
+	public InteractionResult interactAt(Player player, Vec3 hitPos, InteractionHand hand) {
+		if (player.getItemInHand(hand).is(com.example.mechframe.item.MechItems.COMMAND_TERMINAL)) {
 			return this.command(player);
 		}
 		if (this.getFaction() == com.example.mechframe.ai.Faction.ENEMY && !player.isCreative()) {
-			return ActionResult.FAIL;
+			return InteractionResult.FAIL;
 		}
 		return super.interactAt(player, hitPos, hand);
 	}
 
 	@Override
-	public ActionResult interact(PlayerEntity player, Hand hand) {
-		if (player.getStackInHand(hand).isOf(com.example.mechframe.item.MechItems.COMMAND_TERMINAL)) {
+	public InteractionResult interact(Player player, InteractionHand hand) {
+		if (player.getItemInHand(hand).is(com.example.mechframe.item.MechItems.COMMAND_TERMINAL)) {
 			return this.command(player);
 		}
 		if (this.getFaction() == com.example.mechframe.ai.Faction.ENEMY && !player.isCreative()) {
 			// Enemy units cannot be boarded or packed up.
-			return ActionResult.FAIL;
+			return InteractionResult.FAIL;
 		}
-		if (player.isSneaking() && !this.getEntityWorld().isClient() && this.getPassengerList().isEmpty() && !this.isRemoved()) {
+		if (player.isShiftKeyDown() && !this.level().isClientSide() && this.getPassengers().isEmpty() && !this.isRemoved()) {
 			Assembly assembly = this.getAssembly();
 			for (MountSlot mount : MountSlot.values()) {
 				Identifier id = assembly.get(mount);
 				MechPart part = id != null && !assembly.isStock(mount) ? PartRegistry.getOrNull(id) : null;
 				if (part != null) {
 					ItemStack stack = MechPartItem.stackFor(part);
-					if (!player.getInventory().insertStack(stack)) {
-						player.dropItem(stack, false);
+					if (!player.getInventory().add(stack)) {
+						player.drop(stack, false);
 					}
 				}
 			}
@@ -510,13 +507,13 @@ public class MechEntity extends AbstractVehicleEntity implements FreeCameraVehic
 	@Override
 	public void setVehicleDefinitionId(Identifier id) {
 		super.setVehicleDefinitionId(id);
-		if (!this.getEntityWorld().isClient() && this.getAssembly().isEmpty()) {
+		if (!this.level().isClientSide() && this.getAssembly().isEmpty()) {
 			Optional<MechPreset> preset = PartRegistry.preset(id);
 			if (preset.isPresent()) {
-				this.dataTracker.set(ASSEMBLY, preset.get().assembly().encode());
-				this.dataTracker.set(AbstractVehicleEntityAccessor.mechframe$healthKey(), this.getMaxHealth());
+				this.entityData.set(ASSEMBLY, preset.get().assembly().encode());
+				this.entityData.set(AbstractVehicleEntityAccessor.mechframe$healthKey(), this.getMaxHealth());
 				this.en = this.getStats().enCapacity();
-				this.calculateDimensions();
+				this.refreshDimensions();
 			}
 		}
 	}
@@ -538,10 +535,10 @@ public class MechEntity extends AbstractVehicleEntity implements FreeCameraVehic
 	}
 
 	@Override
-	public void onTrackedDataSet(TrackedData<?> data) {
-		super.onTrackedDataSet(data);
+	public void onSyncedDataUpdated(EntityDataAccessor<?> data) {
+		super.onSyncedDataUpdated(data);
 		if (data == ASSEMBLY || data == FORM) {
-			this.calculateDimensions();
+			this.refreshDimensions();
 		}
 		if (data == FORM && this.flightOrientation != null) {
 			this.onFormChanged();
@@ -549,7 +546,7 @@ public class MechEntity extends AbstractVehicleEntity implements FreeCameraVehic
 	}
 
 	public MechForm getForm() {
-		return this.dataTracker == null ? MechForm.ROBOT : MechForm.byOrdinal(this.dataTracker.get(FORM));
+		return this.entityData == null ? MechForm.ROBOT : MechForm.byOrdinal(this.entityData.get(FORM));
 	}
 
 	public boolean isJet() {
@@ -558,7 +555,7 @@ public class MechEntity extends AbstractVehicleEntity implements FreeCameraVehic
 
 	/** 0 = robot, 1 = jet, eased in between during a transformation (render-interpolated). */
 	public float getTransformProgress(float tickDelta) {
-		return MathHelper.lerp(tickDelta, this.prevTransform, this.transform);
+		return Mth.lerp(tickDelta, this.prevTransform, this.transform);
 	}
 
 	public boolean isTransforming() {
@@ -569,14 +566,14 @@ public class MechEntity extends AbstractVehicleEntity implements FreeCameraVehic
 
 	@Override
 	public void tick() {
-		if (!this.getEntityWorld().isClient() && this.dataTracker.get(FORM) == 1
+		if (!this.level().isClientSide() && this.entityData.get(FORM) == 1
 				&& (this.getLayout() == null || !this.getLayout().canTransform)) {
 			// A data reload took the transformation away (or the parts are gone): back to robot form,
 			// or the frame would be stuck flying a jet model with no way to transform back.
-			this.dataTracker.set(FORM, 0);
+			this.entityData.set(FORM, 0);
 		}
 		if (this.lastFormSeen < 0) {
-			this.lastFormSeen = this.dataTracker.get(FORM);
+			this.lastFormSeen = this.entityData.get(FORM);
 			this.transform = this.prevTransform = this.isJet() ? 1f : 0f;
 		}
 		this.prevTransform = this.transform;
@@ -589,10 +586,10 @@ public class MechEntity extends AbstractVehicleEntity implements FreeCameraVehic
 		}
 		MechStats stats = this.getStats();
 		if (this.en < 0f) {
-			this.en = this.getEntityWorld().isClient() ? this.dataTracker.get(EN) : stats.enCapacity();
+			this.en = this.level().isClientSide() ? this.entityData.get(EN) : stats.enCapacity();
 		}
 
-		if (!this.getEntityWorld().isClient() && this.aiDriven() && this.getEntityWorld() instanceof ServerWorld aiWorld) {
+		if (!this.level().isClientSide() && this.aiDriven() && this.level() instanceof ServerLevel aiWorld) {
 			this.brain.tick(this, aiWorld);
 			if (this.isRemoved()) {
 				return;
@@ -603,9 +600,9 @@ public class MechEntity extends AbstractVehicleEntity implements FreeCameraVehic
 
 		this.tickMelee();
 		this.updateLean();
-		if (this.getEntityWorld().isClient()) {
+		if (this.level().isClientSide()) {
 			// The pilot's own client keeps its predicted EN unless it has drifted far from the server.
-			float synced = this.dataTracker.get(EN);
+			float synced = this.entityData.get(EN);
 			if (!this.isLocalPilot() || Math.abs(synced - this.en) > stats.enCapacity() * 0.3f) {
 				this.en = synced;
 			}
@@ -618,15 +615,15 @@ public class MechEntity extends AbstractVehicleEntity implements FreeCameraVehic
 			this.inJump = false;
 			this.inBoost = false;
 		}
-		float syncedHull = this.dataTracker.get(HULL_YAW);
-		if (Float.isNaN(this.hullYaw) != Float.isNaN(syncedHull) || (!Float.isNaN(this.hullYaw) && Math.abs(MathHelper.wrapDegrees(syncedHull - this.hullYaw)) > 0.5f)) {
-			this.dataTracker.set(HULL_YAW, this.hullYaw);
+		float syncedHull = this.entityData.get(HULL_YAW);
+		if (Float.isNaN(this.hullYaw) != Float.isNaN(syncedHull) || (!Float.isNaN(this.hullYaw) && Math.abs(Mth.wrapDegrees(syncedHull - this.hullYaw)) > 0.5f)) {
+			this.entityData.set(HULL_YAW, this.hullYaw);
 		}
-		if (Math.abs(this.dataTracker.get(EN) - this.en) > 0.5f) {
-			this.dataTracker.set(EN, this.en);
+		if (Math.abs(this.entityData.get(EN) - this.en) > 0.5f) {
+			this.entityData.set(EN, this.en);
 		}
-		this.dataTracker.set(ACTION, this.packAction());
-		if (this.age % 2 == 0) {
+		this.entityData.set(ACTION, this.packAction());
+		if (this.tickCount % 2 == 0) {
 			this.updateCandidate();
 		}
 		this.pruneLock();
@@ -649,24 +646,24 @@ public class MechEntity extends AbstractVehicleEntity implements FreeCameraVehic
 	}
 
 	public int getSyncedAction() {
-		return this.dataTracker.get(ACTION);
+		return this.entityData.get(ACTION);
 	}
 
 	/** Tank legs driven with tank controls (robot form, piloted, the pilot asked for them). */
 	public boolean isTankControlled() {
 		MechStats s = this.getStats();
 		return this.inTankControls && s != null && s.legType() == MechPart.LegType.TANK && !this.isJet()
-				&& this.getControllingPassenger() instanceof PlayerEntity;
+				&& this.getControllingPassenger() instanceof Player;
 	}
 
 	/** Hull yaw under tank controls (NaN otherwise): the pilot's own prediction, or the synced value. */
 	public float getHullYaw() {
-		return this.isLocalPilot() || !this.getEntityWorld().isClient() ? this.hullYaw : this.dataTracker.get(HULL_YAW);
+		return this.isLocalPilot() || !this.level().isClientSide() ? this.hullYaw : this.entityData.get(HULL_YAW);
 	}
 
 	/** True on the client of the player piloting this frame. */
 	public boolean isLocalPilot() {
-		return this.getEntityWorld().isClient() && this.getControllingPassenger() instanceof PlayerEntity p && p.isMainPlayer();
+		return this.level().isClientSide() && this.getControllingPassenger() instanceof Player p && p.isLocalPlayer();
 	}
 
 	public boolean isBoostingVisual() {
@@ -703,11 +700,11 @@ public class MechEntity extends AbstractVehicleEntity implements FreeCameraVehic
 	}
 
 	public float getTravel(float tickDelta) {
-		return MathHelper.lerp(tickDelta, this.prevTravel, this.travel);
+		return Mth.lerp(tickDelta, this.prevTravel, this.travel);
 	}
 
 	public float getStepUpVisualOffset(float tickDelta) {
-		return MathHelper.lerp(tickDelta, this.prevStepUpVisualOffset, this.stepUpVisualOffset);
+		return Mth.lerp(tickDelta, this.prevStepUpVisualOffset, this.stepUpVisualOffset);
 	}
 
 	public int getJinkTicks() {
@@ -730,7 +727,7 @@ public class MechEntity extends AbstractVehicleEntity implements FreeCameraVehic
 			this.jinkTicks--;
 		}
 		if (this.tudursvehiclemod$isSinking()) {
-			this.move(MovementType.SELF, this.getVelocity());
+			this.move(MoverType.SELF, this.getDeltaMovement());
 			return;
 		}
 		if (this.isJet() && this.getLayout() != null) {
@@ -743,7 +740,7 @@ public class MechEntity extends AbstractVehicleEntity implements FreeCameraVehic
 	}
 
 	private boolean hasControl() {
-		return (this.getControllingPassenger() instanceof PlayerEntity || this.aiDriven())
+		return (this.getControllingPassenger() instanceof Player || this.aiDriven())
 				&& !this.tudursvehiclemod$isDestroyed()
 				&& this.getLayout() != null
 				&& !this.tudursvehiclemod$isOutOfFuel();
@@ -757,7 +754,7 @@ public class MechEntity extends AbstractVehicleEntity implements FreeCameraVehic
 		}
 		this.turboPitch = 0f;
 		boolean wasGrounded = this.ticksSinceGrounded <= GROUNDED_GRACE_TICKS;
-		if (this.isOnGround()) {
+		if (this.onGround()) {
 			this.ticksSinceGrounded = 0;
 		} else {
 			this.ticksSinceGrounded++;
@@ -766,33 +763,33 @@ public class MechEntity extends AbstractVehicleEntity implements FreeCameraVehic
 		boolean control = this.hasControl();
 
 		// Level out whatever attitude the jet form left behind.
-		this.setPitch(stepTowardAngle(this.getPitch(), 0f, 8f));
+		this.setXRot(stepTowardAngle(this.getXRot(), 0f, 8f));
 		this.prevRoll = this.roll;
 		this.roll = stepTowardAngle(this.roll, 0f, 8f);
 
 		// Body follows the camera.
-		if (this.getControllingPassenger() instanceof PlayerEntity pilot && !this.tudursvehiclemod$isDestroyed()) {
+		if (this.getControllingPassenger() instanceof Player pilot && !this.tudursvehiclemod$isDestroyed()) {
 			float rate = s.turnRate() * (grounded ? 1f : 0.85f);
-			this.setYaw(stepTowardAngle(this.getYaw(), pilot.getYaw(), rate));
+			this.setYRot(stepTowardAngle(this.getYRot(), pilot.getYRot(), rate));
 		} else if (this.aiDriven() && !Float.isNaN(this.brain.desiredYaw)) {
 			float rate = s.turnRate() * (grounded ? 1f : 0.85f);
-			this.setYaw(stepTowardAngle(this.getYaw(), this.brain.desiredYaw, rate));
+			this.setYRot(stepTowardAngle(this.getYRot(), this.brain.desiredYaw, rate));
 		}
 
-		float fwd = control ? MathHelper.clamp(this.inForward, -1f, 1f) : 0f;
-		float str = control ? MathHelper.clamp(this.inStrafe, -1f, 1f) : 0f;
+		float fwd = control ? Mth.clamp(this.inForward, -1f, 1f) : 0f;
+		float str = control ? Mth.clamp(this.inStrafe, -1f, 1f) : 0f;
 		// Tank controls: A/D turn the hull, W/S drive along it; the upper body (turret) keeps following the camera.
 		boolean tankMode = this.isTankControlled();
 		if (tankMode) {
 			if (Float.isNaN(this.hullYaw)) {
-				this.hullYaw = this.getYaw();
+				this.hullYaw = this.getYRot();
 			}
-			this.hullYaw = MathHelper.wrapDegrees(this.hullYaw - str * s.turnRate() * HULL_TURN_FACTOR * (grounded ? 1f : 0.5f));
+			this.hullYaw = Mth.wrapDegrees(this.hullYaw - str * s.turnRate() * HULL_TURN_FACTOR * (grounded ? 1f : 0.5f));
 			str = 0f;
 		} else if (s.legType() != MechPart.LegType.TANK || this.getControllingPassenger() != null) {
 			this.hullYaw = Float.NaN;
 		}
-		float len = MathHelper.sqrt(fwd * fwd + str * str);
+		float len = Mth.sqrt(fwd * fwd + str * str);
 		if (len > 1f) {
 			fwd /= len;
 			str /= len;
@@ -802,7 +799,7 @@ public class MechEntity extends AbstractVehicleEntity implements FreeCameraVehic
 		boolean boosting = control && this.inBoost && s.boostSpeed() > 0f && (grounded || (this.en > 0f && !this.overheat));
 		this.boostingNow = boosting && (hasInput || !grounded);
 
-		double yawRad = Math.toRadians(tankMode ? this.hullYaw : this.getYaw());
+		double yawRad = Math.toRadians(tankMode ? this.hullYaw : this.getYRot());
 		double cos = Math.cos(yawRad);
 		double sin = Math.sin(yawRad);
 		// Model +X (left) is world (cos, sin), model +Z (forward) is world (-sin, cos).
@@ -816,7 +813,7 @@ public class MechEntity extends AbstractVehicleEntity implements FreeCameraVehic
 		if (fwd < -0.1f && !boosting) {
 			speed *= 0.8f;
 		}
-		Vec3d v = this.getVelocity();
+		Vec3 v = this.getDeltaMovement();
 		double tx = dirX * speed;
 		double tz = dirZ * speed;
 		float k;
@@ -828,7 +825,7 @@ public class MechEntity extends AbstractVehicleEntity implements FreeCameraVehic
 					k *= 0.75f;
 				}
 			} else {
-				k = BRAKE_TRACTION * MathHelper.clamp(s.traction() / 0.35f, 0.6f, 1.3f);
+				k = BRAKE_TRACTION * Mth.clamp(s.traction() / 0.35f, 0.6f, 1.3f);
 				if (s.legType() == MechPart.LegType.HOVER) {
 					k *= 0.35f;
 				}
@@ -852,7 +849,7 @@ public class MechEntity extends AbstractVehicleEntity implements FreeCameraVehic
 		this.brakeHold = braking ? 4 : Math.max(0, this.brakeHold - 1);
 		double vx = v.x + (tx - v.x) * k;
 		double vz = v.z + (tz - v.z) * k;
-		Vec3d dash = this.meleeDash(v);
+		Vec3 dash = this.meleeDash(v);
 		if (dash != null) {
 			vx = dash.x;
 			vz = dash.z;
@@ -893,61 +890,61 @@ public class MechEntity extends AbstractVehicleEntity implements FreeCameraVehic
 		}
 		this.lastFallSpeed = vy;
 
-		this.setVelocity(vx, vy, vz);
+		this.setDeltaMovement(vx, vy, vz);
 		this.prevStepUpVisualOffset = this.stepUpVisualOffset;
 		if (grounded) {
 			this.applyStepUp(s.stepHeight());
 		}
 		this.stepUpVisualOffset += (0f - this.stepUpVisualOffset) * 0.3f;
-		Vec3d before = this.getVelocity();
-		this.move(MovementType.SELF, before);
+		Vec3 before = this.getDeltaMovement();
+		this.move(MoverType.SELF, before);
 		if (this.horizontalCollision) {
 			// Glance off walls instead of sticking to them.
-			Vec3d after = this.getVelocity();
-			this.setVelocity(after.x * 0.5, after.y, after.z * 0.5);
+			Vec3 after = this.getDeltaMovement();
+			this.setDeltaMovement(after.x * 0.5, after.y, after.z * 0.5);
 		}
-		if (!wasGrounded && this.isOnGround() && before.y < -0.45) {
+		if (!wasGrounded && this.onGround() && before.y < -0.45) {
 			this.landCounter++;
 			this.fireEvent(MechClientHooks.EVENT_LAND, (float) -before.y, 0f);
 		}
 		this.prevTravel = this.travel;
 		this.travel += (float) Math.sqrt(vx * vx + vz * vz);
-		this.setThrottleDirect(MathHelper.clamp((float) (Math.sqrt(vx * vx + vz * vz) / Math.max(0.05f, s.boostSpeed())), 0f, 1f));
+		this.setThrottleDirect(Mth.clamp((float) (Math.sqrt(vx * vx + vz * vz) / Math.max(0.05f, s.boostSpeed())), 0f, 1f));
 	}
 
 	/** Turbo: flies along the body's heading and the pilot's view pitch at high speed. Heading, pitch
 	 * and speed all follow only slowly; no quick boost, jump or hover; extra fuel burned. */
 	private void updateTurbo(MechStats s) {
 		boolean control = this.hasControl();
-		if (!this.getEntityWorld().isClient() && (!control || this.tudursvehiclemod$isOutOfFuel())) {
-			this.dataTracker.set(TURBO, false);
+		if (!this.level().isClientSide() && (!control || this.tudursvehiclemod$isOutOfFuel())) {
+			this.entityData.set(TURBO, false);
 		}
-		boolean grounded = this.isOnGround();
+		boolean grounded = this.onGround();
 		this.ticksSinceGrounded = grounded ? 0 : this.ticksSinceGrounded + 1;
 		this.prevRoll = this.roll;
 		this.roll = stepTowardAngle(this.roll, 0f, 8f);
-		this.setPitch(stepTowardAngle(this.getPitch(), 0f, 8f));
+		this.setXRot(stepTowardAngle(this.getXRot(), 0f, 8f));
 		float wantPitch = 0f;
-		if (this.getControllingPassenger() instanceof PlayerEntity pilot) {
-			this.setYaw(stepTowardAngle(this.getYaw(), pilot.getYaw(), s.turnRate() * TURBO_TURN));
-			wantPitch = MathHelper.clamp(pilot.getPitch(), -40f, 40f);
+		if (this.getControllingPassenger() instanceof Player pilot) {
+			this.setYRot(stepTowardAngle(this.getYRot(), pilot.getYRot(), s.turnRate() * TURBO_TURN));
+			wantPitch = Mth.clamp(pilot.getXRot(), -40f, 40f);
 		} else if (this.aiDriven()) {
 			if (!Float.isNaN(this.brain.desiredYaw)) {
-				this.setYaw(stepTowardAngle(this.getYaw(), this.brain.desiredYaw, s.turnRate() * TURBO_TURN));
+				this.setYRot(stepTowardAngle(this.getYRot(), this.brain.desiredYaw, s.turnRate() * TURBO_TURN));
 			}
-			wantPitch = MathHelper.clamp(this.brain.desiredPitch, -40f, 40f);
+			wantPitch = Mth.clamp(this.brain.desiredPitch, -40f, 40f);
 		}
 		this.turboPitch = stepTowardAngle(this.turboPitch, wantPitch, 1.6f);
-		float fwd = control ? MathHelper.clamp(this.inForward, -1f, 1f) : 0f;
-		float str = control ? MathHelper.clamp(this.inStrafe, -1f, 1f) : 0f;
+		float fwd = control ? Mth.clamp(this.inForward, -1f, 1f) : 0f;
+		float str = control ? Mth.clamp(this.inStrafe, -1f, 1f) : 0f;
 		float speed = Math.max(0.6f, s.boostSpeed()) * TURBO_SPEED * (fwd < -0.1f ? 0.55f : 1f) * (control ? 1f : 0f);
-		double yawRad = Math.toRadians(this.getYaw());
+		double yawRad = Math.toRadians(this.getYRot());
 		double pRad = Math.toRadians(this.turboPitch);
 		double cp = Math.cos(pRad);
 		double tx = -Math.sin(yawRad) * cp * speed + Math.cos(yawRad) * str * speed * 0.12;
 		double tz = Math.cos(yawRad) * cp * speed + Math.sin(yawRad) * str * speed * 0.12;
 		double ty = -Math.sin(pRad) * speed;
-		Vec3d v = this.getVelocity();
+		Vec3 v = this.getDeltaMovement();
 		double vx = v.x + (tx - v.x) * TURBO_TRACTION;
 		double vy = v.y + (ty - v.y) * TURBO_TRACTION * 1.5;
 		double vz = v.z + (tz - v.z) * TURBO_TRACTION;
@@ -958,20 +955,20 @@ public class MechEntity extends AbstractVehicleEntity implements FreeCameraVehic
 		this.hoveringNow = false;
 		this.brakingNow = false;
 		this.qbTimer = 0;
-		this.setVelocity(vx, vy, vz);
-		this.move(MovementType.SELF, this.getVelocity());
+		this.setDeltaMovement(vx, vy, vz);
+		this.move(MoverType.SELF, this.getDeltaMovement());
 		if (this.horizontalCollision) {
-			Vec3d after = this.getVelocity();
-			this.setVelocity(after.x * 0.3, after.y, after.z * 0.3);
+			Vec3 after = this.getDeltaMovement();
+			this.setDeltaMovement(after.x * 0.3, after.y, after.z * 0.3);
 		}
 		this.lastFallSpeed = vy;
 		this.prevTravel = this.travel;
 		this.travel += (float) Math.sqrt(vx * vx + vz * vz);
 		this.setThrottleDirect(control ? 1f : 0f);
-		if (!this.getEntityWorld().isClient() && control && !this.tudursvehiclemod$isFuelless()) {
+		if (!this.level().isClientSide() && control && !this.tudursvehiclemod$isFuelless()) {
 			float extra = this.getDefinition().fuelConsumptionPerSecond() / 20f * TURBO_EXTRA_FUEL;
-			TrackedData<Float> key = com.example.mechframe.mixin.AbstractVehicleEntityAccessor.mechframe$fuelKey();
-			this.dataTracker.set(key, Math.max(0f, this.dataTracker.get(key) - extra));
+			EntityDataAccessor<Float> key = com.example.mechframe.mixin.AbstractVehicleEntityAccessor.mechframe$fuelKey();
+			this.entityData.set(key, Math.max(0f, this.entityData.get(key) - extra));
 		}
 	}
 
@@ -987,7 +984,7 @@ public class MechEntity extends AbstractVehicleEntity implements FreeCameraVehic
 		if (!this.isQuickBoostReady() || this.isTurbo()) {
 			return false;
 		}
-		float len = MathHelper.sqrt(localX * localX + localZ * localZ);
+		float len = Mth.sqrt(localX * localX + localZ * localZ);
 		if (len < 0.01f) {
 			localX = 0f;
 			localZ = 1f;
@@ -996,14 +993,14 @@ public class MechEntity extends AbstractVehicleEntity implements FreeCameraVehic
 		localX /= len;
 		localZ /= len;
 		// Tank controls: quick boosts are relative to the hull.
-		double yawRad = Math.toRadians(this.isTankControlled() && !Float.isNaN(this.hullYaw) ? this.hullYaw : this.getYaw());
+		double yawRad = Math.toRadians(this.isTankControlled() && !Float.isNaN(this.hullYaw) ? this.hullYaw : this.getYRot());
 		double cos = Math.cos(yawRad);
 		double sin = Math.sin(yawRad);
 		double dirX = localX * cos - localZ * sin;
 		double dirZ = localX * sin + localZ * cos;
-		Vec3d v = this.getVelocity();
+		Vec3 v = this.getDeltaMovement();
 		boolean airborne = this.ticksSinceGrounded > GROUNDED_GRACE_TICKS;
-		this.setVelocity(dirX * s.qbSpeed(), airborne ? Math.max(v.y, 0.06) : v.y, dirZ * s.qbSpeed());
+		this.setDeltaMovement(dirX * s.qbSpeed(), airborne ? Math.max(v.y, 0.06) : v.y, dirZ * s.qbSpeed());
 		this.qbTimer = QB_TICKS;
 		this.qbCooldown = s.qbCooldown();
 		this.drain(s.qbCost());
@@ -1036,7 +1033,7 @@ public class MechEntity extends AbstractVehicleEntity implements FreeCameraVehic
 		this.meleeCounter++;
 		this.meleeCounterSeen = this.meleeCounter;
 		Entity t = this.meleeTarget();
-		this.meleeVictim = t != null && t.isAlive() && t.distanceTo(this) <= m.lungeRange() + (this.getWidth() + t.getWidth()) * 0.5 ? t : null;
+		this.meleeVictim = t != null && t.isAlive() && t.distanceTo(this) <= m.lungeRange() + (this.getBbWidth() + t.getBbWidth()) * 0.5 ? t : null;
 		this.meleeDir = this.meleeAim(m);
 		return true;
 	}
@@ -1048,17 +1045,17 @@ public class MechEntity extends AbstractVehicleEntity implements FreeCameraVehic
 	}
 
 	/** Horizontal unit direction of the dash: at the locked target within lunge range, else ahead. */
-	private Vec3d meleeAim(MechPart.MeleeSpec m) {
+	private Vec3 meleeAim(MechPart.MeleeSpec m) {
 		Entity target = this.meleeVictim;
 		if (target != null && target.isAlive()) {
-			Vec3d d = target.getEntityPos().subtract(this.getEntityPos());
-			d = new Vec3d(d.x, 0, d.z);
+			Vec3 d = target.position().subtract(this.position());
+			d = new Vec3(d.x, 0, d.z);
 			if (d.length() > 0.1) {
 				return d.normalize();
 			}
 		}
-		double yawRad = Math.toRadians(this.getYaw());
-		return new Vec3d(-Math.sin(yawRad), 0, Math.cos(yawRad));
+		double yawRad = Math.toRadians(this.getYRot());
+		return new Vec3(-Math.sin(yawRad), 0, Math.cos(yawRad));
 	}
 
 	/** The swing in progress: which arm and how far through it (0..1 over MELEE_END ticks), or null. */
@@ -1079,8 +1076,8 @@ public class MechEntity extends AbstractVehicleEntity implements FreeCameraVehic
 		if (this.meleeCooldown > 0) {
 			this.meleeCooldown--;
 		}
-		World world = this.getEntityWorld();
-		if (world.isClient() && !this.isLocalPilot()) {
+		Level world = this.level();
+		if (world.isClientSide() && !this.isLocalPilot()) {
 			int synced = (this.getSyncedAction() >> 24) & 15;
 			if (this.meleeCounterSeen < 0) {
 				this.meleeCounterSeen = synced;
@@ -1093,7 +1090,7 @@ public class MechEntity extends AbstractVehicleEntity implements FreeCameraVehic
 		if (this.meleeTick < 0) {
 			return;
 		}
-		if (this.meleeTick == MELEE_STRIKE && world instanceof ServerWorld server) {
+		if (this.meleeTick == MELEE_STRIKE && world instanceof ServerLevel server) {
 			this.strike(server);
 		}
 		if (++this.meleeTick > MELEE_END) {
@@ -1104,13 +1101,13 @@ public class MechEntity extends AbstractVehicleEntity implements FreeCameraVehic
 	/** Damage of one melee hit. Vehicles cap each hit at their armor_max_damage (frames: 260), which
 	 * would flatten every blow to the same number - a melee hit lands as a burst of smaller strikes
 	 * instead, so a pile driver still hits far harder than a blade. Living targets take it in one. */
-	private boolean meleeDamage(ServerWorld world, Entity target, net.minecraft.entity.damage.DamageSource source, float damage) {
+	private boolean meleeDamage(ServerLevel world, Entity target, net.minecraft.world.damagesource.DamageSource source, float damage) {
 		if (!(target instanceof AbstractVehicleEntity)) {
-			return target.damage(world, source, damage);
+			return target.hurtServer(world, source, damage);
 		}
 		boolean hit = false;
 		for (float left = damage; left > 0.5f; left -= MELEE_CHUNK) {
-			hit |= target.damage(world, source, Math.min(left, MELEE_CHUNK));
+			hit |= target.hurtServer(world, source, Math.min(left, MELEE_CHUNK));
 		}
 		return hit;
 	}
@@ -1119,7 +1116,7 @@ public class MechEntity extends AbstractVehicleEntity implements FreeCameraVehic
 	private static final float MELEE_CHUNK = 200f;
 
 	/** Dash velocity while winding up (null: no dash this tick). Slows to a stop at the target. */
-	private Vec3d meleeDash(Vec3d v) {
+	private Vec3 meleeDash(Vec3 v) {
 		if (this.meleeTick < 0 || this.meleeTick >= MELEE_STRIKE) {
 			return null;
 		}
@@ -1131,66 +1128,66 @@ public class MechEntity extends AbstractVehicleEntity implements FreeCameraVehic
 		double speed = m.lungeSpeed();
 		Entity target = this.meleeVictim;
 		if (target != null && target.isAlive()) {
-			Vec3d d = target.getEntityPos().subtract(this.getEntityPos());
-			double gap = Math.sqrt(d.x * d.x + d.z * d.z) - (this.getWidth() + target.getWidth()) * 0.5;
+			Vec3 d = target.position().subtract(this.position());
+			double gap = Math.sqrt(d.x * d.x + d.z * d.z) - (this.getBbWidth() + target.getBbWidth()) * 0.5;
 			if (gap <= m.lungeRange()) {
-				this.meleeDir = new Vec3d(d.x, 0, d.z).normalize();
+				this.meleeDir = new Vec3(d.x, 0, d.z).normalize();
 				// Close in to striking distance, no further.
-				speed = MathHelper.clamp(gap - m.reach() * 0.45, 0.0, speed);
+				speed = Mth.clamp(gap - m.reach() * 0.45, 0.0, speed);
 			}
-		} else if (this.getEntityWorld().getOtherEntities(this, this.getBoundingBox().offset(this.meleeDir.multiply(m.reach() * 0.5))
-				.expand(m.reach() * 0.3, 0.0, m.reach() * 0.3),
+		} else if (this.level().getEntities(this, this.getBoundingBox().move(this.meleeDir.scale(m.reach() * 0.5))
+				.inflate(m.reach() * 0.3, 0.0, m.reach() * 0.3),
 				e -> e.isAlive() && e.isAttackable() && e.getRootVehicle() != this).size() > 0) {
 			// Straight-ahead dash: stop where something is already within the blade's reach.
 			speed = 0.0;
 		}
-		return new Vec3d(this.meleeDir.x * speed, v.y, this.meleeDir.z * speed);
+		return new Vec3(this.meleeDir.x * speed, v.y, this.meleeDir.z * speed);
 	}
 
 	/** The blow: everything within reach in front of the frame (in the dash direction) takes the hit once. */
-	private void strike(ServerWorld world) {
+	private void strike(ServerLevel world) {
 		MechPart weapon = this.getAssembly().part(this.meleeArm);
 		if (weapon == null || weapon.weapon() == null || !weapon.weapon().isMelee()) {
 			return;
 		}
 		MechPart.MeleeSpec m = weapon.weapon().melee();
-		Vec3d dir = this.meleeDir.lengthSquared() > 1.0e-4 ? this.meleeDir : this.meleeAim(m);
-		double half = this.getWidth() * 0.5;
-		Vec3d center = this.getEntityPos().add(0, this.getHeight() * 0.45, 0);
-		Box box = this.getBoundingBox().expand(m.reach() + 1.0, 1.0, m.reach() + 1.0);
+		Vec3 dir = this.meleeDir.lengthSqr() > 1.0e-4 ? this.meleeDir : this.meleeAim(m);
+		double half = this.getBbWidth() * 0.5;
+		Vec3 center = this.position().add(0, this.getBbHeight() * 0.45, 0);
+		AABB box = this.getBoundingBox().inflate(m.reach() + 1.0, 1.0, m.reach() + 1.0);
 		Entity pilot = this.getControllingPassenger();
-		var source = pilot instanceof PlayerEntity player ? this.getDamageSources().playerAttack(player)
-				: pilot instanceof LivingEntity living ? this.getDamageSources().mobAttack(living)
-				: this.getDamageSources().generic();
+		var source = pilot instanceof Player player ? this.damageSources().playerAttack(player)
+				: pilot instanceof LivingEntity living ? this.damageSources().mobAttack(living)
+				: this.damageSources().generic();
 		double cosArc = Math.cos(Math.toRadians(m.arc()));
 		int hits = 0;
-		for (Entity e : world.getOtherEntities(this, box, e -> e.isAlive() && e.isAttackable()
+		for (Entity e : world.getEntities(this, box, e -> e.isAlive() && e.isAttackable()
 				&& e.getRootVehicle() != this.getRootVehicle() && !(e.getRootVehicle() == this))) {
-			Vec3d d = e.getEntityPos().subtract(this.getEntityPos());
-			Vec3d flat = new Vec3d(d.x, 0, d.z);
-			double dist = flat.length() - half - e.getWidth() * 0.5;
-			if (dist > m.reach() || d.y > this.getHeight() + 1.0 || d.y < -e.getHeight() - 1.0) {
+			Vec3 d = e.position().subtract(this.position());
+			Vec3 flat = new Vec3(d.x, 0, d.z);
+			double dist = flat.length() - half - e.getBbWidth() * 0.5;
+			if (dist > m.reach() || d.y > this.getBbHeight() + 1.0 || d.y < -e.getBbHeight() - 1.0) {
 				continue;
 			}
-			if (flat.length() > 0.5 && flat.normalize().dotProduct(dir) < cosArc) {
+			if (flat.length() > 0.5 && flat.normalize().dot(dir) < cosArc) {
 				continue;
 			}
 			if (this.meleeDamage(world, e, source, m.damage())) {
 				hits++;
-				e.addVelocity(dir.x * 0.6, 0.15, dir.z * 0.6);
-				world.spawnParticles(net.minecraft.particle.ParticleTypes.ELECTRIC_SPARK,
-						e.getX(), e.getBodyY(0.5), e.getZ(), 24, 0.4, 0.4, 0.4, 0.4);
-				world.spawnParticles(net.minecraft.particle.ParticleTypes.CRIT,
-						e.getX(), e.getBodyY(0.5), e.getZ(), 12, 0.3, 0.3, 0.3, 0.5);
+				e.push(dir.x * 0.6, 0.15, dir.z * 0.6);
+				world.sendParticles(net.minecraft.core.particles.ParticleTypes.ELECTRIC_SPARK,
+						e.getX(), e.getY(0.5), e.getZ(), 24, 0.4, 0.4, 0.4, 0.4);
+				world.sendParticles(net.minecraft.core.particles.ParticleTypes.CRIT,
+						e.getX(), e.getY(0.5), e.getZ(), 12, 0.3, 0.3, 0.3, 0.5);
 			}
 		}
-		Vec3d swing = center.add(dir.multiply(half + m.reach() * 0.55));
-		world.spawnParticles(net.minecraft.particle.ParticleTypes.SWEEP_ATTACK, swing.x, swing.y, swing.z, 3, 0.6, 0.3, 0.6, 0.0);
-		world.playSound(null, swing.x, swing.y, swing.z, net.minecraft.sound.SoundEvents.ENTITY_PLAYER_ATTACK_SWEEP,
-				this.getSoundCategory(), 2.5f, 0.55f);
+		Vec3 swing = center.add(dir.scale(half + m.reach() * 0.55));
+		world.sendParticles(net.minecraft.core.particles.ParticleTypes.SWEEP_ATTACK, swing.x, swing.y, swing.z, 3, 0.6, 0.3, 0.6, 0.0);
+		world.playSound(null, swing.x, swing.y, swing.z, net.minecraft.sounds.SoundEvents.PLAYER_ATTACK_SWEEP,
+				this.getSoundSource(), 2.5f, 0.55f);
 		if (hits > 0) {
-			world.playSound(null, swing.x, swing.y, swing.z, net.minecraft.sound.SoundEvents.ENTITY_PLAYER_ATTACK_STRONG,
-					this.getSoundCategory(), 2.5f, 0.6f);
+			world.playSound(null, swing.x, swing.y, swing.z, net.minecraft.sounds.SoundEvents.PLAYER_ATTACK_STRONG,
+					this.getSoundSource(), 2.5f, 0.6f);
 		}
 	}
 
@@ -1202,28 +1199,28 @@ public class MechEntity extends AbstractVehicleEntity implements FreeCameraVehic
 		if (stepHeight < 0.05f) {
 			return;
 		}
-		Vec3d velocity = this.getVelocity();
-		double horizontal = velocity.horizontalLength();
+		Vec3 velocity = this.getDeltaMovement();
+		double horizontal = velocity.horizontalDistance();
 		if (horizontal < 1.0e-4) {
 			return;
 		}
 		double scale = horizontal > 0.1 ? 1.0 : 0.1 / horizontal;
-		Box moved = this.getBoundingBox().offset(velocity.x * scale, 0, velocity.z * scale);
-		World world = this.getEntityWorld();
-		if (world.isSpaceEmpty(this, moved) || !world.isSpaceEmpty(this, moved.offset(0, stepHeight, 0))) {
+		AABB moved = this.getBoundingBox().move(velocity.x * scale, 0, velocity.z * scale);
+		Level world = this.level();
+		if (world.noCollision(this, moved) || !world.noCollision(this, moved.move(0, stepHeight, 0))) {
 			return;
 		}
 		float lo = 0f;
 		float hi = stepHeight;
 		for (int i = 0; i < 8; i++) {
 			float mid = (lo + hi) * 0.5f;
-			if (world.isSpaceEmpty(this, moved.offset(0, mid, 0))) {
+			if (world.noCollision(this, moved.move(0, mid, 0))) {
 				hi = mid;
 			} else {
 				lo = mid;
 			}
 		}
-		this.setPosition(this.getX(), this.getY() + hi, this.getZ());
+		this.setPos(this.getX(), this.getY() + hi, this.getZ());
 		this.stepUpVisualOffset -= hi;
 	}
 
@@ -1274,11 +1271,11 @@ public class MechEntity extends AbstractVehicleEntity implements FreeCameraVehic
 	private void updateLean() {
 		this.prevLeanPitch = this.leanPitch;
 		this.prevLeanRoll = this.leanRoll;
-		Vec3d motion = new Vec3d(this.getX() - this.lastX, 0, this.getZ() - this.lastZ);
-		if (motion.lengthSquared() > 16.0) {
-			motion = Vec3d.ZERO; // teleport
+		Vec3 motion = new Vec3(this.getX() - this.xo, 0, this.getZ() - this.zo);
+		if (motion.lengthSqr() > 16.0) {
+			motion = Vec3.ZERO; // teleport
 		}
-		Vec3d accel = motion.subtract(this.prevMotion);
+		Vec3 accel = motion.subtract(this.prevMotion);
 		this.prevMotion = motion;
 		float targetPitch = 0f;
 		float targetRoll = 0f;
@@ -1286,7 +1283,7 @@ public class MechEntity extends AbstractVehicleEntity implements FreeCameraVehic
 			// Turbo: the frame lies forward into its flight, less so while climbing.
 			targetPitch = 58f + this.turboPitch * 0.5f;
 		} else if (!this.isJet() && this.transform < 0.5f) {
-			double yawRad = Math.toRadians(this.getYaw());
+			double yawRad = Math.toRadians(this.getYRot());
 			double fwdX = -Math.sin(yawRad);
 			double fwdZ = Math.cos(yawRad);
 			double leftX = Math.cos(yawRad);
@@ -1296,8 +1293,8 @@ public class MechEntity extends AbstractVehicleEntity implements FreeCameraVehic
 			double af = accel.x * fwdX + accel.z * fwdZ;
 			double al = accel.x * leftX + accel.z * leftZ;
 			float steady = this.getStats().stability();
-			targetPitch = (float) MathHelper.clamp((vf * 7.0 - af * 22.0) / steady, -16.0, 16.0);
-			targetRoll = (float) MathHelper.clamp((-vl * 7.0 + al * 22.0) / steady, -14.0, 14.0);
+			targetPitch = (float) Mth.clamp((vf * 7.0 - af * 22.0) / steady, -16.0, 16.0);
+			targetRoll = (float) Mth.clamp((-vl * 7.0 + al * 22.0) / steady, -14.0, 14.0);
 		}
 		this.leanPitchVel += (targetPitch - this.leanPitch) * 0.32f - this.leanPitchVel * 0.42f;
 		this.leanRollVel += (targetRoll - this.leanRoll) * 0.32f - this.leanRollVel * 0.42f;
@@ -1306,11 +1303,11 @@ public class MechEntity extends AbstractVehicleEntity implements FreeCameraVehic
 	}
 
 	public float getLeanPitch(float tickDelta) {
-		return MathHelper.lerp(tickDelta, this.prevLeanPitch, this.leanPitch);
+		return Mth.lerp(tickDelta, this.prevLeanPitch, this.leanPitch);
 	}
 
 	public float getLeanRoll(float tickDelta) {
-		return MathHelper.lerp(tickDelta, this.prevLeanRoll, this.leanRoll);
+		return Mth.lerp(tickDelta, this.prevLeanRoll, this.leanRoll);
 	}
 
 	private float leanPivotY() {
@@ -1346,13 +1343,13 @@ public class MechEntity extends AbstractVehicleEntity implements FreeCameraVehic
 
 	/** The lean pivots about the hip rather than the feet: the offset that keeps the hip in place. */
 	@Override
-	public Vec3d tudursvehiclemod$getBodyFrameOffset(float tickDelta) {
+	public Vec3 tudursvehiclemod$getBodyFrameOffset(float tickDelta) {
 		float h = this.leanPivotY();
 		Quaternionf unleaned = this.unleanedOrientation(tickDelta);
 		Vector3f pivot = new Vector3f(0, h, 0);
 		Vector3f leaned = this.leanRotation(tickDelta).transform(new Vector3f(0, -h, 0)).add(pivot);
 		Vector3f offset = unleaned.transform(leaned);
-		return new Vec3d(offset.x, offset.y, offset.z);
+		return new Vec3(offset.x, offset.y, offset.z);
 	}
 
 	@Override
@@ -1366,35 +1363,35 @@ public class MechEntity extends AbstractVehicleEntity implements FreeCameraVehic
 	}
 
 	@Override
-	public float getYaw(float tickDelta) {
+	public float getViewYRot(float tickDelta) {
 		if (this.flightOrientation != null && this.isJet()) {
 			return extractYawPitchRoll(new Quaternionf(this.prevFlightOrientation).slerp(this.flightOrientation, tickDelta))[0];
 		}
-		return super.getYaw(tickDelta);
+		return super.getViewYRot(tickDelta);
 	}
 
 	@Override
-	public float getYaw() {
+	public float getYRot() {
 		if (this.flightOrientation != null && this.isJet()) {
 			return extractYawPitchRoll(this.flightOrientation)[0];
 		}
-		return super.getYaw();
+		return super.getYRot();
 	}
 
 	@Override
-	public float getPitch(float tickDelta) {
+	public float getViewXRot(float tickDelta) {
 		if (this.flightOrientation != null && this.isJet()) {
 			return extractYawPitchRoll(new Quaternionf(this.prevFlightOrientation).slerp(this.flightOrientation, tickDelta))[1];
 		}
-		return super.getPitch(tickDelta);
+		return super.getViewXRot(tickDelta);
 	}
 
 	@Override
-	public float getPitch() {
+	public float getXRot() {
 		if (this.flightOrientation != null && this.isJet()) {
 			return extractYawPitchRoll(this.flightOrientation)[1];
 		}
-		return super.getPitch();
+		return super.getXRot();
 	}
 
 	@Override
@@ -1441,7 +1438,7 @@ public class MechEntity extends AbstractVehicleEntity implements FreeCameraVehic
 			return false;
 		}
 		this.transformCooldown = TRANSFORM_TICKS + 6;
-		this.dataTracker.set(FORM, this.isJet() ? 0 : 1);
+		this.entityData.set(FORM, this.isJet() ? 0 : 1);
 		return true;
 	}
 
@@ -1455,13 +1452,13 @@ public class MechEntity extends AbstractVehicleEntity implements FreeCameraVehic
 			return false;
 		}
 		this.transformCooldown = 10;
-		this.dataTracker.set(TURBO, on);
+		this.entityData.set(TURBO, on);
 		this.fireEvent(MechClientHooks.EVENT_QUICK_BOOST, 0f, 1f);
 		return true;
 	}
 
 	public boolean isTurbo() {
-		return this.dataTracker != null && this.dataTracker.get(TURBO);
+		return this.entityData != null && this.entityData.get(TURBO);
 	}
 
 	/** Turbo flight's pitch (degrees, negative = climbing), for the pose. */
@@ -1475,7 +1472,7 @@ public class MechEntity extends AbstractVehicleEntity implements FreeCameraVehic
 	 * physics. Robot -> jet in the air is a launch (the boosters carry the frame up to flight speed);
 	 * jet -> robot keeps the momentum and turns the pilot's view to where the nose was. */
 	private void onFormChanged() {
-		int form = this.dataTracker.get(FORM);
+		int form = this.entityData.get(FORM);
 		if (form == this.lastFormSeen) {
 			return;
 		}
@@ -1492,22 +1489,22 @@ public class MechEntity extends AbstractVehicleEntity implements FreeCameraVehic
 			MechStats s = this.getStats();
 			boolean airborne = this.ticksSinceGrounded > GROUNDED_GRACE_TICKS;
 			float jetMax = s.jet().map(MechPart.JetSpec::maxSpeed).orElse(2.5f);
-			Vec3d v = this.getVelocity();
+			Vec3 v = this.getDeltaMovement();
 			this.jetEntrySpeed = (float) Math.max(v.length(), airborne ? jetMax * 0.6f : 0f);
 			this.jetEntryThrottle = airborne ? 0.85f : 0f;
 		} else {
 			float yaw = extractYawPitchRoll(this.flightOrientation)[0];
 			float pitch = extractYawPitchRoll(this.flightOrientation)[1];
-			super.setYaw(yaw);
-			super.setPitch(0f);
+			super.setYRot(yaw);
+			super.setXRot(0f);
 			this.roll = 0f;
-			if (this.getControllingPassenger() instanceof PlayerEntity pilot) {
-				if (pilot instanceof ServerPlayerEntity serverPilot) {
-					serverPilot.setYaw(yaw);
-					serverPilot.setPitch(MathHelper.clamp(pitch, -60f, 60f));
-				} else if (pilot.isMainPlayer()) {
-					pilot.setYaw(yaw);
-					pilot.setPitch(MathHelper.clamp(pitch, -60f, 60f));
+			if (this.getControllingPassenger() instanceof Player pilot) {
+				if (pilot instanceof ServerPlayer serverPilot) {
+					serverPilot.setYRot(yaw);
+					serverPilot.setXRot(Mth.clamp(pitch, -60f, 60f));
+				} else if (pilot.isLocalPlayer()) {
+					pilot.setYRot(yaw);
+					pilot.setXRot(Mth.clamp(pitch, -60f, 60f));
 				}
 			}
 		}
@@ -1526,35 +1523,35 @@ public class MechEntity extends AbstractVehicleEntity implements FreeCameraVehic
 
 	/** Where the camera pivot is - the origin of the aim ray. Above the frame's centre, so the ray is
 	 * the same line the third-person camera looks along regardless of zoom. */
-	public Vec3d getAimOrigin(float tickDelta) {
+	public Vec3 getAimOrigin(float tickDelta) {
 		MechLayout layout = this.getLayout();
 		float h = layout != null ? (this.isJet() ? layout.jetEye.y : layout.cameraPivotY) : 3f;
-		return this.getLerpedPos(tickDelta).add(0, h, 0);
+		return this.getPosition(tickDelta).add(0, h, 0);
 	}
 
 	/** The point under the crosshair (block, entity or max range), cached per frame. */
-	public Vec3d getAimPoint(float tickDelta) {
-		if (this.aimPointCache != null && this.aimCacheAge == this.age && this.aimCacheDelta == tickDelta) {
+	public Vec3 getAimPoint(float tickDelta) {
+		if (this.aimPointCache != null && this.aimCacheAge == this.tickCount && this.aimCacheDelta == tickDelta) {
 			return this.aimPointCache;
 		}
-		Vec3d origin = this.getAimOrigin(tickDelta);
-		Vec3d dir;
+		Vec3 origin = this.getAimOrigin(tickDelta);
+		Vec3 dir;
 		Entity pilot = this.getControllingPassenger();
 		if (pilot != null) {
-			dir = pilot.getRotationVec(tickDelta);
+			dir = pilot.getViewVector(tickDelta);
 		} else {
-			dir = Vec3d.fromPolar(0f, this.getYaw(tickDelta));
+			dir = Vec3.directionFromRotation(0f, this.getViewYRot(tickDelta));
 		}
-		Vec3d end = origin.add(dir.multiply(AIM_RANGE));
-		BlockHitResult hit = this.getEntityWorld().raycast(new RaycastContext(origin, end,
-				RaycastContext.ShapeType.COLLIDER, RaycastContext.FluidHandling.NONE, this));
-		Vec3d point = hit.getType() == HitResult.Type.BLOCK ? hit.getPos() : end;
-		double best = origin.squaredDistanceTo(point);
-		Box search = new Box(origin, point).expand(2.0);
-		for (Entity e : this.getEntityWorld().getOtherEntities(this, search, e -> e.isAlive() && !this.hasPassenger(e) && e.canHit())) {
-			Optional<Vec3d> h = e.getBoundingBox().expand(0.3).raycast(origin, point);
+		Vec3 end = origin.add(dir.scale(AIM_RANGE));
+		BlockHitResult hit = this.level().clip(new ClipContext(origin, end,
+				ClipContext.Block.COLLIDER, ClipContext.Fluid.NONE, this));
+		Vec3 point = hit.getType() == HitResult.Type.BLOCK ? hit.getLocation() : end;
+		double best = origin.distanceToSqr(point);
+		AABB search = new AABB(origin, point).inflate(2.0);
+		for (Entity e : this.level().getEntities(this, search, e -> e.isAlive() && !this.hasPassenger(e) && e.isPickable())) {
+			Optional<Vec3> h = e.getBoundingBox().inflate(0.3).clip(origin, point);
 			if (h.isPresent()) {
-				double d = origin.squaredDistanceTo(h.get());
+				double d = origin.distanceToSqr(h.get());
 				if (d < best && d > 4.0) {
 					best = d;
 					point = h.get();
@@ -1562,19 +1559,19 @@ public class MechEntity extends AbstractVehicleEntity implements FreeCameraVehic
 			}
 		}
 		this.aimPointCache = point;
-		this.aimCacheAge = this.age;
+		this.aimCacheAge = this.tickCount;
 		this.aimCacheDelta = tickDelta;
 		return point;
 	}
 
 	public Entity getLockTarget() {
-		int id = this.dataTracker.get(LOCK_ID);
-		return id < 0 ? null : this.getEntityWorld().getEntityById(id);
+		int id = this.entityData.get(LOCK_ID);
+		return id < 0 ? null : this.level().getEntity(id);
 	}
 
 	public Entity getCandidate() {
-		int id = this.dataTracker.get(CANDIDATE_ID);
-		return id < 0 ? null : this.getEntityWorld().getEntityById(id);
+		int id = this.entityData.get(CANDIDATE_ID);
+		return id < 0 ? null : this.level().getEntity(id);
 	}
 
 	/** The FCS target the weapons track: the hard lock, else the soft lock (candidate). */
@@ -1593,32 +1590,32 @@ public class MechEntity extends AbstractVehicleEntity implements FreeCameraVehic
 		if (e instanceof AbstractVehicleEntity vehicle) {
 			return !vehicle.tudursvehiclemod$isDestroyed() && !vehicle.hasPassenger(pilot);
 		}
-		if (e instanceof PlayerEntity player) {
-			return !player.isCreative() && !player.isSpectator() && !player.hasVehicle();
+		if (e instanceof Player player) {
+			return !player.isCreative() && !player.isSpectator() && !player.isPassenger();
 		}
-		if (e instanceof Monster) {
+		if (e instanceof Enemy) {
 			return true;
 		}
-		return e instanceof MobEntity mob && pilot instanceof LivingEntity living && mob.getTarget() == living;
+		return e instanceof Mob mob && pilot instanceof LivingEntity living && mob.getTarget() == living;
 	}
 
 	private void updateCandidate() {
 		Entity best = null;
-		if (this.getControllingPassenger() instanceof PlayerEntity pilot && !this.isManualMode() && this.getLayout() != null) {
+		if (this.getControllingPassenger() instanceof Player pilot && !this.isManualMode() && this.getLayout() != null) {
 			MechStats s = this.getStats();
-			Vec3d origin = this.getAimOrigin(1f);
-			Vec3d dir = pilot.getRotationVec(1f);
+			Vec3 origin = this.getAimOrigin(1f);
+			Vec3 dir = pilot.getViewVector(1f);
 			double range = s.lockRange();
 			double cosCone = Math.cos(Math.toRadians(s.lockCone()));
 			double bestScore = Double.MAX_VALUE;
-			for (Entity e : this.getEntityWorld().getOtherEntities(this, new Box(origin, origin).expand(range),
+			for (Entity e : this.level().getEntities(this, new AABB(origin, origin).inflate(range),
 					e -> this.isValidTarget(e, pilot))) {
-				Vec3d to = e.getBoundingBox().getCenter().subtract(origin);
+				Vec3 to = e.getBoundingBox().getCenter().subtract(origin);
 				double dist = to.length();
 				if (dist < 3.0 || dist > range) {
 					continue;
 				}
-				double cos = to.dotProduct(dir) / dist;
+				double cos = to.dot(dir) / dist;
 				if (cos < cosCone) {
 					continue;
 				}
@@ -1626,8 +1623,8 @@ public class MechEntity extends AbstractVehicleEntity implements FreeCameraVehic
 				if (score >= bestScore) {
 					continue;
 				}
-				BlockHitResult hit = this.getEntityWorld().raycast(new RaycastContext(origin, e.getBoundingBox().getCenter(),
-						RaycastContext.ShapeType.COLLIDER, RaycastContext.FluidHandling.NONE, this));
+				BlockHitResult hit = this.level().clip(new ClipContext(origin, e.getBoundingBox().getCenter(),
+						ClipContext.Block.COLLIDER, ClipContext.Fluid.NONE, this));
 				if (hit.getType() == HitResult.Type.BLOCK) {
 					continue;
 				}
@@ -1635,67 +1632,67 @@ public class MechEntity extends AbstractVehicleEntity implements FreeCameraVehic
 				best = e;
 			}
 		}
-		this.dataTracker.set(CANDIDATE_ID, best == null ? -1 : best.getId());
+		this.entityData.set(CANDIDATE_ID, best == null ? -1 : best.getId());
 	}
 
 	private void pruneLock() {
 		Entity lock = this.getLockTarget();
 		if (lock == null) {
-			if (this.dataTracker.get(LOCK_ID) >= 0) {
-				this.dataTracker.set(LOCK_ID, -1);
+			if (this.entityData.get(LOCK_ID) >= 0) {
+				this.entityData.set(LOCK_ID, -1);
 			}
 			return;
 		}
 		Entity pilot = this.getControllingPassenger();
 		boolean valid = (pilot != null || this.aiDriven()) && lock.isAlive() && !lock.isRemoved()
 				&& !(lock instanceof AbstractVehicleEntity v && v.tudursvehiclemod$isDestroyed())
-				&& lock.squaredDistanceTo(this) < Math.pow(this.getStats().lockRange() * 1.5, 2);
+				&& lock.distanceToSqr(this) < Math.pow(this.getStats().lockRange() * 1.5, 2);
 		if (!valid) {
-			this.dataTracker.set(LOCK_ID, -1);
+			this.entityData.set(LOCK_ID, -1);
 		}
 	}
 
 	/** The base mod's target-designation key (B): lock the soft-lock candidate, or release. */
 	@Override
 	public void tudursvehiclemod$toggleCarrierLockMode() {
-		if (this.dataTracker.get(LOCK_ID) >= 0) {
-			this.dataTracker.set(LOCK_ID, -1);
+		if (this.entityData.get(LOCK_ID) >= 0) {
+			this.entityData.set(LOCK_ID, -1);
 			return;
 		}
 		Entity candidate = this.getCandidate();
 		if (candidate != null) {
-			this.dataTracker.set(LOCK_ID, candidate.getId());
+			this.entityData.set(LOCK_ID, candidate.getId());
 		}
 	}
 
 	@Override
 	public void tudursvehiclemod$releaseAllCarrierLocks() {
-		this.dataTracker.set(LOCK_ID, -1);
+		this.entityData.set(LOCK_ID, -1);
 	}
 
 	/** World point a weapon mount should hit: the FCS target led by the projectile's flight time
 	 * (and lifted for its drop), or the crosshair point. */
-	private Vec3d targetPointFor(MountSlot mount, float tickDelta) {
+	private Vec3 targetPointFor(MountSlot mount, float tickDelta) {
 		MechPart weapon = this.getAssembly().part(mount);
 		Entity target = weapon != null && weapon.weapon() != null && weapon.weapon().fcs() ? this.getFcsTarget() : null;
 		if (target == null) {
 			return this.getAimPoint(tickDelta);
 		}
-		Vec3d center = target.getLerpedPos(tickDelta).add(0, target.getHeight() * 0.5, 0);
-		Vec3d targetVel = new Vec3d(target.getX() - target.lastX, target.getY() - target.lastY, target.getZ() - target.lastZ);
-		if (targetVel.lengthSquared() > 25.0) {
-			targetVel = Vec3d.ZERO;
+		Vec3 center = target.getPosition(tickDelta).add(0, target.getBbHeight() * 0.5, 0);
+		Vec3 targetVel = new Vec3(target.getX() - target.xo, target.getY() - target.yo, target.getZ() - target.zo);
+		if (targetVel.lengthSqr() > 25.0) {
+			targetVel = Vec3.ZERO;
 		}
 		WeaponStats stats = WeaponStatsLoader.get(weapon.weapon().weaponName());
 		double speed = Math.max(0.5, stats.velocity());
-		Vec3d origin = this.getAimOrigin(tickDelta);
-		Vec3d aim = center;
+		Vec3 origin = this.getAimOrigin(tickDelta);
+		Vec3 aim = center;
 		double t = 0;
 		for (int i = 0; i < 3; i++) {
 			double dist = aim.distanceTo(origin);
 			double ratio = 0.01 * dist / speed;
 			t = ratio < 0.95 ? -Math.log(1.0 - ratio) / 0.01005 : dist / speed * 3.0;
-			aim = center.add(targetVel.multiply(t));
+			aim = center.add(targetVel.scale(t));
 		}
 		double drop = 0.5 * Math.abs(stats.gravity()) * t * t;
 		return aim.add(0, Math.min(drop, 40.0), 0);
@@ -1708,17 +1705,17 @@ public class MechEntity extends AbstractVehicleEntity implements FreeCameraVehic
 		if (layout == null || this.isJet()) {
 			return null;
 		}
-		boolean aiAim = this.getEntityWorld().isClient() ? this.getFaction() != com.example.mechframe.ai.Faction.NONE
+		boolean aiAim = this.level().isClientSide() ? this.getFaction() != com.example.mechframe.ai.Faction.NONE
 				&& this.getControllingPassenger() == null && this.getLockTarget() != null : this.aiDriven();
-		if ((!(this.getControllingPassenger() instanceof PlayerEntity) && !aiAim) || this.tudursvehiclemod$isDestroyed()) {
+		if ((!(this.getControllingPassenger() instanceof Player) && !aiAim) || this.tudursvehiclemod$isDestroyed()) {
 			// Unmanned: arms hang down, back weapons rest level.
 			return new float[]{0f, mount.isArmWeapon() ? 40f : 0f};
 		}
-		Vec3d target = this.targetPointFor(mount, tickDelta);
+		Vec3 target = this.targetPointFor(mount, tickDelta);
 		Quaternionf body = this.tudursvehiclemod$getBodyOrientation(tickDelta);
 		Quaternionf bodyInv = new Quaternionf(body).conjugate();
-		Vec3d frame = this.tudursvehiclemod$getBodyFrameOffset(tickDelta);
-		Vec3d pos = this.getLerpedPos(tickDelta);
+		Vec3 frame = this.tudursvehiclemod$getBodyFrameOffset(tickDelta);
+		Vec3 pos = this.getPosition(tickDelta);
 		Vector3f pivotRoot = layout.weaponPivot.get(mount);
 		// Target in the body frame, relative to the mount's pivot.
 		Vector3f toTarget = bodyInv.transform(new Vector3f(
@@ -1737,7 +1734,7 @@ public class MechEntity extends AbstractVehicleEntity implements FreeCameraVehic
 			}
 			dir.normalize();
 			yaw = (float) Math.toDegrees(Math.atan2(-dir.x, dir.z));
-			pitch = (float) -Math.toDegrees(Math.asin(MathHelper.clamp(dir.y, -1f, 1f)));
+			pitch = (float) -Math.toDegrees(Math.asin(Mth.clamp(dir.y, -1f, 1f)));
 			Vector3f muzzle = new Quaternionf().rotationY((float) Math.toRadians(-yaw))
 					.rotateX((float) Math.toRadians(pitch)).transform(new Vector3f(offset));
 			// Only the sideways/vertical part of the offset matters for parallax; the along-barrel part doesn't.
@@ -1759,7 +1756,7 @@ public class MechEntity extends AbstractVehicleEntity implements FreeCameraVehic
 		if (aimRange == null) {
 			return aim[0];
 		}
-		return (float) MathHelper.clamp(MathHelper.wrapDegrees(aim[0] - aimRange.defaultYaw()),
+		return (float) Mth.clamp(Mth.wrapDegrees(aim[0] - aimRange.defaultYaw()),
 				Math.min(aimRange.minYaw(), aimRange.maxYaw()), Math.max(aimRange.minYaw(), aimRange.maxYaw()));
 	}
 
@@ -1773,7 +1770,7 @@ public class MechEntity extends AbstractVehicleEntity implements FreeCameraVehic
 		if (aimRange == null) {
 			return aim[1];
 		}
-		return (float) MathHelper.clamp(aim[1], Math.min(aimRange.minPitch(), aimRange.maxPitch()),
+		return (float) Mth.clamp(aim[1], Math.min(aimRange.minPitch(), aimRange.maxPitch()),
 				Math.max(aimRange.minPitch(), aimRange.maxPitch()));
 	}
 
@@ -1825,7 +1822,7 @@ public class MechEntity extends AbstractVehicleEntity implements FreeCameraVehic
 		double y = q.y;
 		double z = q.z;
 		double w = q.w;
-		double pitch = Math.asin(MathHelper.clamp(2.0 * (x * w - y * z), -1.0, 1.0));
+		double pitch = Math.asin(Mth.clamp(2.0 * (x * w - y * z), -1.0, 1.0));
 		double negYaw = Math.atan2(2.0 * (x * z + y * w), 1.0 - 2.0 * (x * x + y * y));
 		double roll = Math.atan2(2.0 * (x * y + z * w), 1.0 - 2.0 * (x * x + z * z));
 		return new float[]{(float) -Math.toDegrees(negYaw), (float) Math.toDegrees(pitch), (float) Math.toDegrees(roll)};
@@ -1849,8 +1846,8 @@ public class MechEntity extends AbstractVehicleEntity implements FreeCameraVehic
 			}
 			float yawRate = turn * JET_YAW_RATE_MULTIPLIER;
 			float pitchRate = turn * JET_PITCH_RATE_MULTIPLIER;
-			float targetYaw = MathHelper.clamp(this.pendingYawInput, -yawRate, yawRate);
-			float targetPitch = MathHelper.clamp(this.pendingPitchInput, -pitchRate, pitchRate);
+			float targetYaw = Mth.clamp(this.pendingYawInput, -yawRate, yawRate);
+			float targetPitch = Mth.clamp(this.pendingPitchInput, -pitchRate, pitchRate);
 			this.pendingYawInput = 0f;
 			this.pendingPitchInput = 0f;
 			float targetRoll = this.inStrafe * -JET_ROLL_RATE;
@@ -1874,8 +1871,8 @@ public class MechEntity extends AbstractVehicleEntity implements FreeCameraVehic
 			this.flightOrientation.slerp(forced, forcedT).normalize();
 		}
 		float[] e = extractYawPitchRoll(this.flightOrientation);
-		super.setYaw(e[0]);
-		super.setPitch(e[1]);
+		super.setYRot(e[0]);
+		super.setXRot(e[1]);
 		this.prevRoll = this.roll;
 		this.roll = e[2];
 		this.carryRotationOntoPassengers();
@@ -1887,20 +1884,20 @@ public class MechEntity extends AbstractVehicleEntity implements FreeCameraVehic
 			return;
 		}
 		for (Entity passenger : this.tudursvehiclemod$getRealPassengerList()) {
-			Quaternionf view = new Quaternionf().rotationY((float) Math.toRadians(-passenger.getYaw()))
-					.rotateX((float) Math.toRadians(passenger.getPitch()));
+			Quaternionf view = new Quaternionf().rotationY((float) Math.toRadians(-passenger.getYRot()))
+					.rotateX((float) Math.toRadians(passenger.getXRot()));
 			float[] e = extractYawPitchRoll(new Quaternionf(delta).mul(view).normalize());
-			passenger.setYaw(e[0]);
-			passenger.setPitch(MathHelper.clamp(e[1], -90f, 90f));
+			passenger.setYRot(e[0]);
+			passenger.setXRot(Mth.clamp(e[1], -90f, 90f));
 		}
 	}
 
 	private void updateJetFlight(VehicleDefinition def) {
 		MechStats s = this.getStats();
 		MechPart.JetSpec jet = s.jet().orElse(null);
-		PlayerEntity pilot = this.hasControl() && this.getControllingPassenger() instanceof PlayerEntity p ? p : null;
+		Player pilot = this.hasControl() && this.getControllingPassenger() instanceof Player p ? p : null;
 		if (!this.flightInitialized) {
-			this.seedFlightOrientation(super.getYaw(), super.getPitch(), this.roll);
+			this.seedFlightOrientation(super.getYRot(), super.getXRot(), this.roll);
 			this.prevFlightOrientation.set(this.flightOrientation);
 			this.flightInitialized = true;
 			this.smoothedYawDelta = 0f;
@@ -1910,7 +1907,7 @@ public class MechEntity extends AbstractVehicleEntity implements FreeCameraVehic
 		}
 		if (!this.jetActive) {
 			this.jetActive = true;
-			this.jetSurfaced = this.isOnGround();
+			this.jetSurfaced = this.onGround();
 			this.jetLifted = !this.jetSurfaced;
 			this.jetStalling = false;
 			this.jetSustained = false;
@@ -1924,7 +1921,7 @@ public class MechEntity extends AbstractVehicleEntity implements FreeCameraVehic
 
 		float throttle;
 		if (pilot != null) {
-			throttle = MathHelper.clamp(this.getThrottle() + this.inForward * 0.025f, 0f, 1f);
+			throttle = Mth.clamp(this.getThrottle() + this.inForward * 0.025f, 0f, 1f);
 			this.setThrottleDirect(throttle);
 		} else {
 			throttle = Math.max(0f, this.getThrottle() - 0.01f);
@@ -1941,7 +1938,7 @@ public class MechEntity extends AbstractVehicleEntity implements FreeCameraVehic
 		float maxSpeed = def.maxSpeed() * (afterburner ? jet.afterburner() : 1f);
 		float effThrottle = afterburner ? 1f : throttle;
 
-		boolean raw = this.isOnGround();
+		boolean raw = this.onGround();
 		if (raw == this.jetSurfaced) {
 			this.jetSurfacedDebounce = 0;
 		} else if (++this.jetSurfacedDebounce >= 3) {
@@ -1950,7 +1947,7 @@ public class MechEntity extends AbstractVehicleEntity implements FreeCameraVehic
 		}
 		boolean surfaced = this.jetSurfaced;
 		this.ticksSinceGrounded = surfaced ? 0 : this.ticksSinceGrounded + 1;
-		float actual = (float) this.getVelocity().length();
+		float actual = (float) this.getDeltaMovement().length();
 		if (this.jetSustained) {
 			if (this.cruiseSpeed < def.maxSpeed() * JET_SUSTAINED_DISENGAGE) {
 				this.jetSustained = false;
@@ -1969,8 +1966,8 @@ public class MechEntity extends AbstractVehicleEntity implements FreeCameraVehic
 
 		// ---- attitude
 		if (surfaced) {
-			float steer = pilot != null ? -this.inStrafe * def.turnSpeed() * 1.5f + MathHelper.clamp(this.pendingYawInput * 0.3f, -6f, 6f) : 0f;
-			Quaternionf ground = new Quaternionf().rotationY((float) Math.toRadians(-(this.getYaw() + steer)));
+			float steer = pilot != null ? -this.inStrafe * def.turnSpeed() * 1.5f + Mth.clamp(this.pendingYawInput * 0.3f, -6f, 6f) : 0f;
+			Quaternionf ground = new Quaternionf().rotationY((float) Math.toRadians(-(this.getYRot() + steer)));
 			this.pendingYawInput = 0f;
 			this.pendingPitchInput = Math.min(0f, this.pendingPitchInput);
 			if (pilot != null && this.cruiseSpeed > def.maxSpeed() * JET_MIN_FLIGHT_FRACTION && this.pendingPitchInput < 0f) {
@@ -1984,7 +1981,7 @@ public class MechEntity extends AbstractVehicleEntity implements FreeCameraVehic
 			}
 		} else if (this.jetStalling) {
 			if (!this.jetHoldYawLocked) {
-				this.jetHoldYaw = this.getYaw();
+				this.jetHoldYaw = this.getYRot();
 				this.jetHoldYawLocked = true;
 			}
 			Quaternionf noseDown = new Quaternionf().rotationY((float) Math.toRadians(-this.jetHoldYaw)).rotateX((float) Math.toRadians(70f));
@@ -1999,23 +1996,23 @@ public class MechEntity extends AbstractVehicleEntity implements FreeCameraVehic
 		}
 
 		// ---- velocity
-		Vec3d target;
-		if (this.isTouchingWater()) {
-			Vec3d cur = this.getVelocity();
-			target = new Vec3d(cur.x * 0.85, -0.08, cur.z * 0.85);
+		Vec3 target;
+		if (this.isInWater()) {
+			Vec3 cur = this.getDeltaMovement();
+			target = new Vec3(cur.x * 0.85, -0.08, cur.z * 0.85);
 			this.cruiseSpeed *= 0.85f;
 		} else if (surfaced) {
 			float ts = effThrottle * maxSpeed;
 			float blend = ts < this.cruiseSpeed ? JET_GROUND_DECEL : JET_GROUND_BLEND;
 			this.cruiseSpeed += (ts - this.cruiseSpeed) * blend;
-			Vec3d heading = this.getRotationVec(1f);
-			target = new Vec3d(heading.x * this.cruiseSpeed, -0.05, heading.z * this.cruiseSpeed);
-			if (this.jetSustained && this.getPitch() < -3f) {
-				target = new Vec3d(target.x, JET_LIFTOFF_VELOCITY, target.z);
+			Vec3 heading = this.getViewVector(1f);
+			target = new Vec3(heading.x * this.cruiseSpeed, -0.05, heading.z * this.cruiseSpeed);
+			if (this.jetSustained && this.getXRot() < -3f) {
+				target = new Vec3(target.x, JET_LIFTOFF_VELOCITY, target.z);
 			}
 		} else {
-			Vec3d heading = this.getRotationVec(1f);
-			Vec3d vel = this.getVelocity();
+			Vec3 heading = this.getViewVector(1f);
+			Vec3 vel = this.getDeltaMovement();
 			double hs = Math.sqrt(vel.x * vel.x + vel.z * vel.z);
 			float rawPath = hs < 1e-4 && Math.abs(vel.y) < 1e-4 ? 0f : (float) Math.toDegrees(Math.atan2(vel.y, hs));
 			if (Math.abs(rawPath) >= Math.abs(this.jetSmoothedPathPitch)) {
@@ -2026,44 +2023,44 @@ public class MechEntity extends AbstractVehicleEntity implements FreeCameraVehic
 			float path = this.jetSmoothedPathPitch;
 			float ts;
 			float blend;
-			float base = this.jetSustained ? MathHelper.clamp(def.acceleration(), 0.01f, 1f) : JET_GLIDE_BLEND;
+			float base = this.jetSustained ? Mth.clamp(def.acceleration(), 0.01f, 1f) : JET_GLIDE_BLEND;
 			if (path >= 0f) {
-				float climb = MathHelper.clamp(path / 90f, 0f, 1f);
-				ts = effThrottle * maxSpeed * MathHelper.lerp(climb, 1f, JET_CLIMB_MIN_FRACTION);
+				float climb = Mth.clamp(path / 90f, 0f, 1f);
+				ts = effThrottle * maxSpeed * Mth.lerp(climb, 1f, JET_CLIMB_MIN_FRACTION);
 				blend = Math.max(base, climb * JET_CLIMB_DECEL);
 			} else {
-				float dive = MathHelper.clamp(-path / 90f, 0f, 1f);
-				ts = MathHelper.lerp(dive, effThrottle * maxSpeed, maxSpeed * JET_DIVE_MULTIPLIER);
+				float dive = Mth.clamp(-path / 90f, 0f, 1f);
+				ts = Mth.lerp(dive, effThrottle * maxSpeed, maxSpeed * JET_DIVE_MULTIPLIER);
 				blend = Math.max(base, dive * JET_DIVE_BLEND);
 			}
 			if (ts < this.cruiseSpeed) {
 				blend = Math.max(blend * 1.5f, 0.002f);
 			}
 			this.cruiseSpeed += (ts - this.cruiseSpeed) * blend;
-			target = heading.multiply(this.cruiseSpeed);
+			target = heading.scale(this.cruiseSpeed);
 			if (!this.jetSustained && !this.jetStalling && this.cruiseSpeed < def.maxSpeed() * (stallFraction + 0.1f)) {
 				float lower = def.maxSpeed() * stallFraction;
 				float upper = def.maxSpeed() * (stallFraction + 0.1f);
-				float f = upper > lower ? MathHelper.clamp(1f - (this.cruiseSpeed - lower) / (upper - lower), 0f, 1f) : 1f;
+				float f = upper > lower ? Mth.clamp(1f - (this.cruiseSpeed - lower) / (upper - lower), 0f, 1f) : 1f;
 				double gy = Math.max(JET_NEAR_STALL_MAX_FALL, vel.y + def.gravity() * JET_NEAR_STALL_GRAVITY * f);
-				target = new Vec3d(target.x, MathHelper.lerp(f, target.y, gy), target.z);
+				target = new Vec3(target.x, Mth.lerp(f, target.y, gy), target.z);
 			}
 			if (this.jinkTicks > 0) {
 				// Lateral jink: a sideways shove that decays over its duration.
-				double yawRad = Math.toRadians(this.getYaw());
+				double yawRad = Math.toRadians(this.getYRot());
 				double side = this.jinkSide * 1.5 * (this.jinkTicks / 10.0);
 				target = target.add(Math.cos(yawRad) * side, 0, Math.sin(yawRad) * side);
 			}
 		}
 		double preSpeed = target.length();
-		this.setVelocity(target);
-		this.move(MovementType.SELF, this.getVelocity());
-		if (this.horizontalCollision && preSpeed > JET_CRASH_MIN_SPEED && this.getEntityWorld() instanceof ServerWorld sw) {
-			this.damage(sw, this.getDamageSources().flyIntoWall(), (float) (preSpeed * JET_CRASH_DAMAGE_PER_SPEED));
+		this.setDeltaMovement(target);
+		this.move(MoverType.SELF, this.getDeltaMovement());
+		if (this.horizontalCollision && preSpeed > JET_CRASH_MIN_SPEED && this.level() instanceof ServerLevel sw) {
+			this.hurtServer(sw, this.damageSources().flyIntoWall(), (float) (preSpeed * JET_CRASH_DAMAGE_PER_SPEED));
 			this.cruiseSpeed = 0f;
 		}
 		this.prevTravel = this.travel;
-		this.travel += (float) this.getVelocity().horizontalLength();
+		this.travel += (float) this.getDeltaMovement().horizontalDistance();
 	}
 
 	private boolean tryJink(float localX) {
@@ -2087,26 +2084,26 @@ public class MechEntity extends AbstractVehicleEntity implements FreeCameraVehic
 	// ==================================================================================== persistence
 
 	@Override
-	protected void readCustomData(ReadView view) {
-		super.readCustomData(view);
-		this.dataTracker.set(ASSEMBLY, view.getString("MechAssembly", ""));
+	protected void readAdditionalSaveData(ValueInput view) {
+		super.readAdditionalSaveData(view);
+		this.entityData.set(ASSEMBLY, view.getStringOr("MechAssembly", ""));
 		MechLayout layout = this.getLayout();
-		int form = view.getInt("MechForm", 0);
-		this.dataTracker.set(FORM, layout != null && layout.canTransform ? form : 0);
+		int form = view.getIntOr("MechForm", 0);
+		this.entityData.set(FORM, layout != null && layout.canTransform ? form : 0);
 		this.transform = this.prevTransform = this.isJet() ? 1f : 0f;
-		this.lastFormSeen = this.dataTracker.get(FORM);
-		this.en = view.getFloat("MechEn", -1f);
-		this.setBrain(view.getOptionalReadView("MechAI").map(com.example.mechframe.ai.MechBrain::read).orElse(null));
+		this.lastFormSeen = this.entityData.get(FORM);
+		this.en = view.getFloatOr("MechEn", -1f);
+		this.setBrain(view.child("MechAI").map(com.example.mechframe.ai.MechBrain::read).orElse(null));
 	}
 
 	@Override
-	protected void writeCustomData(WriteView view) {
-		super.writeCustomData(view);
-		view.putString("MechAssembly", this.dataTracker.get(ASSEMBLY));
-		view.putInt("MechForm", this.dataTracker.get(FORM));
+	protected void addAdditionalSaveData(ValueOutput view) {
+		super.addAdditionalSaveData(view);
+		view.putString("MechAssembly", this.entityData.get(ASSEMBLY));
+		view.putInt("MechForm", this.entityData.get(FORM));
 		view.putFloat("MechEn", this.en);
 		if (this.brain != null) {
-			this.brain.write(view.get("MechAI"));
+			this.brain.write(view.child("MechAI"));
 		}
 	}
 }

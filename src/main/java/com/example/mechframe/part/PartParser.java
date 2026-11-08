@@ -3,7 +3,6 @@ package com.example.mechframe.part;
 import com.google.gson.JsonArray;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
-import net.minecraft.util.Identifier;
 import org.joml.Vector3f;
 
 import java.util.ArrayList;
@@ -11,6 +10,7 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import net.minecraft.resources.Identifier;
 
 /** JSON -> MechPart. Hand-written rather than a Codec: parts have many optional, slot-specific
  * blocks, and a missing or misspelled key should fall back to a sensible default with a clear log
@@ -28,8 +28,8 @@ public final class PartParser {
 		String displayName = str(json, "display_name", id.getPath());
 		String maker = str(json, "maker", "");
 		int tier = (int) num(json, "tier", 1);
-		Identifier model = Identifier.of(str(json, "model", id.getNamespace() + ":models/obj/parts/" + id.getPath() + ".obj"));
-		Identifier texture = Identifier.of(str(json, "texture", id.getNamespace() + ":textures/part/" + id.getPath() + ".png"));
+		Identifier model = Identifier.parse(str(json, "model", id.getNamespace() + ":models/obj/parts/" + id.getPath() + ".obj"));
+		Identifier texture = Identifier.parse(str(json, "texture", id.getNamespace() + ":textures/part/" + id.getPath() + ".png"));
 		float weight = (float) num(json, "weight", 5);
 		float armor = (float) num(json, "armor", 100);
 		Optional<String> transformSet = json.has("transform_set") ? Optional.of(json.get("transform_set").getAsString()) : Optional.empty();
@@ -74,7 +74,7 @@ public final class PartParser {
 					for (Map.Entry<String, JsonElement> e : stats.getAsJsonObject("integrated").entrySet()) {
 						MountSlot m = MountSlot.byId(e.getKey());
 						if (m != null && m.isArmWeapon()) {
-							integrated.put(m, Identifier.of(e.getValue().getAsString()));
+							integrated.put(m, Identifier.parse(e.getValue().getAsString()));
 						}
 					}
 				}
@@ -95,7 +95,7 @@ public final class PartParser {
 			case WEAPON -> weapon = new MechPart.WeaponSpec(
 					str(stats, "weapon", id.getPath()),
 					MountSlot.WeaponMount.byId(str(stats, "mount", "any")),
-					Identifier.of(str(stats, "projectile_item", "minecraft:iron_nugget")),
+					Identifier.parse(str(stats, "projectile_item", "minecraft:iron_nugget")),
 					(float) num(stats, "recoil_distance", 0.1),
 					(float) num(stats, "min_yaw", -75), (float) num(stats, "max_yaw", 75),
 					(float) num(stats, "min_pitch", -80), (float) num(stats, "max_pitch", 60),

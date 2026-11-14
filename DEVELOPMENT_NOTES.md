@@ -168,8 +168,8 @@ Mech Frame の設計と、実装中に分かったことの記録です。ユー
 - 配備する機体は `RandomAssembly`(全パーツから、Tierの範囲で。脚の積載を超えたら肩の武器を外して振り直す)。車両定義は
   `mechframe:striker`(車両側の設定だけを使う)。名前は「敵機 <コアのメーカー>」(赤)/「味方機 …」(緑)。
 - パーツのドロップ: `MechEntity.damage` で撃破に変わった瞬間に1回だけ(`dropsRolled`)。内蔵武器は腕と一緒なので抽選しない。
-- ブロック破壊なし: `AiProjectileBlockDamageMixin`(弾の爆発の破壊・火を止め、貫通は止める)、`AiWreckExplosionMixin`(撃破時の
-  MOB爆発をNONEで出し直す)。Enemy Vehicle Addon と同じ方法。
+- ブロック破壊なし: 前提MODの `VehicleProjectileEvents.ALLOW_BLOCK_DAMAGE`(1.1.2、弾の爆発の破壊・火と貫通を止める。
+  `MechFrame#onInitialize` で登録)、`AiWreckExplosionMixin`(撃破時のMOB爆発をNONEで出し直す)。
 - 構造物: `tools/mechgen/gen_outposts.py` が構造物テンプレート(NBT、DataVersion 4671)と jigsaw 構造物(1ピース、`beard_box`)、
   `structure_set`(間隔34チャンク)、バイオームタグを書く。指令所の設定はテンプレートのブロックエンティティのデータ。
 - 開発テスト: `ai`(前哨基地の敵機が交戦、味方機の基地防衛→僚機)、`aiesc`(僚機の追従)、`aires`(要塞、撃破・ドロップ・再配備)、
@@ -200,4 +200,30 @@ Mech Frame の設計と、実装中に分かったことの記録です。ユー
   1.21.11 にしか無い API(ツールチップ、マウス入力、ギズモ、`Level#explode` の戻り値など)は、パッチと
   このアドオン独自の互換クラスで直しています。詳しくは `mechframe-forge/PORTING.md`。
   Fabric 版を直したら、Forge 版は `port.py generate` で作り直し、パッチが当たらなくなった箇所だけ手で直します。
+
+## 最適化 (1.1.1、前提MOD 1.1.2)
+
+- `MechEntity#getDefinition()`: 前提MODは1tickに何度も呼ぶ。以前は呼ぶたびに組み合わせ全体を文字列にしてから共有キャッシュを
+  引いていた(開発環境で約1.5〜2µs/回)。機体ごとに結果(`DefinitionFactory.Entry`)を持ち、レイアウト(同一性)・形態・車両定義
+  (レジストリの Map の同一性と ID)・`DefinitionFactory.epoch()` のどれかが変わったときだけ引き直す(約0.2µs/回)。
+- 当たり判定のメッシュ: 前提MODの内部キャッシュ(`GROUPED_CACHE`)へ直接入れていたため、前提MODがキャッシュを消すと
+  (`/reload`、定義の同期)メッシュが無くなり、`INJECTED` が「登録済み」のままなので戻らなかった。
+  `ServerObjModelHitboxes.registerGeneratedModel()` に置き換え(`/reload` をまたいで保持)。
+- 使われなくなった組み合わせの解放: 防衛AIの機体は毎回ランダムな構成なので、`MechLayout`・`DefinitionFactory`・メッシュの
+  キャッシュが配備のたびに増え、前提MODの定義ごとのキャッシュ(静的メッシュ・ボクセル)も増えていた(メッシュ1つで約4,000三角形)。
+  機体は1tickに1回、自分のレイアウトと定義に使用中の印を付け(`touch()`)、`FrameCaches.tick()`(サーバーとクライアントの
+  tick、30秒ごと)が1分間使われていないものを解放し、どの定義も使っていないメッシュを`unregisterGeneratedModel()`する。
+  解放した定義が24個たまるごとに前提MODの `clearDefinitionCaches()`(使用中の分は必要になったときに作り直される)。
+  解放したら epoch を上げるので、まだ読み込まれている機体は次の `getDefinition()` で引き直し、メッシュも戻る。
+- 照準点(`getAimPoint`、操縦者のクライアントで毎フレーム、サーバーで毎tick): 照準線全体(最大256m、斜めなら数百チャンク)を
+  囲む箱でエンティティを探していた。16mずつ手前から探し、当たりが見つかった区間で打ち切る。
+- ソフトロックの候補(2tickごと): ロック距離の立方体ではなく、ロックの円錐を囲む箱で探す(円錐が80°以上なら従来どおり)。
+- `WeaponStatsLoaderMixin`: 取り付け箇所の別名から`#`以降を取り除く結果をキャッシュ(前提MODは名前ごとに結果を
+  キャッシュするようになったので、毎回の部分文字列が唯一の割り当てだった)。
+- 描画(`MechPoser`): 描くグループの一覧とキー文字列を毎フレーム作っていた。レイアウトごとに作って使い回す
+  (頭部あり・なしの2通り。パーツのモデルが読み直されたら作り直す)。
+- 前提MODの公開フックへの置き換え: `AbstractVehicleEntityAccessor`(体力・燃料・武器の状態)、`AiProjectileBlockDamageMixin`、
+  `ServerObjModelHitboxesAccessor` を削除。前提MODの内部の変更に影響されなくなった。
+- 開発テスト `perf`(`-PdevtestEnd=2400`): `/reload` 前後と前提MODのキャッシュを消した後のメッシュ、`getDefinition()` の時間、
+  ランダムな機体20機を消した後の解放。
 

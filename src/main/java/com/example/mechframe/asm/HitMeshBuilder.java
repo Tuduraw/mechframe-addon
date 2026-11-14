@@ -1,12 +1,12 @@
 package com.example.mechframe.asm;
 
 import com.example.mechframe.MechFrame;
-import com.example.mechframe.mixin.ServerObjModelHitboxesAccessor;
 import com.example.mechframe.part.MechForm;
 import com.example.mechframe.part.MechLayout;
 import com.example.mechframe.part.MechPart;
 import com.example.mechframe.part.MountSlot;
 import com.example.mechframe.part.PartRegistry;
+import com.example.tudursvehiclemod.asset.ServerObjModelHitboxes;
 import org.joml.Matrix4f;
 import org.joml.Vector3f;
 import org.slf4j.Logger;
@@ -16,12 +16,12 @@ import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Optional;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import net.minecraft.resources.Identifier;
 
-/** Builds the hit-detection geometry of an assembled frame and hands it to the base mod.
+/** Builds the hit-detection geometry of an assembled frame and hands it to the base mod
+ * (ServerObjModelHitboxes.registerGeneratedModel(), which keeps it across /reload).
  *
  * <p>Every part's OBJ is placed with the same MechLayout matrices the renderer starts from, at rest
  * (legs standing, arms forward). Groups:
@@ -36,7 +36,8 @@ import net.minecraft.resources.Identifier;
 public final class HitMeshBuilder {
 
 	private static final Logger LOGGER = LoggerFactory.getLogger("MechFrame/HitMesh");
-	private static final Set<Identifier> INJECTED = ConcurrentHashMap.newKeySet();
+	/** Model ids currently registered with the base mod. */
+	private static final Set<Identifier> REGISTERED = ConcurrentHashMap.newKeySet();
 
 	private HitMeshBuilder() {
 	}
@@ -50,10 +51,10 @@ public final class HitMeshBuilder {
 		return Identifier.fromNamespaceAndPath(MechFrame.MOD_ID, "models/obj/asm/" + hash + ".obj");
 	}
 
-	/** Makes sure the base mod's cache holds this frame's mesh (idempotent, cheap after the first call). */
+	/** Makes sure the base mod has this frame's mesh registered (idempotent, cheap after the first call). */
 	public static Identifier ensure(MechLayout layout, MechForm form) {
 		Identifier id = modelId(layout, form);
-		if (INJECTED.contains(id)) {
+		if (REGISTERED.contains(id)) {
 			return id;
 		}
 		Map<String, List<float[]>> groups;
@@ -63,11 +64,30 @@ public final class HitMeshBuilder {
 			LOGGER.error("Failed to build hit mesh for {}", layout.assembly.encode(), e);
 			groups = Map.of();
 		}
-		if (!groups.isEmpty()) {
-			ServerObjModelHitboxesAccessor.mechframe$groupedCache().put(id, Optional.of(groups));
-		}
-		INJECTED.add(id);
+		// Registered even when empty: the base mod then treats the model as having no mesh, instead
+		// of looking for an OBJ file of that name.
+		ServerObjModelHitboxes.registerGeneratedModel(id, groups);
+		REGISTERED.add(id);
 		return id;
+	}
+
+	/** Number of meshes registered with the base mod (diagnostics, the development play test). */
+	public static int registeredCount() {
+		return REGISTERED.size();
+	}
+
+	/** Unregisters every mesh except those listed (the ones a cached definition still refers to). */
+	static void releaseExcept(Set<Identifier> keep) {
+		for (Identifier id : REGISTERED) {
+			if (!keep.contains(id) && REGISTERED.remove(id)) {
+				ServerObjModelHitboxes.unregisterGeneratedModel(id);
+			}
+		}
+	}
+
+	/** Unregisters every mesh (data reload: the part geometry may have changed). */
+	static void releaseAll() {
+		releaseExcept(Set.of());
 	}
 
 	private static Map<String, List<float[]>> buildRobot(MechLayout layout) {

@@ -53,6 +53,12 @@ public class MechFrame implements ModInitializer {
 		MechNetworking.register();
 		ServerLifecycleEvents.SERVER_STARTED.register(MechNetworking::setServer);
 		net.fabricmc.fabric.api.event.lifecycle.v1.ServerTickEvents.END_SERVER_TICK.register(com.example.mechframe.ai.MechBrain::serverTick);
+		net.fabricmc.fabric.api.event.lifecycle.v1.ServerTickEvents.END_SERVER_TICK.register(server -> com.example.mechframe.asm.FrameCaches.tick());
+		// Shots of defence-AI frames break no blocks (unless the server config allows it).
+		com.example.tudursvehiclemod.entity.projectile.VehicleProjectileEvents.ALLOW_BLOCK_DAMAGE.register(projectile ->
+				com.example.mechframe.ai.MechServerConfig.aiBlockDamage
+						|| !(projectile.tudursvehiclemod$getFiringVehicle() instanceof com.example.mechframe.entity.MechEntity mech)
+						|| mech.getBrain() == null || mech.getControllingPassenger() != null);
 		ServerLifecycleEvents.SERVER_STOPPED.register(server -> MechNetworking.setServer(null));
 	}
 }

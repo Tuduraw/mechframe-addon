@@ -33,6 +33,7 @@ public class MechFrameClient implements ClientModInitializer {
 		ClientTickEvents.END_CLIENT_TICK.register(client -> {
 			CameraFx.tick(client);
 			MechHud.tickMarkers(client);
+			com.example.mechframe.asm.FrameCaches.tick();
 		});
 		// Development builds only (-Pdevtest): the automated play test is not in a release jar.
 		if (System.getProperty("mechframe.devtest") != null) {

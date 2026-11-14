@@ -44,29 +44,101 @@ public final class DefinitionFactory {
 	private record Key(String assembly, MechForm form, int generation) {
 	}
 
-	private record Entry(VehicleDefinition base, VehicleDefinition built) {
+	/** One synthesized definition. The frames that use it mark it once per tick (touch()); the
+	 * periodic sweep() releases entries no loaded frame has marked for a while, with their hit meshes. */
+	public static final class Entry {
+		final VehicleDefinition base;
+		private final VehicleDefinition built;
+		private volatile long lastUsed = System.nanoTime();
+
+		Entry(VehicleDefinition base, VehicleDefinition built) {
+			this.base = base;
+			this.built = built;
+		}
+
+		public VehicleDefinition definition() {
+			return this.built;
+		}
+
+		public void touch() {
+			this.lastUsed = System.nanoTime();
+		}
 	}
+
+	/** An entry no frame has used for this long is released (one minute). */
+	private static final long STALE_NANOS = 60L * 1_000_000_000L;
+	/** The base mod keeps per-definition caches (static body mesh, voxel grid, ...) keyed by the
+	 * definition object until a /reload. After this many released definitions they are cleared, so
+	 * a long session of randomly built enemy frames doesn't pile them up; they rebuild on demand. */
+	private static final int BASE_CACHE_CLEAR_AFTER = 24;
 
 	private static final Map<Key, Entry> CACHE = new HashMap<>();
 	private static VehicleDefinition fallbackBase;
+	/** Bumped whenever entries are dropped (reload, sweep): frames re-resolve their definition then
+	 * (MechEntity caches the Entry it got and checks this), which also puts back a released mesh. */
+	private static volatile int epoch;
+	private static int releasedSinceBaseClear;
 
 	private DefinitionFactory() {
 	}
 
-	public static synchronized VehicleDefinition get(MechLayout layout, MechForm form, VehicleDefinition presetDef) {
+	public static int epoch() {
+		return epoch;
+	}
+
+	/** The definition of this layout in this form, built once per distinct (assembly, form, preset
+	 * definition) and shared. Callers that ask often should keep the Entry and re-ask only when the
+	 * layout, form, preset definition or epoch() changed (MechEntity does). */
+	public static synchronized Entry get(MechLayout layout, MechForm form, VehicleDefinition presetDef) {
 		VehicleDefinition base = presetDef != null && ENTITY_TYPE.equals(presetDef.entityType()) ? presetDef : fallbackBase();
 		Key key = new Key(layout.assembly.encode(), form, com.example.mechframe.part.PartRegistry.generation());
 		Entry entry = CACHE.get(key);
-		if (entry != null && entry.base == base) {
-			return entry.built;
+		if (entry == null || entry.base != base) {
+			MechForm built = form == MechForm.JET && layout.canTransform ? MechForm.JET : MechForm.ROBOT;
+			entry = new Entry(base, build(layout, built, base));
+			CACHE.put(key, entry);
+		} else {
+			// The mesh may have been released by a sweep while this entry stayed (see sweep()).
+			HitMeshBuilder.ensure(layout, form == MechForm.JET && layout.canTransform ? MechForm.JET : MechForm.ROBOT);
 		}
-		VehicleDefinition built = build(layout, form == MechForm.JET && layout.canTransform ? MechForm.JET : MechForm.ROBOT, base);
-		CACHE.put(key, new Entry(base, built));
-		return built;
+		entry.touch();
+		return entry;
 	}
 
+	/** Number of cached definitions (diagnostics, the development play test). */
+	public static synchronized int cachedCount() {
+		return CACHE.size();
+	}
+
+	/** Data reload: every definition and hit mesh is rebuilt from the new part data on demand. */
 	public static synchronized void clear() {
 		CACHE.clear();
+		HitMeshBuilder.releaseAll();
+		releasedSinceBaseClear = 0;
+		epoch++;
+	}
+
+	/** Releases the definitions (and hit meshes no remaining definition uses) of frames that are no
+	 * longer loaded. Called every half minute from the server and the client tick. */
+	public static synchronized void sweep() {
+		long now = System.nanoTime();
+		int before = CACHE.size();
+		CACHE.values().removeIf(e -> now - e.lastUsed > STALE_NANOS);
+		int released = before - CACHE.size();
+		if (released == 0) {
+			return;
+		}
+		java.util.Set<Identifier> inUse = new java.util.HashSet<>();
+		for (Entry e : CACHE.values()) {
+			inUse.add(e.built.model());
+		}
+		HitMeshBuilder.releaseExcept(inUse);
+		epoch++;
+		releasedSinceBaseClear += released;
+		if (releasedSinceBaseClear >= BASE_CACHE_CLEAR_AFTER) {
+			releasedSinceBaseClear = 0;
+			com.example.tudursvehiclemod.entity.AbstractVehicleEntity.tudursvehiclemod$clearDefinitionCaches();
+		}
 	}
 
 	/** A definition with every base-mod default, for a client that never received the preset JSON. */

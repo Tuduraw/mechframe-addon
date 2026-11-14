@@ -49,34 +49,16 @@ public final class MechPoser {
 		boolean robotOnly = transform <= 0.001f || !layout.canTransform;
 
 		Map<String, Matrix4f> robot = fullyJet ? Map.of() : robotPose(mech, layout, anim, td);
-		Map<String, Entry> entries = new java.util.LinkedHashMap<>();
-		boolean hideHead = hidesHeadFor(mech);
-		for (MountSlot slot : MountSlot.values()) {
-			MechPart part = layout.assembly.part(slot);
-			if (part == null || (hideHead && slot == MountSlot.HEAD)) {
-				continue;
-			}
-			ObjModel model = ObjModelLoader.get(part.model()).orElse(null);
-			if (model == null) {
-				continue;
-			}
-			for (String group : model.getGroupNames()) {
-				if (slot == MountSlot.ARMS && !group.startsWith("l_") && !group.startsWith("r_")) {
-					continue;
-				}
-				entries.put(slot.id() + ":" + group, new Entry(slot, group, part));
-			}
-		}
-		Blender blender = new Blender(layout, robot, entries, transform);
-		for (Map.Entry<String, Entry> e : entries.entrySet()) {
-			Entry entry = e.getValue();
+		Map<String, Entry> entries = rig(layout, hidesHeadFor(mech));
+		Blender blender = robotOnly || fullyJet ? null : new Blender(layout, robot, entries, transform);
+		for (Entry entry : entries.values()) {
 			Matrix4f m;
 			if (robotOnly) {
-				m = robotOf(robot, entry.slot, entry.group);
+				m = robotOf(robot, entry);
 			} else if (fullyJet) {
 				m = jetMatrix(layout, entry.slot, entry.group);
 			} else {
-				m = blender.blended(e.getKey());
+				m = blender.blended(entry.key);
 			}
 			if (m != null) {
 				out.add(new DrawItem(entry.part.model(), entry.group, entry.part.texture(), m, false));
@@ -94,12 +76,64 @@ public final class MechPoser {
 		return cam != null && mc.options.getCameraType().isFirstPerson() && cam.getVehicle() == mech;
 	}
 
-	private record Entry(MountSlot slot, String group, MechPart part) {
+	/** One drawn group: its key in the pose maps ("slot:group") and its slot's fallback ("slot:*"). */
+	private record Entry(MountSlot slot, String group, MechPart part, String key, String wildcard) {
 	}
 
-	private static Matrix4f robotOf(Map<String, Matrix4f> robot, MountSlot slot, String group) {
-		Matrix4f m = robot.get(slot.id() + ":" + group);
-		return m != null ? m : robot.get(slot.id() + ":*");
+	/** The drawn groups of a layout, in draw order, keyed "slot:group": with the head, and without
+	 * it (first-person pilot). Built once per layout instead of every frame (it only changes with the
+	 * parts), and again if a part's model object changes (a resource reload); a layout whose models
+	 * aren't all loaded yet is built afresh until they are. */
+	private record Rig(ObjModel[] models, Map<String, Entry> full, Map<String, Entry> headless) {
+	}
+
+	private static final Map<MechLayout, Rig> RIGS = new java.util.WeakHashMap<>();
+
+	private static Map<String, Entry> rig(MechLayout layout, boolean hideHead) {
+		ObjModel[] models = new ObjModel[MountSlot.values().length];
+		boolean complete = true;
+		for (MountSlot slot : MountSlot.values()) {
+			MechPart part = layout.assembly.part(slot);
+			if (part != null) {
+				models[slot.ordinal()] = ObjModelLoader.get(part.model()).orElse(null);
+				complete &= models[slot.ordinal()] != null;
+			}
+		}
+		Rig rig = RIGS.get(layout);
+		if (rig == null || !java.util.Arrays.equals(rig.models, models)) {
+			rig = new Rig(models, collectRig(layout, models, false), collectRig(layout, models, true));
+			if (complete) {
+				RIGS.put(layout, rig);
+			} else {
+				RIGS.remove(layout);
+			}
+		}
+		return hideHead ? rig.headless : rig.full;
+	}
+
+	private static Map<String, Entry> collectRig(MechLayout layout, ObjModel[] models, boolean hideHead) {
+		Map<String, Entry> entries = new java.util.LinkedHashMap<>();
+		for (MountSlot slot : MountSlot.values()) {
+			MechPart part = layout.assembly.part(slot);
+			ObjModel model = models[slot.ordinal()];
+			if (part == null || model == null || (hideHead && slot == MountSlot.HEAD)) {
+				continue;
+			}
+			String wildcard = slot.id() + ":*";
+			for (String group : model.getGroupNames()) {
+				if (slot == MountSlot.ARMS && !group.startsWith("l_") && !group.startsWith("r_")) {
+					continue;
+				}
+				String key = slot.id() + ":" + group;
+				entries.put(key, new Entry(slot, group, part, key, wildcard));
+			}
+		}
+		return java.util.Collections.unmodifiableMap(entries);
+	}
+
+	private static Matrix4f robotOf(Map<String, Matrix4f> robot, Entry entry) {
+		Matrix4f m = robot.get(entry.key);
+		return m != null ? m : robot.get(entry.wildcard);
 	}
 
 	/**
@@ -136,7 +170,7 @@ public final class MechPoser {
 			if (entry == null || !this.visiting.add(key)) {
 				return null;
 			}
-			Matrix4f robotM = robotOf(this.robot, entry.slot, entry.group);
+			Matrix4f robotM = robotOf(this.robot, entry);
 			Matrix4f jetM = jetMatrix(this.layout, entry.slot, entry.group);
 			float delay = jetDelayFor(this.layout, entry.slot, entry.group);
 			float s = Mth.clamp((this.transform - delay) / Math.max(0.05f, 1f - delay), 0f, 1f);
@@ -146,7 +180,7 @@ public final class MechPoser {
 			Entry parent = parentKey != null ? this.entries.get(parentKey) : null;
 			if (robotM != null && parent != null) {
 				Matrix4f parentNow = this.blended(parentKey);
-				Matrix4f parentRobot = robotOf(this.robot, parent.slot, parent.group);
+				Matrix4f parentRobot = robotOf(this.robot, parent);
 				if (parentNow != null && parentRobot != null) {
 					Matrix4f parentJet = jetMatrix(this.layout, parent.slot, parent.group);
 					Matrix4f relRobot = new Matrix4f(parentRobot).invert().mul(robotM);

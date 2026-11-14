@@ -205,12 +205,37 @@ public final class MechLayout {
 
 	private static final Map<String, MechLayout> CACHE = new HashMap<>();
 	private static int cacheGeneration = -1;
+	/** A layout no loaded frame has used for this long leaves the shared cache (one minute). */
+	private static final long STALE_NANOS = 60L * 1_000_000_000L;
+
+	/** When a frame last used this layout (see touch()). */
+	private volatile long lastUsed = System.nanoTime();
 
 	public static synchronized MechLayout of(Assembly assembly) {
 		if (cacheGeneration != PartRegistry.generation()) {
 			CACHE.clear();
 			cacheGeneration = PartRegistry.generation();
 		}
-		return CACHE.computeIfAbsent(assembly.encode(), key -> new MechLayout(assembly));
+		MechLayout layout = CACHE.computeIfAbsent(assembly.encode(), key -> new MechLayout(assembly));
+		layout.touch();
+		return layout;
+	}
+
+	/** Number of cached layouts (diagnostics, the development play test). */
+	public static synchronized int cachedCount() {
+		return CACHE.size();
+	}
+
+	/** Marks the layout as in use (frames call this once per tick). */
+	public void touch() {
+		this.lastUsed = System.nanoTime();
+	}
+
+	/** Drops the layouts of frames that are no longer loaded (enemy units are each a freshly rolled
+	 * frame, so the cache would otherwise keep one per unit ever spawned until a /reload). A frame
+	 * keeps its own reference, so this never takes a layout from under one. */
+	public static synchronized void sweep() {
+		long now = System.nanoTime();
+		CACHE.values().removeIf(layout -> now - layout.lastUsed > STALE_NANOS);
 	}
 }

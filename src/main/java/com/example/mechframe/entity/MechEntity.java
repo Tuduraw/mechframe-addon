@@ -8,7 +8,6 @@ import java.util.List;
 
 import com.example.mechframe.MechFrame;
 import com.example.mechframe.asm.DefinitionFactory;
-import com.example.mechframe.mixin.AbstractVehicleEntityAccessor;
 import com.example.mechframe.part.Assembly;
 import com.example.mechframe.part.MechForm;
 import com.example.mechframe.part.MechLayout;
@@ -21,6 +20,7 @@ import com.example.tudursvehiclemod.asset.VehicleDefinition;
 import com.example.tudursvehiclemod.asset.VehicleRegistry;
 import com.example.tudursvehiclemod.asset.WeaponAimRange;
 import com.example.tudursvehiclemod.asset.WeaponDefinition;
+import com.example.tudursvehiclemod.entity.AbstractVehicleEntity.WeaponState;
 import com.example.tudursvehiclemod.asset.WeaponStats;
 import com.example.tudursvehiclemod.asset.WeaponStatsLoader;
 import com.example.tudursvehiclemod.entity.AbstractVehicleEntity;
@@ -201,6 +201,15 @@ public class MechEntity extends AbstractVehicleEntity implements FreeCameraVehic
 	private Assembly cachedAssembly;
 	private int cachedGeneration;
 	private MechLayout cachedLayout;
+	/** getDefinition()'s last answer and what it was built from: the base mod asks for the definition
+	 * many times per tick, and building the shared cache's key means encoding the whole assembly. */
+	private DefinitionFactory.Entry defEntry;
+	private MechLayout defLayout;
+	private MechForm defForm;
+	private Identifier defVehicleId;
+	private java.util.Map<Identifier, VehicleDefinition> defRegistry;
+	private VehicleDefinition defPreset;
+	private int defEpoch;
 
 	private Vec3 aimPointCache;
 	private float aimCacheDelta = Float.NaN;
@@ -283,69 +292,46 @@ public class MechEntity extends AbstractVehicleEntity implements FreeCameraVehic
 		float ratio = this.getMaxHealth() > 0f ? Mth.clamp(this.getHealth() / this.getMaxHealth(), 0f, 1f) : 1f;
 		Assembly before = this.getAssembly();
 		VehicleDefinition oldDef = this.getDefinition();
+		List<WeaponState> oldStates = new java.util.ArrayList<>();
+		for (int i = 0; i < oldDef.weapons().size(); i++) {
+			oldStates.add(this.tudursvehiclemod$getWeaponState(i));
+		}
 		this.entityData.set(ASSEMBLY, assembly.encode());
-		this.remapWeaponState(oldDef, before, assembly);
+		this.remapWeaponState(oldDef, oldStates, before, assembly);
 		MechLayout layout = this.getLayout();
 		if (layout == null || !layout.canTransform) {
 			this.entityData.set(FORM, 0);
 		}
 		if (!this.tudursvehiclemod$isDestroyed()) {
-			this.entityData.set(AbstractVehicleEntityAccessor.mechframe$healthKey(), this.getMaxHealth() * ratio);
+			this.tudursvehiclemod$setHealth(this.getMaxHealth() * ratio);
 		}
 		this.en = Math.min(this.en, this.getStats().enCapacity());
 		this.refreshDimensions();
 	}
 
-	/** The base mod keeps magazine, reserve, reload, heat and fire mode per weapon INDEX, and only
-	 * resizes those arrays when the weapon count changes. After a refit the same index can be a
-	 * different weapon (emptying the right arm shifts every other weapon down one), so carry each
-	 * mount's state over to its new index, and start a weapon that was actually swapped out empty -
-	 * the same state a freshly built frame's weapons start in. */
-	private void remapWeaponState(VehicleDefinition oldDef, Assembly before, Assembly after) {
-		AbstractVehicleEntityAccessor acc = (AbstractVehicleEntityAccessor) (Object) this;
-		int[] ammo = acc.mechframe$getWeaponAmmo();
-		int[] reload = acc.mechframe$getWeaponReload();
-		int[] reserve = acc.mechframe$getWeaponReserve();
-		int[] firing = acc.mechframe$getWeaponFiringPosition();
-		float[] heat = acc.mechframe$getWeaponHeat();
-		int[] mode = acc.mechframe$getWeaponMode();
+	/** The base mod keeps magazine, reserve, reload, heat and fire mode per weapon INDEX. After a
+	 * refit the same index can be a different weapon (emptying the right arm shifts every other
+	 * weapon down one), so carry each mount's state over to its new index, and start a weapon that
+	 * was actually swapped out empty - the same state a freshly built frame's weapons start in
+	 * (a null entry, see AbstractVehicleEntity.tudursvehiclemod$setWeaponStates()). */
+	private void remapWeaponState(VehicleDefinition oldDef, List<WeaponState> oldStates, Assembly before, Assembly after) {
 		List<WeaponDefinition> oldWeapons = oldDef.weapons();
 		List<WeaponDefinition> newWeapons = this.getDefinition().weapons();
-		int n = newWeapons.size();
-		int[] nAmmo = new int[n];
-		int[] nReload = new int[n];
-		int[] nReserve = new int[n];
-		int[] nFiring = new int[n];
-		float[] nHeat = new float[n];
-		int[] nMode = new int[n];
-		for (int i = 0; i < n; i++) {
-			WeaponDefinition weapon = newWeapons.get(i);
+		List<WeaponState> states = new java.util.ArrayList<>(newWeapons.size());
+		for (WeaponDefinition weapon : newWeapons) {
 			MountSlot mount = MountSlot.bySeat(weapon.seatIndex());
-			int from = -1;
+			WeaponState kept = null;
 			if (mount != null && Objects.equals(before.get(mount), after.get(mount))) {
-				for (int j = 0; j < oldWeapons.size(); j++) {
+				for (int j = 0; j < oldWeapons.size() && j < oldStates.size(); j++) {
 					if (oldWeapons.get(j).seatIndex() == weapon.seatIndex()) {
-						from = j;
+						kept = oldStates.get(j);
 						break;
 					}
 				}
 			}
-			boolean keep = from >= 0 && from < ammo.length && from < reload.length && from < reserve.length
-					&& from < firing.length && from < heat.length && from < mode.length;
-			nAmmo[i] = keep ? ammo[from] : 0;
-			nReload[i] = keep ? reload[from] : 0;
-			nReserve[i] = keep ? reserve[from] : (weapon.maxAmmo() > 0 ? 0 : -1);
-			nFiring[i] = keep ? firing[from] : 0;
-			nHeat[i] = keep ? heat[from] : 0f;
-			nMode[i] = keep ? mode[from] : 0;
+			states.add(kept);
 		}
-		acc.mechframe$setWeaponAmmo(nAmmo);
-		acc.mechframe$setWeaponReload(nReload);
-		acc.mechframe$setWeaponReserve(nReserve);
-		acc.mechframe$setWeaponFiringPosition(nFiring);
-		acc.mechframe$setWeaponHeat(nHeat);
-		acc.mechframe$setWeaponMode(nMode);
-		this.tudursvehiclemod$syncWeaponAmmo();
+		this.tudursvehiclemod$setWeaponStates(states);
 	}
 
 	// ==================================================================================== defence AI
@@ -511,7 +497,7 @@ public class MechEntity extends AbstractVehicleEntity implements FreeCameraVehic
 			Optional<MechPreset> preset = PartRegistry.preset(id);
 			if (preset.isPresent()) {
 				this.entityData.set(ASSEMBLY, preset.get().assembly().encode());
-				this.entityData.set(AbstractVehicleEntityAccessor.mechframe$healthKey(), this.getMaxHealth());
+				this.tudursvehiclemod$setHealth(this.getMaxHealth());
 				this.en = this.getStats().enCapacity();
 				this.refreshDimensions();
 			}
@@ -529,9 +515,35 @@ public class MechEntity extends AbstractVehicleEntity implements FreeCameraVehic
 		if (layout == null) {
 			return super.getDefinition();
 		}
+		MechForm form = this.getForm();
 		Identifier vehicleId = this.getVehicleDefinitionId();
-		VehicleDefinition preset = vehicleId != null ? VehicleRegistry.get(vehicleId).orElse(null) : null;
-		return DefinitionFactory.get(layout, this.getForm(), preset);
+		// The preset definition is looked up again only when the id changed or the vehicle registry
+		// was replaced (a reload installs a new map).
+		java.util.Map<Identifier, VehicleDefinition> registry = VehicleRegistry.getAll();
+		if (vehicleId != this.defVehicleId || registry != this.defRegistry) {
+			this.defVehicleId = vehicleId;
+			this.defRegistry = registry;
+			this.defPreset = vehicleId != null ? registry.get(vehicleId) : null;
+			this.defEntry = null;
+		}
+		if (this.defEntry == null || layout != this.defLayout || form != this.defForm || this.defEpoch != DefinitionFactory.epoch()) {
+			this.defEpoch = DefinitionFactory.epoch();
+			this.defEntry = DefinitionFactory.get(layout, form, this.defPreset);
+			this.defLayout = layout;
+			this.defForm = form;
+		}
+		return this.defEntry.definition();
+	}
+
+	/** Once per tick: tells the shared caches this frame's layout and definition are still in use
+	 * (anything no loaded frame marks for a while is released - see DefinitionFactory.sweep()). */
+	private void markCachesInUse() {
+		if (this.cachedLayout != null) {
+			this.cachedLayout.touch();
+		}
+		if (this.defEntry != null) {
+			this.defEntry.touch();
+		}
 	}
 
 	@Override
@@ -585,6 +597,7 @@ public class MechEntity extends AbstractVehicleEntity implements FreeCameraVehic
 			this.transformCooldown--;
 		}
 		MechStats stats = this.getStats();
+		this.markCachesInUse();
 		if (this.en < 0f) {
 			this.en = this.level().isClientSide() ? this.entityData.get(EN) : stats.enCapacity();
 		}
@@ -967,8 +980,7 @@ public class MechEntity extends AbstractVehicleEntity implements FreeCameraVehic
 		this.setThrottleDirect(control ? 1f : 0f);
 		if (!this.level().isClientSide() && control && !this.tudursvehiclemod$isFuelless()) {
 			float extra = this.getDefinition().fuelConsumptionPerSecond() / 20f * TURBO_EXTRA_FUEL;
-			EntityDataAccessor<Float> key = com.example.mechframe.mixin.AbstractVehicleEntityAccessor.mechframe$fuelKey();
-			this.entityData.set(key, Math.max(0f, this.entityData.get(key) - extra));
+			this.tudursvehiclemod$setFuel(this.getFuel() - extra);
 		}
 	}
 
@@ -1546,21 +1558,47 @@ public class MechEntity extends AbstractVehicleEntity implements FreeCameraVehic
 		BlockHitResult hit = this.level().clip(new ClipContext(origin, end,
 				ClipContext.Block.COLLIDER, ClipContext.Fluid.NONE, this));
 		Vec3 point = hit.getType() == HitResult.Type.BLOCK ? hit.getLocation() : end;
-		double best = origin.distanceToSqr(point);
-		AABB search = new AABB(origin, point).inflate(2.0);
-		for (Entity e : this.level().getEntities(this, search, e -> e.isAlive() && !this.hasPassenger(e) && e.isPickable())) {
-			Optional<Vec3> h = e.getBoundingBox().inflate(0.3).clip(origin, point);
-			if (h.isPresent()) {
-				double d = origin.distanceToSqr(h.get());
-				if (d < best && d > 4.0) {
-					best = d;
-					point = h.get();
-				}
-			}
-		}
-		this.aimPointCache = point;
+		this.aimPointCache = this.nearestEntityAlong(origin, point);
 		this.aimCacheAge = this.tickCount;
 		this.aimCacheDelta = tickDelta;
+		return point;
+	}
+
+	/** Length of the stretches nearestEntityAlong() searches one at a time. */
+	private static final double AIM_SEGMENT = 16.0;
+
+	/** The first entity hit on the way from origin to end (more than 2 blocks out), else end. The ray
+	 * is searched a short stretch at a time, nearest first, and the search stops at the first stretch
+	 * that holds a hit: one box round the whole ray (up to AIM_RANGE, diagonally) covered hundreds of
+	 * chunks, and this runs every frame on the pilot's client and every tick on the server. */
+	private Vec3 nearestEntityAlong(Vec3 origin, Vec3 end) {
+		Vec3 ray = end.subtract(origin);
+		double length = ray.length();
+		if (length < 1.0e-6) {
+			return end;
+		}
+		Vec3 point = end;
+		double best = length * length;
+		for (double from = 0.0; from < length; from += AIM_SEGMENT) {
+			double to = Math.min(length, from + AIM_SEGMENT);
+			Vec3 a = origin.add(ray.scale(from / length));
+			Vec3 b = origin.add(ray.scale(to / length));
+			for (Entity e : this.level().getEntities(this, new AABB(a, b).inflate(2.0), e -> e.isAlive() && !this.hasPassenger(e) && e.isPickable())) {
+				Optional<Vec3> h = e.getBoundingBox().inflate(0.3).clip(origin, end);
+				if (h.isPresent()) {
+					double d = origin.distanceToSqr(h.get());
+					if (d < best && d > 4.0) {
+						best = d;
+						point = h.get();
+					}
+				}
+			}
+			// A hit is final once it lies within the stretches searched so far: anything in a later
+			// stretch is farther away.
+			if (best <= to * to) {
+				break;
+			}
+		}
 		return point;
 	}
 
@@ -1608,8 +1646,12 @@ public class MechEntity extends AbstractVehicleEntity implements FreeCameraVehic
 			double range = s.lockRange();
 			double cosCone = Math.cos(Math.toRadians(s.lockCone()));
 			double bestScore = Double.MAX_VALUE;
-			for (Entity e : this.level().getEntities(this, new AABB(origin, origin).inflate(range),
-					e -> this.isValidTarget(e, pilot))) {
+			// Only the lock cone can hold a candidate: search the box round it (the cone's axis grown by
+			// its widest radius) instead of a cube of the whole lock range round the frame.
+			AABB search = s.lockCone() < 80.0
+					? new AABB(origin, origin.add(dir.scale(range))).inflate(range * Math.sin(Math.toRadians(s.lockCone())))
+					: new AABB(origin, origin).inflate(range);
+			for (Entity e : this.level().getEntities(this, search, e -> this.isValidTarget(e, pilot))) {
 				Vec3 to = e.getBoundingBox().getCenter().subtract(origin);
 				double dist = to.length();
 				if (dist < 3.0 || dist > range) {

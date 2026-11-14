@@ -29,7 +29,7 @@
 
 - Minecraft 1.21.11
 - Fabric Loader 0.18 以降、Fabric API
-- tudursvehiclemod 1.0.5 以降
+- tudursvehiclemod 1.1.2 以降(Mojang マッピング版。このアドオンが使うフックは 1.1.2 で追加されました)
 
 ## 入手と組み替えの流れ
 
@@ -433,13 +433,18 @@ tudursvehiclemod-addons/<パック名>/
 ## 前提MODとの関係
 
 - 機体は`AbstractVehicleEntity`を継承した独自エンティティです。`getDefinition()`は、組み合わせごとに
-  `VehicleDefinition`を合成して返します。当たり判定のメッシュも、組み合わせごとに生成して前提MODのキャッシュに登録します。
+  `VehicleDefinition`を合成して返します(機体ごとにキャッシュし、パーツ・形態・車両定義が変わったときだけ引き直します)。
+  当たり判定のメッシュも組み合わせごとに生成し、`ServerObjModelHitboxes.registerGeneratedModel()`で前提MODに登録します
+  (`/reload`をまたいで保持されます)。読み込まれている機体が使わなくなった組み合わせのデータ(レイアウト・定義・メッシュ)は、
+  約1分後にまとめて解放します。防衛AIの敵機は配備のたびにランダムな構成になるため、解放しないと長時間のプレイで溜まり続けます。
 - 前提MODは武器とその旋回パーツを**武器名**で対応付けます。そのため、両手に同じ武器を持つと、左手の武器が
   右手の照準で撃たれてしまいます。このアドオンでは取り付け箇所ごとに別名(`mf_burst_rifle#l_arm`)で登録し、
   武器ファイルの読み込み時に`#`以降を取り除くことで解決しています(`WeaponStatsLoaderMixin`)。`#`を含まない
   ほかの車両の武器名には影響しません。
-- そのほかの前提MODへのmixinは、private static フィールドを読むアクセサー2つと、防衛AIの機体の弾がブロックを壊さないようにする
-  `AiProjectileBlockDamageMixin`(前提MODの弾の爆発・貫通の処理の先頭)だけです。
+- 体力・燃料・武器の状態の設定、弾のブロック破壊の可否、当たり判定のメッシュの登録は、前提MOD 1.1.2 の公開フック
+  (`tudursvehiclemod$setHealth()`・`setFuel()`・`setWeaponStates()`、`VehicleProjectileEvents.ALLOW_BLOCK_DAMAGE`、
+  `registerGeneratedModel()`)を使います。前提MODへのmixinは、上の`WeaponStatsLoaderMixin`と、撃破時の爆発でブロックを
+  壊さないようにする`AiWreckExplosionMixin`(バニラの`Level#explode`)だけです。
 
 ## 開発
 

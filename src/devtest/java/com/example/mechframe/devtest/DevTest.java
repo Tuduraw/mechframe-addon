@@ -76,6 +76,7 @@ public final class DevTest {
 			case "aiblock" -> aiBlock();
 			case "turbo" -> turbo();
 			case "garage" -> garage();
+			case "perf" -> perf();
 			default -> basic();
 		}
 		ClientTickEvents.END_CLIENT_TICK.register(DevTest::tick);
@@ -313,6 +314,156 @@ public final class DevTest {
 	}
 
 	/** An outpost unit destroyed: parts drop, the post redeploys a new random frame; no block damage. */
+	/** Optimisations: the generated hit mesh survives /reload (shots still hit), getDefinition() is
+	 * served from the frame's own cache, and the layouts / definitions / meshes of frames that are no
+	 * longer loaded are released by the periodic sweep (run with -PdevtestEnd=2400: the sweep only
+	 * drops what has been unused for a minute). */
+	private static void perf() {
+		common();
+		at(40, c -> {
+			spawn(c, "striker", 0, 0, 0f, false);
+			spawn(c, "bastion", 0, 40, 180f, false);
+		});
+		at(60, c -> meshLog(c, "before reload"));
+		at(70, c -> c.getSingleplayerServer().execute(() -> {
+			MechEntity m = SPAWNED.get("bastion");
+			int n = 200_000;
+			Object first = m.getDefinition();
+			boolean same = true;
+			long t0 = System.nanoTime();
+			for (int i = 0; i < n; i++) {
+				same &= m.getDefinition() == first;
+			}
+			long t1 = System.nanoTime();
+			for (int i = 0; i < n; i++) {
+				com.example.mechframe.asm.DefinitionFactory.get(m.getLayout(), m.getForm(),
+						com.example.tudursvehiclemod.asset.VehicleRegistry.get(m.getVehicleDefinitionId()).orElse(null));
+			}
+			long t2 = System.nanoTime();
+			log.println(String.format(Locale.ROOT, "getDefinition: %.0f ns/call (same instance: %s); shared-cache path: %.0f ns/call",
+					(t1 - t0) / (double) n, same, (t2 - t1) / (double) n));
+		}));
+		at(100, c -> server(c, "reload"));
+		at(160, c -> meshLog(c, "after reload"));
+		// What a client receiving vehicle definitions (or a reload racing the render thread) does: the
+		// base mod's model caches are cleared while the part data - and so the model ids - stay the same.
+		at(162, c -> c.getSingleplayerServer().execute(com.example.tudursvehiclemod.asset.ServerObjModelHitboxes::clearCaches));
+		at(164, c -> meshLog(c, "after the base caches were cleared"));
+		at(165, c -> server(c, "tp @a 0 -60 4 0 0"));
+		at(170, c -> c.getSingleplayerServer().execute(() -> {
+			ServerPlayer player = c.getSingleplayerServer().getPlayerList().getPlayers().get(0);
+			player.startRiding(SPAWNED.get("striker"), true, true);
+		}));
+		at(180, c -> c.options.setCameraType(CameraType.THIRD_PERSON_BACK));
+		at(200, c -> {
+			MechEntity m = MechInput.pilotedMech(c);
+			log.println("pre-fire: target hp=" + SPAWNED.get("bastion").getHealth() + " piloted=" + (m != null)
+					+ " candidate=" + (m == null ? null : m.getCandidate()) + " ammo=" + ammo(m));
+			key(c.options.keyAttack, true);
+		});
+		at(215, c -> c.getSingleplayerServer().execute(() -> {
+			MechEntity target = SPAWNED.get("bastion");
+			int n = target.level().getEntitiesOfClass(net.minecraft.world.entity.projectile.Projectile.class,
+					target.getBoundingBox().inflate(60), e -> true).size();
+			log.println("  projectiles in flight=" + n + " striker yaw=" + SPAWNED.get("striker").getYRot()
+					+ " target at " + target.position());
+		}));
+		at(245, c -> {
+			key(c.options.keyAttack, false);
+			log.println("post-fire: target hp=" + SPAWNED.get("bastion").getHealth());
+		});
+		at(260, c -> server(c, "kill @e[type=minecraft:item]"));
+		// Twenty randomly built frames (like defence-AI units), then gone again.
+		at(280, c -> c.getSingleplayerServer().execute(() -> {
+			ServerLevel w = c.getSingleplayerServer().overworld();
+			for (int i = 0; i < 20; i++) {
+				MechEntity mech = MechFrame.MECH.create(w, EntitySpawnReason.COMMAND);
+				mech.snapTo(-30 + i * 3, -60, -30, 0f, 0f);
+				mech.setVehicleDefinitionId(Identifier.fromNamespaceAndPath("mechframe", "striker"));
+				mech.setAssembly(com.example.mechframe.ai.RandomAssembly.roll(w.getRandom(), 1, 5));
+				mech.addTag("dtrandom");
+				w.addFreshEntity(mech);
+			}
+		}));
+		at(300, c -> cacheLog(c, "with 20 random frames"));
+		at(320, c -> server(c, "kill @e[tag=dtrandom]"));
+		at(340, c -> cacheLog(c, "random frames removed"));
+		at(2300, c -> cacheLog(c, "after the sweep"));
+		at(2302, c -> {
+			for (net.minecraft.world.entity.Entity e : c.level.entitiesForRendering()) {
+				if (e instanceof MechEntity m) {
+					log.println("  client frame " + m.getId() + " core=" + m.getAssembly().get(com.example.mechframe.part.MountSlot.CORE)
+							+ " destroyed=" + m.tudursvehiclemod$isDestroyed() + " removed=" + m.isRemoved());
+				}
+			}
+			c.getSingleplayerServer().execute(() -> {
+				for (ServerLevel w : c.getSingleplayerServer().getAllLevels()) {
+					for (net.minecraft.world.entity.Entity e : w.getAllEntities()) {
+						if (e instanceof MechEntity m) {
+							log.println("  server frame " + m.getId() + " core=" + m.getAssembly().get(com.example.mechframe.part.MountSlot.CORE)
+									+ " tags=" + m.getTags() + " destroyed=" + m.tudursvehiclemod$isDestroyed());
+						}
+					}
+				}
+			});
+		});
+		at(2310, c -> meshLog(c, "still loaded frames"));
+	}
+
+	/** How many points of a 10x20x10 grid over the frame's box the base mod's hit test counts as on
+	 * its mesh surface (what a projectile is tested against): 0 means the frame can't be hit. */
+	private static int surfaceHits(MechEntity m) {
+		var box = m.getBoundingBox();
+		int hits = 0;
+		for (int i = 0; i < 10; i++) {
+			for (int j = 0; j < 20; j++) {
+				for (int k = 0; k < 10; k++) {
+					var p = new net.minecraft.world.phys.Vec3(box.minX + (i + 0.5) * box.getXsize() / 10, box.minY + (j + 0.5) * box.getYsize() / 20,
+							box.minZ + (k + 0.5) * box.getZsize() / 10);
+					if (m.tudursvehiclemod$isPointNearMeshSurface(p)) {
+						hits++;
+					}
+				}
+			}
+		}
+		return hits;
+	}
+
+	private static void meshLog(Minecraft c, String label) {
+		c.getSingleplayerServer().execute(() -> {
+			for (String name : new String[]{"striker", "bastion"}) {
+				MechEntity m = SPAWNED.get(name);
+				var def = m.getDefinition();
+				var mesh = com.example.tudursvehiclemod.asset.ServerObjModelHitboxes.getGroupedTriangles(def.model());
+				log.println(label + ": " + name + " model=" + def.model() + " groups=" + mesh.map(g -> g.keySet().toString()).orElse("NONE")
+						+ " triangles=" + mesh.map(g -> g.values().stream().mapToInt(List::size).sum()).orElse(0)
+						+ " surface points hit=" + surfaceHits(m));
+			}
+		});
+	}
+
+	private static void cacheLog(Minecraft c, String label) {
+		c.getSingleplayerServer().execute(() -> {
+			log.println(label + ": layouts=" + com.example.mechframe.part.MechLayout.cachedCount()
+					+ " definitions=" + com.example.mechframe.asm.DefinitionFactory.cachedCount()
+					+ " meshes=" + com.example.mechframe.asm.HitMeshBuilder.registeredCount()
+					+ " part generation=" + com.example.mechframe.part.PartRegistry.generation()
+					+ " random frames still in the world=" + c.getSingleplayerServer().overworld().getEntitiesOfClass(MechEntity.class,
+							new net.minecraft.world.phys.AABB(-300, -100, -300, 300, 100, 300), m -> m.getTags().contains("dtrandom")).size());
+			try {
+				var f = com.example.mechframe.asm.DefinitionFactory.class.getDeclaredField("CACHE");
+				f.setAccessible(true);
+				synchronized (com.example.mechframe.asm.DefinitionFactory.class) {
+					for (var e : ((java.util.Map<?, ?>) f.get(null)).entrySet()) {
+						log.println("    def " + e.getKey().toString().replaceAll("assembly=[^,]*core=([^;]*);[^,]*", "core=$1"));
+					}
+				}
+			} catch (ReflectiveOperationException ex) {
+				log.println("    (no cache dump: " + ex + ")");
+			}
+		});
+	}
+
 	private static void aiRespawn() {
 		common();
 		at(5, c -> {

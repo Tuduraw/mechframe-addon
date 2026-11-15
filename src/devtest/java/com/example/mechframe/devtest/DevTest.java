@@ -78,6 +78,7 @@ public final class DevTest {
 			case "garage" -> garage();
 			case "perf" -> perf();
 			case "terrain" -> terrain();
+			case "structures" -> structures();
 			default -> basic();
 		}
 		ClientTickEvents.END_CLIENT_TICK.register(DevTest::tick);
@@ -315,6 +316,30 @@ public final class DevTest {
 	}
 
 	/** An outpost unit destroyed: parts drop, the post redeploys a new random frame; no block damage. */
+	/** The base (outpost / fort) generation settings: the structure set's spacing and separation as the game
+	 * sees them, and how many chunks of a 128x128-chunk area it would start a base in. */
+	private static void structures() {
+		common();
+		at(40, c -> c.getSingleplayerServer().execute(() -> {
+			ServerLevel w = c.getSingleplayerServer().overworld();
+			var set = w.registryAccess().lookupOrThrow(net.minecraft.core.registries.Registries.STRUCTURE_SET)
+					.getValue(Identifier.fromNamespaceAndPath("mechframe", "outposts"));
+			var placement = (net.minecraft.world.level.levelgen.structure.placement.RandomSpreadStructurePlacement) set.placement();
+			var state = w.getChunkSource().getGeneratorState();
+			int bases = 0;
+			for (int x = -64; x < 64; x++) {
+				for (int z = -64; z < 64; z++) {
+					if (placement.isStructureChunk(state, x, z)) {
+						bases++;
+					}
+				}
+			}
+			log.println("structures: enabled=" + com.example.mechframe.ai.OutpostGeneration.enabled() + " spacing=" + placement.spacing()
+					+ " separation=" + placement.separation() + " base chunks in 128x128 chunks=" + bases
+					+ " enemyvehicleaddon=" + net.fabricmc.loader.api.FabricLoader.getInstance().isModLoaded("enemyvehicleaddon"));
+		}));
+	}
+
 	/** Walking up 1-block steps (no jump, no EN) and EN while falling: a frame walks forward over two
 	 * 1-block steps and against a 2-block wall, then is dropped 40 blocks with no keys held. The
 	 * pilot's client runs the frame's physics, so that is where it is logged. */

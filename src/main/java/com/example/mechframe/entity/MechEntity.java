@@ -810,8 +810,8 @@ public class MechEntity extends AbstractVehicleEntity implements FreeCameraVehic
 		}
 		boolean hasInput = len > 0.01f;
 		boolean boosting = control && this.inBoost && s.boostSpeed() > 0f && (grounded || (this.en > 0f && !this.overheat));
-		// In the air the boost only works - and only costs EN - while a direction is held: just falling with the
-		// boost switched on (it is a toggle by default) is falling, not boosting.
+		// In the air the boost (its glide) only works while a direction is held. It costs no EN: moving through the
+		// air is not rising - only the hover (Space) and quick boosts spend EN up there.
 		boolean airBoost = boosting && !grounded && hasInput;
 		this.boostingNow = boosting && hasInput;
 
@@ -896,9 +896,6 @@ public class MechEntity extends AbstractVehicleEntity implements FreeCameraVehic
 			} else if (!jumped) {
 				double g = GRAVITY * (airBoost ? BOOST_GLIDE_GRAVITY : 1.0);
 				vy = Math.max(vy - g, MAX_FALL_SPEED);
-			}
-			if (airBoost) {
-				this.drain(s.airBoostCost());
 			}
 		} else {
 			this.airTicks = 0;

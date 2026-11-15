@@ -28,6 +28,13 @@ public final class MechServerConfig {
 	public static double respawnMinutes = 10.0;
 	/** Enemy-mode frames also attack players in creative mode (normally only for testing). */
 	public static boolean targetCreativePlayers = false;
+	/** The world generates Mech Frame's bases (outposts and forts), and how densely (1 = as shipped). */
+	public static boolean structuresEnabled = true;
+	public static double structureFrequency = 1.0;
+	/** The same two, used instead when Enemy Vehicle Addon is installed too (it adds bases of its own).
+	 * They start out as copies of the two above. */
+	public static boolean structuresEnabledWithEva = true;
+	public static double structureFrequencyWithEva = 1.0;
 
 	private MechServerConfig() {
 	}
@@ -53,6 +60,15 @@ public final class MechServerConfig {
 		partDropChance = Math.max(0.0, Math.min(1.0, num(json, "part_drop_chance", partDropChance)));
 		respawnMinutes = Math.max(0.0, num(json, "respawn_minutes", respawnMinutes));
 		targetCreativePlayers = bool(json, "target_creative_players", targetCreativePlayers);
+		structuresEnabled = bool(json, "structures_enabled", structuresEnabled);
+		structureFrequency = Math.max(0.0, num(json, "structure_frequency", structureFrequency));
+		structuresEnabledWithEva = bool(json, "structures_enabled_with_enemyvehicleaddon", structuresEnabled);
+		structureFrequencyWithEva = Math.max(0.0, num(json, "structure_frequency_with_enemyvehicleaddon", structureFrequency));
+		if (FabricLoader.getInstance().isModLoaded("enemyvehicleaddon")) {
+			OutpostGeneration.configure(structuresEnabledWithEva, structureFrequencyWithEva, "with Enemy Vehicle Addon");
+		} else {
+			OutpostGeneration.configure(structuresEnabled, structureFrequency, "Enemy Vehicle Addon not installed");
+		}
 		// Test hooks (dev client): -Dmechframe.respawnMinutes=0.1 -Dmechframe.dropChance=1
 		String rm = System.getProperty("mechframe.respawnMinutes");
 		if (rm != null) {

@@ -201,7 +201,7 @@ Mech Frame の設計と、実装中に分かったことの記録です。ユー
   このアドオン独自の互換クラスで直しています。詳しくは `mechframe-forge/PORTING.md`。
   Fabric 版を直したら、Forge 版は `port.py generate` で作り直し、パッチが当たらなくなった箇所だけ手で直します。
 
-## 最適化 (1.1.1、前提MOD 1.1.2)
+## 最適化 (前提MOD 1.1.2 が必要)
 
 - `MechEntity#getDefinition()`: 前提MODは1tickに何度も呼ぶ。以前は呼ぶたびに組み合わせ全体を文字列にしてから共有キャッシュを
   引いていた(開発環境で約1.5〜2µs/回)。機体ごとに結果(`DefinitionFactory.Entry`)を持ち、レイアウト(同一性)・形態・車両定義
@@ -227,14 +227,29 @@ Mech Frame の設計と、実装中に分かったことの記録です。ユー
 - 開発テスト `perf`(`-PdevtestEnd=2400`): `/reload` 前後と前提MODのキャッシュを消した後のメッシュ、`getDefinition()` の時間、
   ランダムな機体20機を消した後の解放。
 
-## 段差の自動昇降と空中のEN (1.1.2)
+## 段差の自動昇降と空中のEN
 
 - 段差: どの脚部でも1ブロックの段差を歩いて登る(`MIN_STEP_HEIGHT` 1.05、部品の `step_height` が大きければそちら)。
   以前は持ち上げた tick にも下向きの速度が残っていて、ゲームが縦方向を先に動かすため段差の上面より下へ落ちてから
   側面に当たり、持ち上げと落下を繰り返して登れなかった。持ち上げた tick は下向きの速度を 0 にする。ENは使わない。
 - 空中のEN: ブーストは既定で切り替え式なので、オンのまま落下するだけで `air_boost_cost` を毎 tick 消費していた。
-  空中のブースト(消費と滑空の重力軽減)は方向キーを押している間だけ働くようにした。ホバー(上昇)は従来どおり消費する。
+  空中の移動ではENを消費しない(ブーストがオンで方向キーを押していても)。空中でENを使うのはホバー(上昇)と
+  クイックブーストだけ。空中のブーストの滑空(重力の軽減)は方向キーを押している間だけ働く。`air_boost_cost` は
+  使われなくなった(パーツデータの互換のため読み込みは残している)。
   ENは空中では回復しない(以前は地上の55%)。地上に着いてからの猶予 tick と戦闘機形態は従来どおり回復する。
 - 開発テスト `terrain`: 1ブロックの段差2段と2ブロックの壁を歩く(登る・壁で止まる・ENは減らない)、
-  ENを半分にして30ブロック落とす(キーなし・前進・ブーストのみ・ブースト+前進。前の3つは消費も回復もしない)。
+  ENを半分にして30ブロック落とす(キーなし・前進・ブーストのみ・ブースト+前進。どれも落下中は消費も回復もしない)。
+
+## 拠点の生成の設定
+
+- `config/mechframe-server.json` の `structures_enabled` / `structure_frequency` と、Enemy Vehicle Addon を入れているときに
+  代わりに使う `structures_enabled_with_enemyvehicleaddon` / `structure_frequency_with_enemyvehicleaddon`(既定は前の2つと同じ値)。
+  読み込みはMODの初期化時(ワールドより前)。どちらを使うかはその時点で Enemy Vehicle Addon(mod id `enemyvehicleaddon`)が
+  入っているかで決める。
+- 仕組み: 拠点の構造物セット(`worldgen/structure_set/outposts.json`、salt 73190526)の配置を Mixin で変える。
+  `StructurePlacementMixin` が無効のとき `isStructureChunk` を false に、`OutpostPlacementMixin` が `spacing` / `separation`
+  を頻度の平方根で割った値にする(配置の計算 `getPotentialStructureChunk` と、`/locate` などの探索が使う `spacing()` の両方)。
+  サーバー開始時に構造物セットを書き換える方法は、Forge 版ではサーバー開始のイベントがワールドの読み込み(スポーン周辺の生成)
+  より後になるため使っていない。
+- 頻度を変えると配置の格子が変わるので、生成済みの地形との境目で拠点が途切れることがある。ワールドを作る前に設定する。
 

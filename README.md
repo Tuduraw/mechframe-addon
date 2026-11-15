@@ -57,7 +57,7 @@
 |---|---|---|
 | 旋回・照準 | マウス | 機体(胴体)が視点の方向へ脚部の旋回速度で向きを変えます |
 | 移動 | W / A / S / D | 視点に対して全方向に移動します。入力を離すと急停止します |
-| ブースト | 左Ctrl(押すたびにオン/オフ) | ブースターの速度で移動します。地上ではENを消費せず、空中では方向キーを押している間だけENを消費します(オンのまま落下するだけなら消費しません)。オンの間は画面上部に「BOOST」と出ます |
+| ブースト | 左Ctrl(押すたびにオン/オフ) | ブースターの速度で移動します。地上でも空中でもENを消費しません(空中では方向キーを押している間、落下がゆるやかになります)。オンの間は画面上部に「BOOST」と出ます |
 | クイックブースト | X、または方向キーの2度押し | 入力方向へ瞬間的に加速します(約10ブロック)。ENを消費します |
 | ジャンプ / ホバー | Space | 押すとジャンプします。空中で押し続けるとENを消費して上昇・滞空します |
 | 変形 / ターボ | V | 変形セットで揃えた機体は戦闘機形態に変形します。変形できない機体ではターボモードのオン/オフです(下記) |
@@ -293,6 +293,13 @@ Swallow・Mantaのコアは、横にしたときに低くなるよう、前後�
 | `part_drop_chance` | `0.08` | 敵機を撃破したとき、各パーツを落とす確率(パーツごとに抽選) |
 | `respawn_minutes` | `10.0` | 敵機の撃破・消失から再配備までの時間(分) |
 | `target_creative_players` | `false` | 敵機がクリエイティブのプレイヤーも狙う(動作確認用) |
+| `structures_enabled` | `true` | ワールド生成で拠点(前哨基地・要塞)を作る |
+| `structure_frequency` | `1.0` | 拠点の多さ(`2.0`で約2倍、`0.5`で約半分。`0`は作らない) |
+| `structures_enabled_with_enemyvehicleaddon` | `structures_enabled` と同じ | Enemy Vehicle Addon も入れているときは、`structures_enabled` の代わりにこちらを使う |
+| `structure_frequency_with_enemyvehicleaddon` | `structure_frequency` と同じ | Enemy Vehicle Addon も入れているときは、`structure_frequency` の代わりにこちらを使う |
+
+拠点の設定は、これから生成される地形にだけ効きます。頻度を変えると拠点の位置の並びが変わり、生成済みの地形との境目で拠点が
+途切れることがあるため、ワールドを作る前に設定してください。設定ファイルを書き換えたらゲーム(サーバー)を起動し直します。
 
 ### Enemy Vehicle Addon との併用
 
@@ -389,7 +396,7 @@ tudursvehiclemod-addons/<パック名>/
 | core | `neck`, `shoulder_l`(`shoulder_r`), `back`, `back_l`(`back_r`), `seat`, `eye`(`jet_eye`: 戦闘機形態の視点。省略時は`eye`) | `en_capacity`, `en_recharge`, `recharge_delay`, `defense`, `fuel`, `stability`, `jet`{`max_speed`, `acceleration`, `turn_speed`, `stall_fraction`, `afterburner`, `afterburner_cost`, `collision_height`} |
 | arms | `elbow`, `grip` | `load_limit`, `aim_speed`, `recoil_control`, `integrated`(武器内蔵腕。上記) |
 | legs | `hip` | `type`(`biped` / `reverse_joint` / `tank` / `quad` / `hexapod` / `hover`), `load_limit`, `walk_speed`, `boost_multiplier`, `jump`, `turn_rate`, `step_height`, `traction`, `qb_multiplier`, `hover_multiplier`, `collision_width`, `step_length`, `step_lift`, `step_ticks`, `core_tilt`(コアの前傾、度), `pelvis_groups`, `chains`, `wheels` |
-| booster | — | `boost_speed`, `qb_speed`, `qb_cost`, `qb_cooldown`, `hover_thrust`, `hover_cost`, `air_boost_cost`, `nozzles` / `jet_nozzles`([{`pos`, `dir`, `size`}]) |
+| booster | — | `boost_speed`, `qb_speed`, `qb_cost`, `qb_cooldown`, `hover_thrust`, `hover_cost`, `air_boost_cost`(現在は使われません。空中の移動はENを消費しないため), `nozzles` / `jet_nozzles`([{`pos`, `dir`, `size`}]) |
 | weapon | `muzzle` | `weapon`(前提MODの武器ファイル名), `mount`(`arm` / `back` / `any` / `integrated`), `projectile_item`, `recoil_distance`, `fcs`, `min_yaw` / `max_yaw` / `min_pitch` / `max_pitch`, `melee`(近接武器。下記) |
 
 - 脚の`chains`は1本ごとに、OBJグループ(`upper` / `lower` / `foot`、多脚は付け根の`coxa`と`coxa_pivot`)、

@@ -810,7 +810,10 @@ public class MechEntity extends AbstractVehicleEntity implements FreeCameraVehic
 		}
 		boolean hasInput = len > 0.01f;
 		boolean boosting = control && this.inBoost && s.boostSpeed() > 0f && (grounded || (this.en > 0f && !this.overheat));
-		this.boostingNow = boosting && (hasInput || !grounded);
+		// In the air the boost only works - and only costs EN - while a direction is held: just falling with the
+		// boost switched on (it is a toggle by default) is falling, not boosting.
+		boolean airBoost = boosting && !grounded && hasInput;
+		this.boostingNow = boosting && hasInput;
 
 		double yawRad = Math.toRadians(tankMode ? this.hullYaw : this.getYRot());
 		double cos = Math.cos(yawRad);
@@ -891,10 +894,10 @@ public class MechEntity extends AbstractVehicleEntity implements FreeCameraVehic
 				this.hoveringNow = true;
 				this.drain(s.hoverCost());
 			} else if (!jumped) {
-				double g = GRAVITY * (boosting ? BOOST_GLIDE_GRAVITY : 1.0);
+				double g = GRAVITY * (airBoost ? BOOST_GLIDE_GRAVITY : 1.0);
 				vy = Math.max(vy - g, MAX_FALL_SPEED);
 			}
-			if (boosting) {
+			if (airBoost) {
 				this.drain(s.airBoostCost());
 			}
 		} else {
@@ -906,7 +909,7 @@ public class MechEntity extends AbstractVehicleEntity implements FreeCameraVehic
 		this.setDeltaMovement(vx, vy, vz);
 		this.prevStepUpVisualOffset = this.stepUpVisualOffset;
 		if (grounded) {
-			this.applyStepUp(s.stepHeight());
+			this.applyStepUp(Math.max(s.stepHeight(), MIN_STEP_HEIGHT));
 		}
 		this.stepUpVisualOffset += (0f - this.stepUpVisualOffset) * 0.3f;
 		Vec3 before = this.getDeltaMovement();
@@ -1207,10 +1210,11 @@ public class MechEntity extends AbstractVehicleEntity implements FreeCameraVehic
 		return this.qbTimer;
 	}
 
+	/** Every frame walks up a full block without jumping (and so without EN): part data may give more. */
+	private static final float MIN_STEP_HEIGHT = 1.05f;
+
+	/** Walks up a step in the way (up to stepHeight) by lifting the frame onto it. No EN: it is part of walking. */
 	private void applyStepUp(float stepHeight) {
-		if (stepHeight < 0.05f) {
-			return;
-		}
 		Vec3 velocity = this.getDeltaMovement();
 		double horizontal = velocity.horizontalDistance();
 		if (horizontal < 1.0e-4) {
@@ -1233,6 +1237,9 @@ public class MechEntity extends AbstractVehicleEntity implements FreeCameraVehic
 			}
 		}
 		this.setPos(this.getX(), this.getY() + hi, this.getZ());
+		// No downward speed this tick: the game moves vertically before horizontally, so the frame would drop
+		// back below the step's top before reaching it, hit its side and fall back down, again and again.
+		this.setDeltaMovement(velocity.x, Math.max(velocity.y, 0.0), velocity.z);
 		this.stepUpVisualOffset -= hi;
 	}
 
@@ -1261,8 +1268,12 @@ public class MechEntity extends AbstractVehicleEntity implements FreeCameraVehic
 			this.enDelay--;
 			return;
 		}
+		// No recharge in the air (rising or falling); the jet form recharges as before.
 		boolean grounded = this.ticksSinceGrounded <= GROUNDED_GRACE_TICKS || this.isJet();
-		this.en = Math.min(s.enCapacity(), this.en + s.enRecharge() * (grounded ? 1f : 0.55f) * (this.overheat ? 1.5f : 1f));
+		if (!grounded) {
+			return;
+		}
+		this.en = Math.min(s.enCapacity(), this.en + s.enRecharge() * (this.overheat ? 1.5f : 1f));
 		if (this.overheat && this.en >= s.enCapacity() * 0.35f) {
 			this.overheat = false;
 		}

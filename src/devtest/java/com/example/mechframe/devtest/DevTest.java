@@ -77,6 +77,7 @@ public final class DevTest {
 			case "turbo" -> turbo();
 			case "garage" -> garage();
 			case "perf" -> perf();
+			case "terrain" -> terrain();
 			default -> basic();
 		}
 		ClientTickEvents.END_CLIENT_TICK.register(DevTest::tick);
@@ -314,6 +315,83 @@ public final class DevTest {
 	}
 
 	/** An outpost unit destroyed: parts drop, the post redeploys a new random frame; no block damage. */
+	/** Walking up 1-block steps (no jump, no EN) and EN while falling: a frame walks forward over two
+	 * 1-block steps and against a 2-block wall, then is dropped 40 blocks with no keys held. The
+	 * pilot's client runs the frame's physics, so that is where it is logged. */
+	private static void terrain() {
+		common();
+		// The test world keeps whatever earlier runs left (the player may even be saved riding a frame).
+		at(5, c -> server(c, "ride @a dismount", "kill @e[type=mechframe:mech]", "tp @a 0 -60 0 0 0"));
+		at(10, c -> server(c, "fill -14 -60 -12 14 -45 30 air", "fill -14 -60 31 14 -45 70 air", "fill -8 -60 12 8 -60 70 stone",
+				"fill -8 -59 26 8 -59 70 stone", "fill -8 -58 40 8 -57 70 stone", "fill 22 -60 -12 38 -30 12 air"));
+		at(30, c -> spawn(c, "striker", 0, 0, 0f, false));
+		at(40, c -> c.getSingleplayerServer().execute(() -> {
+			ServerPlayer player = c.getSingleplayerServer().getPlayerList().getPlayers().get(0);
+			player.startRiding(SPAWNED.get("striker"), true, true);
+		}));
+		at(60, c -> key(c.options.keyUp, true));
+		for (int t = 60; t <= 220; t += 5) {
+			int tick = t;
+			at(t, c -> terrainLog(c, "walk t" + tick));
+		}
+		at(220, c -> key(c.options.keyUp, false));
+		// Four drops of 30 blocks with EN at half: no keys, forward held, boost on (no keys), boost on + forward.
+		String[] modes = {"no keys", "forward", "boost", "boost+forward"};
+		for (int i = 0; i < modes.length; i++) {
+			int start = 240 + i * 90;
+			String mode = modes[i];
+			at(start, c -> {
+				MechEntity m = MechInput.pilotedMech(c);
+				setEn(m, m.getStats().enCapacity() * 0.5f);
+				// The pilot's client runs the frame's physics: move it there too, or it overrides the teleport.
+				m.setPos(30.5, -30.0, 0.5);
+				m.setDeltaMovement(0, 0, 0);
+				c.getSingleplayerServer().execute(() -> SPAWNED.get("striker").teleportTo(30.5, -30.0, 0.5));
+			});
+			at(start + 2, c -> {
+				MechEntity m = MechInput.pilotedMech(c);
+				setEn(m, m.getStats().enCapacity() * 0.5f);
+				key(c.options.keyUp, mode.contains("forward"));
+				m.inBoost = mode.contains("boost");
+				MechInput.boostOn = mode.contains("boost");
+			});
+			for (int t = start + 4; t <= start + 80; t += 4) {
+				int tick = t;
+				at(t, c -> terrainLog(c, "drop[" + mode + "] t" + tick));
+			}
+			at(start + 82, c -> {
+				key(c.options.keyUp, false);
+				MechInput.boostOn = false;
+			});
+		}
+	}
+
+	/** Sets the frame's EN on the pilot's client (which runs its physics) and on the server. */
+	private static void setEn(MechEntity client, float value) {
+		for (MechEntity m : new MechEntity[]{client, SPAWNED.get("striker")}) {
+			try {
+				var f = MechEntity.class.getDeclaredField("en");
+				f.setAccessible(true);
+				f.setFloat(m, value);
+			} catch (ReflectiveOperationException e) {
+				log.println("  (cannot set EN: " + e + ")");
+			}
+		}
+	}
+
+	private static void terrainLog(Minecraft c, String label) {
+		MechEntity m = MechInput.pilotedMech(c);
+		if (m == null) {
+			log.println(label + ": not piloting");
+			return;
+		}
+		var box = m.getBoundingBox();
+		var feet = net.minecraft.core.BlockPos.containing(m.getX(), m.getY() + 0.5, m.getZ() + box.getZsize() / 2 - 0.3);
+		log.println(String.format(Locale.ROOT, "%s: x=%.2f z=%.2f y=%.2f vy=%.3f onGround=%s en=%.1f/%.0f box y %.2f..%.2f w %.2f front block=%s noPhysics=%s",
+				label, m.getX(), m.getZ(), m.getY(), m.getDeltaMovement().y, m.onGround(), m.getEn(), m.getStats().enCapacity(),
+				box.minY, box.maxY, box.getXsize(), m.level().getBlockState(feet).getBlock().getName().getString(), m.noPhysics));
+	}
+
 	/** Optimisations: the generated hit mesh survives /reload (shots still hit), getDefinition() is
 	 * served from the frame's own cache, and the layouts / definitions / meshes of frames that are no
 	 * longer loaded are released by the periodic sweep (run with -PdevtestEnd=2400: the sweep only
